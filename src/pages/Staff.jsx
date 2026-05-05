@@ -43,23 +43,32 @@ const Staff = () => {
   const [userForm, setUserForm] = useState({ username: '', email: '', password: '', confirmPassword: '', role: 'staff', group_ids: [], phone: '' })
   const [groupForm, setGroupForm] = useState({ name: '', permission_ids: [] })
 
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+
   useEffect(() => {
-    fetchData()
+    fetchData(1)
   }, [])
 
-  const fetchData = async () => {
+  const fetchData = async (p = 1) => {
     const token = localStorage.getItem('token')
+    setLoading(true)
     try {
       const [uRes, gRes, pRes] = await Promise.all([
-        axios.get('http://127.0.0.1:8000/api/users/', { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`http://127.0.0.1:8000/api/users/?page=${p}`, { headers: { Authorization: `Bearer ${token}` } }),
         axios.get('http://127.0.0.1:8000/api/groups/', { headers: { Authorization: `Bearer ${token}` } }),
         axios.get('http://127.0.0.1:8000/api/permissions/', { headers: { Authorization: `Bearer ${token}` } })
       ])
+      
       const usersData = uRes.data.results || uRes.data
+      setUsers(usersData)
+      setHasMore(!!uRes.data.next)
+      setPage(1)
+
       const groupsData = gRes.data.results || gRes.data
       const permsData = pRes.data.results || pRes.data
 
-      setUsers(usersData)
       setGroups(groupsData)
       const relevantModels = ['product', 'rental', 'sale', 'category', 'customer', 'payment', 'user', 'group', 'notification']
       const filteredPerms = permsData.filter(p => 
@@ -69,6 +78,19 @@ const Staff = () => {
     } catch (err) {
       console.error(err)
     }
+    setLoading(false)
+  }
+
+  const fetchMoreUsers = async () => {
+    setLoadingMore(true)
+    const token = localStorage.getItem('token')
+    try {
+      const res = await axios.get(`http://127.0.0.1:8000/api/users/?page=${page + 1}`, { headers: { Authorization: `Bearer ${token}` } })
+      setUsers(prev => [...prev, ...(res.data.results || [])])
+      setHasMore(!!res.data.next)
+      setPage(prev => prev + 1)
+    } catch (err) {}
+    setLoadingMore(false)
   }
 
   const handleOpenUserModal = (user = null) => {
@@ -277,6 +299,13 @@ const Staff = () => {
               ))}
             </tbody>
           </table>
+          {hasMore && (
+            <div style={{ textAlign: 'center', padding: '30px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <button onClick={fetchMoreUsers} className="btn-outline btn-sm" disabled={loadingMore}>
+                {loadingMore ? 'CARGANDO...' : 'CARGAR MÁS PERSONAL'}
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '25px' }}>

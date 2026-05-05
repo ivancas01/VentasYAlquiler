@@ -38,7 +38,8 @@ const AdminLayout = ({ children }) => {
       const res = await axios.get('http://127.0.0.1:8000/api/notifications/', {
         headers: { Authorization: `Bearer ${token}` }
       })
-      const unread = res.data.filter(n => !n.is_read).length
+      const data = Array.isArray(res.data) ? res.data : (res.data.results || [])
+      const unread = data.filter(n => !n.is_read).length
       setNotifCount(unread)
     } catch (err) {}
   }
@@ -81,31 +82,34 @@ const AdminLayout = ({ children }) => {
         <div style={{ marginBottom: '50px', padding: '0 10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
             <span className="urban-font" style={{ fontSize: '1rem', color: 'white' }}>Admin Hub</span>
-            <Link to="/admin/notifications" style={{ 
+            <Link to="/admin/notifications" className={notifCount > 0 ? 'bell-animation' : ''} style={{ 
               position: 'relative', 
-              color: 'var(--text-dim)', 
+              color: notifCount > 0 ? '#fbbf24' : 'var(--text-dim)', 
               transition: 'all 0.3s',
               display: 'flex',
               alignItems: 'center'
-            }} onMouseOver={e => e.currentTarget.style.color = 'var(--cta)'} onMouseOut={e => e.currentTarget.style.color = 'var(--text-dim)'}>
+            }}>
               <Bell size={20} />
               {notifCount > 0 && (
-                <span style={{ 
+                <span className="pulse-badge" style={{ 
                   position: 'absolute', 
                   top: '-8px', 
                   right: '-8px', 
                   background: '#ef4444', 
                   color: 'white', 
-                  fontSize: '0.6rem', 
-                  width: '16px', 
-                  height: '16px', 
-                  borderRadius: '50%', 
+                  fontSize: '0.65rem', 
+                  width: '18px', 
+                  height: '18px', 
+                  borderRadius: '50% !important', 
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'center',
-                  fontWeight: 'bold',
+                  fontWeight: '800',
+                  border: '2px solid var(--primary)',
                   boxShadow: '0 0 10px rgba(239, 68, 68, 0.5)'
-                }}>{notifCount}</span>
+                }}>
+                  {notifCount}
+                </span>
               )}
             </Link>
           </div>
@@ -127,9 +131,8 @@ const AdminLayout = ({ children }) => {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '12px 15px',
-                      borderRadius: '8px',
-                      color: isActive ? 'black' : 'var(--text-dim)',
+                       padding: '12px 15px',
+                      color: isActive ? 'white' : 'var(--text-dim)',
                       background: isActive ? 'var(--accent-gradient)' : 'transparent',
                       transition: 'all 0.3s ease',
                       fontWeight: isActive ? 'bold' : 'normal',
@@ -182,7 +185,7 @@ const AdminLayout = ({ children }) => {
         marginLeft: '280px', 
         padding: '40px 60px',
         minHeight: '100vh',
-        background: 'radial-gradient(circle at top right, #121212 0%, #050505 100%)'
+        background: 'radial-gradient(circle at top right, var(--secondary) 0%, var(--bg) 100%)'
       }}>
         {children}
       </main>

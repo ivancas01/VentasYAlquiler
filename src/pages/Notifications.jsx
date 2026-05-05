@@ -19,11 +19,16 @@ const Notifications = () => {
       await axios.post('http://127.0.0.1:8000/api/notifications/refresh/', {}, {
         headers: { Authorization: `Bearer ${token}` }
       })
+      // Mark all as read so the sidebar icon clears
+      await axios.post('http://127.0.0.1:8000/api/notifications/read_all/', {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       // Then fetch them
       const res = await axios.get('http://127.0.0.1:8000/api/notifications/', {
         headers: { Authorization: `Bearer ${token}` }
       })
-      setNotifications(res.data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)))
+      const data = Array.isArray(res.data) ? res.data : (res.data.results || [])
+      setNotifications(data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)))
     } catch (err) {
       console.error("Error fetching notifications", err)
     }

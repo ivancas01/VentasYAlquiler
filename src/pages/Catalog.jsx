@@ -28,11 +28,14 @@ const Catalog = () => {
     }
   }, [selectedProduct])
 
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+
   const fetchInitialData = async () => {
     // Fetch categories
     try {
       const res = await axios.get('http://127.0.0.1:8000/api/categories/')
-      setCategories(res.data)
+      setCategories(res.data.results || res.data)
     } catch (err) {
       console.error("Error fetching categories", err)
     }
@@ -40,30 +43,37 @@ const Catalog = () => {
     // Fetch config
     try {
       const res = await axios.get('http://127.0.0.1:8000/api/config/')
-      if (res.data.length > 0) setConfig(res.data[0])
+      if (res.data) setConfig(res.data)
     } catch (err) {
       console.error("Error fetching config", err)
     }
   }
 
-  const fetchProducts = async () => {
-    setLoading(true)
+  const fetchProducts = async (reset = true) => {
+    if (reset) {
+      setLoading(true)
+      setPage(1)
+    }
     try {
-      let url = 'http://127.0.0.1:8000/api/products/?'
+      let url = `http://127.0.0.1:8000/api/products/?page=${reset ? 1 : page + 1}&`
       if (filterType !== 'all') url += `type=${filterType}&`
       if (filterCategory !== 'all') url += `category=${filterCategory}`
       
       const res = await axios.get(url)
-      setProducts(res.data)
+      const newProducts = res.data.results || []
+      setProducts(reset ? newProducts : [...products, ...newProducts])
+      setHasMore(!!res.data.next)
+      if (!reset) setPage(prev => prev + 1)
     } catch (err) {
       console.error("Error fetching products", err)
+      if (reset) setProducts([])
     }
     setLoading(false)
   }
 
-  const filteredProducts = products.filter(p => 
-    p.name.toLowerCase().includes(search.toLowerCase())
-  )
+  const filteredProducts = Array.isArray(products) 
+    ? products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
+    : []
 
   return (
     <div className="fade-in" style={{ padding: '160px 20px 80px', maxWidth: '1400px', margin: '0 auto' }}>
@@ -96,7 +106,7 @@ const Catalog = () => {
             ))}
           </select>
 
-          <div style={{ display: 'flex', gap: '10px', background: 'var(--secondary)', padding: '5px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ display: 'flex', gap: '10px', background: 'var(--secondary)', padding: '5px', border: '1px solid rgba(255,255,255,0.05)' }}>
             {['all', 'sale', 'rental'].map(t => (
               <button 
                 key={t}
@@ -108,7 +118,6 @@ const Catalog = () => {
                   color: filterType === t ? 'black' : 'white',
                   border: 'none',
                   cursor: 'pointer',
-                  borderRadius: '2px',
                   fontWeight: 'bold',
                   textTransform: 'uppercase'
                 }}
@@ -123,37 +132,52 @@ const Catalog = () => {
       {loading ? (
         <div style={{ textAlign: 'center', padding: '100px', color: 'var(--cta)' }}>CARGANDO COLECCIÓN...</div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '40px' }}>
-          {filteredProducts.map(product => (
-            <div 
-              key={product.id} 
-              className="glass-card" 
-              onClick={() => setSelectedProduct(product)}
-              style={{ padding: '25px', display: 'flex', flexDirection: 'column', transition: 'transform 0.3s ease', cursor: 'pointer' }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-10px)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-            >
-              <div style={{ height: '350px', background: 'var(--secondary)', borderRadius: '4px', marginBottom: '20px', overflow: 'hidden', position: 'relative' }}>
-                {product.image && <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
-                <div style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(0,0,0,0.7)', color: 'var(--cta)', padding: '5px 12px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase', border: '1px solid var(--cta)' }}>
-                  {product.product_type === 'both' ? 'VENTA / ALQUILER' : product.product_type.toUpperCase()}
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '40px' }}>
+            {filteredProducts.map(product => (
+              <div 
+                key={product.id} 
+                className="glass-card" 
+                onClick={() => setSelectedProduct(product)}
+                style={{ padding: '25px', display: 'flex', flexDirection: 'column', transition: 'transform 0.3s ease', cursor: 'pointer' }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-10px)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+              >
+                <div style={{ height: '350px', background: 'var(--secondary)', marginBottom: '20px', overflow: 'hidden', position: 'relative' }}>
+                  {product.image && <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                  {product.stock === 0 && (
+                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '1.2rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '2px', zIndex: 10 }}>
+                      {product.product_type === 'sale' ? 'AGOTADO' : 'ALQUILADO'}
+                    </div>
+                  )}
+                  <div style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(0,0,0,0.7)', color: 'var(--cta)', padding: '5px 12px', fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase', border: '1px solid var(--cta)', zIndex: 11 }}>
+                    {product.product_type === 'both' ? 'VENTA / ALQUILER' : product.product_type.toUpperCase()}
+                  </div>
+                </div>
+                <h3 className="urban-font" style={{ fontSize: '1.1rem', marginBottom: '10px', color: 'white' }}>{product.name}</h3>
+                <p style={{ color: 'var(--text-dim)', fontSize: '0.85rem', marginBottom: '20px', flex: 1, lineHeight: '1.5' }}>
+                  {product.description?.length > 100 ? product.description.substring(0, 100) + '...' : product.description}
+                </p>
+                
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px' }}>
+                  <div>
+                    {product.price_sale && <div style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>${parseFloat(product.price_sale).toLocaleString()}</div>}
+                    {product.price_rental && <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--cta)' }}>${parseFloat(product.price_rental).toLocaleString()} <span style={{fontSize: '0.6rem'}}>ALQ</span></div>}
+                  </div>
+                  <button onClick={() => setSelectedProduct(product)} className="btn-primary btn-sm">VER DETALLES</button>
                 </div>
               </div>
-              <h3 className="urban-font" style={{ fontSize: '1.1rem', marginBottom: '10px', color: 'white' }}>{product.name}</h3>
-              <p style={{ color: 'var(--text-dim)', fontSize: '0.85rem', marginBottom: '20px', flex: 1, lineHeight: '1.5' }}>
-                {product.description?.length > 100 ? product.description.substring(0, 100) + '...' : product.description}
-              </p>
-              
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px' }}>
-                <div>
-                  {product.price_sale && <div style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>${parseFloat(product.price_sale).toLocaleString()}</div>}
-                  {product.price_rental && <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--cta)' }}>${parseFloat(product.price_rental).toLocaleString()} <span style={{fontSize: '0.6rem'}}>ALQ</span></div>}
-                </div>
-                <button onClick={() => setSelectedProduct(product)} className="btn-primary btn-sm">VER DETALLES</button>
-              </div>
+            ))}
+          </div>
+          
+          {hasMore && (
+            <div style={{ textAlign: 'center', marginTop: '60px' }}>
+              <button onClick={() => fetchProducts(false)} className="btn-outline" style={{ padding: '15px 50px' }}>
+                CARGAR MÁS PRENDAS
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
 
       {/* Product Detail Modal */}
@@ -189,22 +213,22 @@ const Catalog = () => {
               position: 'relative', 
               maxHeight: '90vh', 
               overflowY: 'auto',
-              background: '#0a0a0a',
-              border: '1px solid rgba(184, 158, 72, 0.3)'
+              background: 'var(--bg)',
+              border: '1px solid var(--glass-border)'
             }}
           >
             <button onClick={() => setSelectedProduct(null)} style={{ position: 'absolute', top: '30px', right: '30px', background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', zIndex: 10 }}>
               <ArrowRight size={35} style={{ transform: 'rotate(180deg)' }} />
             </button>
             
-            <div style={{ height: '600px', background: 'var(--secondary)', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <div style={{ height: '600px', background: 'var(--secondary)', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
               {selectedProduct.image && <img src={selectedProduct.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <span style={{ color: 'var(--cta)', letterSpacing: '4px', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '15px' }}>{selectedProduct.category_name}</span>
               <h2 className="urban-font gold-text" style={{ fontSize: '3rem', marginBottom: '25px', lineHeight: '1.1' }}>{selectedProduct.name}</h2>
-              <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '1.05rem', lineHeight: '1.8', marginBottom: '40px', background: 'rgba(255,255,255,0.03)', padding: '25px', borderRadius: '8px', borderLeft: '3px solid var(--cta)' }}>
+              <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '1.05rem', lineHeight: '1.8', marginBottom: '40px', background: 'rgba(255,255,255,0.03)', padding: '25px', borderLeft: '3px solid var(--cta)' }}>
                 {selectedProduct.description || 'Sin descripción detallada disponible para esta pieza exclusiva.'}
               </p>
 
@@ -227,7 +251,7 @@ const Catalog = () => {
                 </div>
               </div>
 
-              <div style={{ marginTop: 'auto', background: 'rgba(255,255,255,0.02)', padding: '35px', borderRadius: '15px', border: '1px solid rgba(184, 158, 72, 0.2)' }}>
+              <div style={{ marginTop: 'auto', background: 'rgba(255,255,255,0.02)', padding: '35px', border: '1px solid var(--glass-border)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     {selectedProduct.price_sale && <div style={{ fontSize: '2.2rem', fontWeight: 'bold', color: 'white' }}>${parseFloat(selectedProduct.price_sale).toLocaleString()} <span style={{fontSize: '0.8rem', color: 'var(--text-dim)'}}>VENTA</span></div>}

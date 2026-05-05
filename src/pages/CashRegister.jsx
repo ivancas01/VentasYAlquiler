@@ -212,24 +212,31 @@ const CashRegister = () => {
                     ref={index === movements.length - 1 ? lastMoveRef : null}
                     key={move.id} 
                     className="glass-card" 
-                    style={{ padding: '20px', background: 'rgba(255,255,255,0.02)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: `4px solid ${move.type === 'IN' ? '#10b981' : '#ef4444'}` }}
+                    style={{ 
+                      padding: '20px', 
+                      background: 'rgba(255,255,255,0.02)', 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center', 
+                      borderLeft: `4px solid ${(move.movement_type === 'IN' || move.type === 'IN') ? '#10b981' : '#ef4444'}` 
+                    }}
                   >
                     <div>
                       <div style={{ fontWeight: 'bold', fontSize: '0.9rem', color: 'white' }}>
-                        {move.label.toUpperCase()}
+                        {(move.description || 'Movimiento').toUpperCase()}
                       </div>
                       <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginTop: '4px', display: 'flex', gap: '10px' }}>
-                        <span>{new Date(move.date).toLocaleDateString()} {new Date(move.date).toLocaleTimeString()}</span>
+                        <span>{new Date(move.created_at).toLocaleDateString()} {new Date(move.created_at).toLocaleTimeString()}</span>
                         <span>•</span>
-                        <span>{move.staff}</span>
+                        <span>{move.staff_name || 'Sistema'}</span>
                       </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontWeight: 'bold', color: move.type === 'IN' ? '#10b981' : '#ef4444', fontSize: '1.1rem' }}>
-                        {move.type === 'IN' ? '+' : '-'}{formatCurrency(move.amount)}
+                      <div style={{ fontWeight: 'bold', color: (move.movement_type === 'IN' || move.type === 'IN') ? '#10b981' : '#ef4444', fontSize: '1.1rem' }}>
+                        {(move.movement_type === 'IN' || move.type === 'IN') ? '+' : '-'}{formatCurrency(move.amount)}
                       </div>
                       <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', marginTop: '4px' }}>
-                        {move.method} {move.bank ? `(${move.bank})` : ''}
+                        {(move.payment_method || move.method || 'Efectivo')} {move.bank ? `(${move.bank})` : ''}
                       </div>
                     </div>
                   </div>

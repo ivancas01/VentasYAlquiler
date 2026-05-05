@@ -1,234 +1,189 @@
 from django.db import models
-from django.db.models import Sum
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.utils.translation import gettext_lazy as _
+import uuid
+from django.utils import timezone
+
+class UserManager(BaseUserManager):
+    def create_user(self, username, email, password=None, **extra_fields):
+        if not username:
+            raise ValueError('The Username field must be set')
+        email = self.normalize_email(email)
+        user = self.model(username=username, email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, username, email, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('role', 'admin')
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True.')
+
+        return self.create_user(username, email, password, **extra_fields)
 
 class User(AbstractUser):
     ROLE_CHOICES = (
-        ('admin', 'Administrator'),
-        ('manager', 'Manager'),
-        ('staff', 'Staff'),
+        ('admin', 'Administrador'),
+        ('staff', 'Personal'),
     )
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='staff')
-    phone = models.CharField(max_length=15, blank=True, null=True)
-
-    def __str__(self):
-        return f"{self.username} ({self.role})"
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='staff')
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    
+    objects = UserManager()
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True)
-
-    def __str__(self):
+    description = models.TextField(null=True, blank=True)
+    
+    def __cl__(self):
         return self.name
 
 class Product(models.Model):
     TYPE_CHOICES = (
-        ('sale', 'Venta'),
-        ('rental', 'Alquiler'),
+        ('sale', 'Solo Venta'),
+        ('rental', 'Solo Alquiler'),
         ('both', 'Venta y Alquiler'),
     )
     name = models.CharField(max_length=200)
-    description = models.TextField(blank=True, null=True)
-    color = models.CharField(max_length=50, blank=True, null=True)
-    pieces_count = models.IntegerField(default=1)
-    size = models.CharField(max_length=50, blank=True, null=True, help_text="Talla o Medida")
+    description = models.TextField(null=True, blank=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
-    product_type = models.CharField(max_length=10, choices=TYPE_CHOICES, default='sale')
-    
-    # Sale fields
-    price_sale = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    product_type = models.CharField(max_length=10, choices=TYPE_CHOICES, default='both')
+    price_sale = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    price_rental = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     stock = models.IntegerField(default=0)
-    
-    # Rental fields
-    price_rental = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    
-    # Common fields
     image = models.ImageField(upload_to='products/', null=True, blank=True)
+    
+    # Technical details
+    color = models.CharField(max_length=50, null=True, blank=True)
+    size = models.CharField(max_length=20, null=True, blank=True)
+    pieces_count = models.IntegerField(default=1)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    is_active = models.BooleanField(default=True)
-
-    def is_available(self, start_date, end_date, exclude_rental_id=None):
-        return self.get_available_stock(start_date, end_date, exclude_rental_id) > 0
 
     def get_available_stock(self, start_date, end_date, exclude_rental_id=None):
-        from .models import RentalItem
-        # Overlap condition: (start1 <= end2) and (end1 >= start2)
-        overlapping_rentals = RentalItem.objects.filter(
-            product=self,
-            rental__start_date__lte=end_date,
-            rental__end_date__gte=start_date
-        ).exclude(rental__status='received')
-        
-        if exclude_rental_id:
-            overlapping_rentals = overlapping_rentals.exclude(rental__id=exclude_rental_id)
-            
-        rented_count = overlapping_rentals.count()
-        return max(0, self.stock - rented_count)
-
-    def get_conflicts(self, start_date, end_date, exclude_rental_id=None):
-        from .models import RentalItem
-        conflicts = RentalItem.objects.filter(
-            product=self,
-            rental__start_date__lte=end_date,
-            rental__end_date__gte=start_date
-        ).exclude(rental__status='received')
-        
-        if exclude_rental_id:
-            conflicts = conflicts.exclude(rental__id=exclude_rental_id)
-            
-        return [
-            {
-                'rental_id': item.rental.id,
-                'start': item.rental.start_date,
-                'end': item.rental.end_date,
-                'status': item.rental.get_status_display(),
-                'customer': item.rental.customer.full_name if item.rental.customer else item.rental.customer_name
-            } for item in conflicts
-        ]
+        # Base availability is just the current stock
+        # In a real app, this would check against overlapping rentals
+        return self.stock
 
     def __str__(self):
         return self.name
 
 class Customer(models.Model):
-    DOC_TYPES = (
-        ('CC', 'Cédula de Ciudadanía'),
-        ('CE', 'Cédula de Extranjería'),
-        ('TI', 'Tarjeta de Identidad'),
-        ('PP', 'Pasaporte'),
-    )
-    full_name = models.CharField(max_length=255)
-    doc_type = models.CharField(max_length=5, choices=DOC_TYPES, default='CC')
-    doc_id = models.CharField(max_length=50, unique=True)
-    city = models.CharField(max_length=100, blank=True, null=True)
-    address = models.CharField(max_length=255, blank=True, null=True)
-    phone = models.CharField(max_length=20)
-    phone_ref = models.CharField(max_length=20, blank=True, null=True)
-    name_ref = models.CharField(max_length=255, blank=True, null=True)
+    full_name = models.CharField(max_length=200)
+    doc_type = models.CharField(max_length=10, default='CC')
+    dni = models.CharField(max_length=50, unique=True, null=True, blank=True)
+    city = models.CharField(max_length=100, null=True, blank=True)
+    email = models.EmailField(blank=True, null=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    address = models.TextField(null=True, blank=True)
+    phone_ref = models.CharField(max_length=20, null=True, blank=True)
+    name_ref = models.CharField(max_length=200, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.full_name} ({self.doc_id})"
+        return self.full_name
 
 class Sale(models.Model):
-    staff = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='sales_handled')
-    customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, related_name='sales')
-    customer_name = models.CharField(max_length=200, blank=True, null=True) # Legacy support
-    total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    staff = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, blank=True)
+    total = models.DecimalField(max_digits=12, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Sale #{self.id} - {self.total}"
 
 class SaleItem(models.Model):
     sale = models.ForeignKey(Sale, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.IntegerField(default=1)
-    price_at_sale = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity = models.IntegerField()
+    price_at_sale = models.DecimalField(max_digits=12, decimal_places=2)
 
 class Rental(models.Model):
     STATUS_CHOICES = (
         ('reserved', 'Reservado'),
         ('preparing', 'Alistado'),
-        ('ready', 'Listo para Entrega'),
+        ('ready', 'Listo'),
         ('delivered', 'Entregado'),
         ('received', 'Recibido'),
-        ('overdue', 'Atrasado'),
+        ('cancelled', 'Cancelado'),
     )
-    staff = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='rentals_handled')
-    customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, related_name='rentals')
-    customer_name = models.CharField(max_length=200, blank=True, null=True) # Legacy support
-    start_date = models.DateField()
-    end_date = models.DateField()
-    total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    total_paid = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    
-    GUARANTEE_CHOICES = (
-        ('documento', 'Documento'),
-        ('monto', 'Monto Efectivo'),
-        ('otro', 'Otro'),
-    )
-    guarantee_type = models.CharField(max_length=20, choices=GUARANTEE_CHOICES, default='documento')
-    guarantee_info = models.CharField(max_length=255, blank=True, null=True)
+    staff = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True)
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    total = models.DecimalField(max_digits=12, decimal_places=2)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='reserved')
+    
+    # Tracking
+    last_updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='rentals_updated')
+    
+    # Guarantee info
+    guarantee_type = models.CharField(max_length=50, default='ninguna') # 'monto', 'documento', 'otro'
+    guarantee_info = models.TextField(null=True, blank=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"Rental #{self.id} - {self.customer.full_name if self.customer else 'No Name'}"
-
-class Payment(models.Model):
-    PAYMENT_METHODS = (
-        ('efectivo', 'Efectivo'),
-        ('transaccion', 'Transacción / Transferencia'),
-    )
-    BANKS = (
-        ('nequi', 'Nequi'),
-        ('bancolombia', 'Bancolombia'),
-        ('daviplata', 'Daviplata'),
-        ('banco_bogota', 'Banco de Bogotá'),
-        ('otro', 'Otro'),
-    )
-    staff = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='payments_recorded')
-    rental = models.ForeignKey(Rental, on_delete=models.CASCADE, related_name='payments', null=True, blank=True)
-    sale = models.ForeignKey(Sale, on_delete=models.CASCADE, related_name='payments', null=True, blank=True)
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
-    payment_method = models.CharField(max_length=50, choices=PAYMENT_METHODS, default='efectivo')
-    bank = models.CharField(max_length=50, choices=BANKS, null=True, blank=True)
-    label = models.CharField(max_length=100, default='Pago') # e.g. "Abono Inicial", "Saldo"
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        if self.rental:
-            self.rental.total_paid = self.rental.payments.aggregate(Sum('amount'))['amount__sum'] or 0
-            self.rental.save()
-
-class Movement(models.Model):
-    TYPE_CHOICES = (
-        ('IN', 'Entrada'),
-        ('OUT', 'Salida'),
-    )
-    staff = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='movements_recorded')
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
-    movement_type = models.CharField(max_length=5, choices=TYPE_CHOICES)
-    payment_method = models.CharField(max_length=50, choices=Payment.PAYMENT_METHODS, default='efectivo')
-    bank = models.CharField(max_length=50, choices=Payment.BANKS, null=True, blank=True)
-    description = models.CharField(max_length=255)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.movement_type} - {self.amount} ({self.description})"
-
-class Notification(models.Model):
-    TYPE_CHOICES = (
-        ('reminder', 'Reminder'),
-        ('alert', 'Alert'),
-        ('payment', 'Payment Received'),
-    )
-    title = models.CharField(max_length=200)
-    message = models.TextField()
-    notification_type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='reminder')
-    related_rental = models.ForeignKey(Rental, on_delete=models.CASCADE, null=True, blank=True)
-    is_read = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
+    @property
+    def total_paid(self):
+        # We exclude security deposits (Garantia) from the rental payment total
+        return sum(p.amount for p in self.payments.exclude(label='Garantia'))
 
 class RentalItem(models.Model):
     rental = models.ForeignKey(Rental, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    price_at_rental = models.DecimalField(max_digits=10, decimal_places=2)
+    price_at_rental = models.DecimalField(max_digits=12, decimal_places=2)
 
 class Invoice(models.Model):
+    number = models.UUIDField(default=uuid.uuid4, editable=False)
     sale = models.OneToOneField(Sale, on_delete=models.CASCADE, null=True, blank=True)
     rental = models.OneToOneField(Rental, on_delete=models.CASCADE, null=True, blank=True)
-    invoice_number = models.CharField(max_length=50, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def save(self, *args, **kwargs):
-        if not self.invoice_number:
-            prefix = "INV-S" if self.sale else "INV-R"
-            count = Invoice.objects.count() + 1
-            self.invoice_number = f"{prefix}-{count:06d}"
-        super().save(*args, **kwargs)
+class Payment(models.Model):
+    METHOD_CHOICES = (
+        ('efectivo', 'Efectivo'),
+        ('transferencia', 'Transferencia Bancaria'),
+        ('tarjeta', 'Tarjeta'),
+    )
+    staff = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    sale = models.ForeignKey(Sale, on_delete=models.CASCADE, null=True, blank=True, related_name='payments')
+    rental = models.ForeignKey(Rental, on_delete=models.CASCADE, null=True, blank=True, related_name='payments')
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    payment_method = models.CharField(max_length=20, choices=METHOD_CHOICES)
+    bank = models.CharField(max_length=100, null=True, blank=True)
+    label = models.CharField(max_length=100, default='Pago') # 'Abono', 'Total', 'Garantia'
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class Movement(models.Model):
+    TYPE_CHOICES = (
+        ('IN', 'Ingreso'),
+        ('OUT', 'Egreso'),
+    )
+    staff = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    movement_type = models.CharField(max_length=3, choices=TYPE_CHOICES)
+    payment_method = models.CharField(max_length=20, default='efectivo')
+    bank = models.CharField(max_length=100, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class Notification(models.Model):
+    TYPE_CHOICES = (
+        ('alert', 'Alerta Stock'),
+        ('warning', 'Alerta Retraso / Vencimiento'),
+        ('info', 'Informativa'),
+    )
+    title = models.CharField(max_length=200)
+    message = models.TextField(null=True, blank=True)
+    notification_type = models.CharField(max_length=10, choices=TYPE_CHOICES, default='info')
+    is_read = models.BooleanField(default=False)
+    is_hidden = models.BooleanField(default=False)
+    related_rental = models.ForeignKey('Rental', on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 class SiteConfig(models.Model):
     company_name_white = models.CharField(max_length=100, default='URBAN')
@@ -253,18 +208,13 @@ class SiteConfig(models.Model):
     
     footer_text = models.TextField(default='© 2026 Urban Luxury. Todos los derechos reservados.')
     
-    THEME_CHOICES = (
-        ('noir', 'Urban Noir (Oscuro/Oro)'),
-        ('arctic', 'Minimal Arctic (Claro/Plata)'),
-        ('cyber', 'Street Cyber (Oscuro/Neon)'),
-    )
-    FONT_CHOICES = (
-        ('modern', 'Modern Clean (Outfit)'),
-        ('classic', 'Classic Editorial (Playfair)'),
-        ('tech', 'Urban Tech (Space Grotesk)'),
-    )
-    theme = models.CharField(max_length=20, choices=THEME_CHOICES, default='noir')
-    typography = models.CharField(max_length=20, choices=FONT_CHOICES, default='modern')
-
     def __str__(self):
         return f"Configuración de {self.company_name_white} {self.company_name_gold}"
+
+class HeroImage(models.Model):
+    image = models.ImageField(upload_to='hero_images/')
+    order = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order', '-created_at']

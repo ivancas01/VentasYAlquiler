@@ -1,124 +1,68 @@
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from django.db.models import Sum, Count
-from django.db.models.functions import TruncDate
-from .serializers import (
-    UserSerializer, CategorySerializer, ProductSerializer, 
-    SaleSerializer, RentalSerializer, InvoiceSerializer,
-    PaymentSerializer, NotificationSerializer, CustomerSerializer,
-    SiteConfigSerializer, GroupSerializer, PermissionSerializer, MovementSerializer
-)
+from rest_framework.views import APIView
+from django.db.models import Sum, Count, Q
+from django.db.models.functions import TruncMonth, TruncDate
+from django.utils import timezone
 from .models import (
     User, Category, Product, Sale, Rental, Invoice, 
-    Payment, Notification, Customer, SiteConfig, Movement
+    Payment, Notification, Customer, SiteConfig, Movement, HeroImage
 )
-from rest_framework.views import APIView
-from datetime import date, timedelta
-
-class DashboardStatsView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def get(self, request):
-        today = date.today()
-        yesterday = today - timedelta(days=1)
-        month_start = today.replace(day=1)
-        
-        # Sales Stats
-        total_sales_month = Sale.objects.filter(created_at__gte=month_start).aggregate(Sum('total'))['total__sum'] or 0
-        total_rentals_active = Rental.objects.filter(status__in=['delivered', 'overdue', 'ready']).count()
-        pending_returns_today = Rental.objects.filter(end_date=today, status='delivered').count()
-        upcoming_deliveries = Rental.objects.filter(start_date=today, status__in=['reserved', 'preparing', 'ready']).count()
-        
-        # Financials
-        total_revenue_today = Payment.objects.filter(created_at__date=today).aggregate(Sum('amount'))['amount__sum'] or 0
-        total_revenue_yesterday = Payment.objects.filter(created_at__date=yesterday).aggregate(Sum('amount'))['amount__sum'] or 0
-        
-        # Calculate Revenue Trend
-        revenue_trend = 0
-        if total_revenue_yesterday > 0:
-            revenue_trend = ((total_revenue_today - total_revenue_yesterday) / total_revenue_yesterday) * 100
-        elif total_revenue_today > 0:
-            revenue_trend = 100 # From 0 to something is 100% growth for display
-        
-        # Weekly Revenue Chart Data
-        weekly_revenue = []
-        for i in range(6, -1, -1):
-            day = today - timedelta(days=i)
-            rev = Payment.objects.filter(created_at__date=day).aggregate(Sum('amount'))['amount__sum'] or 0
-            weekly_revenue.append({
-                'day': day.strftime('%a').upper(),
-                'value': float(rev)
-            })
-
-        # Inventory
-        low_stock = Product.objects.filter(stock__lte=2).count()
-        
-        # Recent activity
-        recent_rentals = Rental.objects.order_by('-created_at')[:5]
-        recent_rentals_data = RentalSerializer(recent_rentals, many=True).data
-
-        return Response({
-            'monthly_sales': float(total_sales_month),
-            'active_rentals': total_rentals_active,
-            'returns_today': pending_returns_today,
-            'upcoming_deliveries': upcoming_deliveries,
-            'revenue_today': float(total_revenue_today),
-            'revenue_trend': round(revenue_trend, 1),
-            'weekly_revenue': weekly_revenue,
-            'low_stock': low_stock,
-            'recent_rentals': recent_rentals_data
-        })
-
+from .serializers import (
+    UserSerializer, CategorySerializer, ProductSerializer, SaleSerializer,
+    RentalSerializer, InvoiceSerializer, PaymentSerializer, NotificationSerializer,
+    CustomerSerializer, SiteConfigSerializer, MovementSerializer, HeroImageSerializer,
+    GroupSerializer, PermissionSerializer
+)
 from django.contrib.auth.models import Group, Permission
-
-class GroupViewSet(viewsets.ModelViewSet):
-    queryset = Group.objects.all()
-    serializer_class = GroupSerializer
-    permission_classes = [permissions.IsAdminUser]
-
-class PermissionViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Permission.objects.all()
-    serializer_class = PermissionSerializer
-    permission_classes = [permissions.IsAdminUser]
+from datetime import timedelta
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-
-    def get_permissions(self):
-        if self.action == 'me':
-            return [permissions.IsAuthenticated()]
-        return [permissions.IsAdminUser()]
-
-    def get_queryset(self):
-        return User.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
 
     @action(detail=False, methods=['get'])
     def me(self, request):
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
 
+class GroupViewSet(viewsets.ModelViewSet):
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class PermissionViewSet(viewsets.ModelViewSet):
+    queryset = Permission.objects.all()
+    serializer_class = PermissionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.AllowAny]
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve', 'availability']:
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
-        queryset = Product.objects.filter(is_active=True)
-        product_type = self.request.query_params.get('type')
+        queryset = Product.objects.all()
+        p_type = self.request.query_params.get('type')
         category = self.request.query_params.get('category')
-        
-        if product_type:
-            queryset = queryset.filter(product_type__in=[product_type, 'both'])
-        if category:
+        if p_type:
+            if p_type == 'both':
+                queryset = queryset.filter(product_type='both')
+            else:
+                queryset = queryset.filter(product_type__in=[p_type, 'both'])
+        if category and category != 'all':
             queryset = queryset.filter(category_id=category)
-            
         return queryset
 
     @action(detail=False, methods=['get'])
@@ -127,22 +71,40 @@ class ProductViewSet(viewsets.ModelViewSet):
         end_date = request.query_params.get('end_date')
         
         if not start_date or not end_date:
-            return Response({'error': 'start_date and end_date are required'}, status=400)
+            return Response({"error": "start_date and end_date are required"}, status=400)
             
-        queryset = self.get_queryset()
+        products = Product.objects.all()
         results = []
-        for p in queryset:
-            available_stock = p.get_available_stock(start_date, end_date)
+        
+        for product in products:
+            # Find overlapping rentals
+            # Overlap: (StartA <= EndB) and (EndA >= StartB)
+            overlapping_rentals = Rental.objects.filter(
+                items__product=product,
+                start_date__lte=end_date,
+                end_date__gte=start_date
+            ).exclude(status='received') # Don't count returned items
+            
+            # Sum pieces of this product in overlapping rentals
+            # We need to filter the items inside the rentals too
+            booked_count = 0
             conflicts = []
-            if available_stock < p.stock:
-                conflicts = p.get_conflicts(start_date, end_date)
+            for rental in overlapping_rentals:
+                # Count how many times this product appears in this rental
+                count = rental.items.filter(product=product).count()
+                booked_count += count
+                conflicts.append({
+                    "start": rental.start_date,
+                    "end": rental.end_date,
+                    "customer": rental.customer.full_name if rental.customer else "N/A"
+                })
                 
             results.append({
-                'id': p.id,
-                'available_stock': available_stock,
-                'total_stock': p.stock,
-                'conflicts': conflicts
+                "id": product.id,
+                "available_stock": max(0, product.stock - booked_count),
+                "conflicts": conflicts
             })
+            
         return Response(results)
 
 class CustomerViewSet(viewsets.ModelViewSet):
@@ -151,38 +113,22 @@ class CustomerViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # Allow searching by doc_id
-        doc_id = self.request.query_params.get('doc_id', None)
+        queryset = Customer.objects.all()
+        doc_id = self.request.query_params.get('doc_id')
+        search = self.request.query_params.get('search')
         if doc_id:
-            return self.queryset.filter(doc_id=doc_id)
-        return self.queryset
+            queryset = queryset.filter(dni=doc_id)
+        if search:
+            queryset = queryset.filter(
+                Q(full_name__icontains=search) | 
+                Q(dni__icontains=search)
+            )
+        return queryset
 
 class SaleViewSet(viewsets.ModelViewSet):
     queryset = Sale.objects.all().order_by('-created_at')
     serializer_class = SaleSerializer
     permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        queryset = self.queryset
-        search = self.request.query_params.get('search')
-        start_date = self.request.query_params.get('start_date')
-        end_date = self.request.query_params.get('end_date')
-
-        if search:
-            if search.startswith('#'):
-                try:
-                    queryset = queryset.filter(id=search.replace('#', ''))
-                except: pass
-            else:
-                queryset = queryset.filter(customer_data__full_name__icontains=search) | \
-                           queryset.filter(customer_name__icontains=search)
-        
-        if start_date:
-            queryset = queryset.filter(created_at__date__gte=start_date)
-        if end_date:
-            queryset = queryset.filter(created_at__date__lte=end_date)
-            
-        return queryset
 
     def perform_create(self, serializer):
         serializer.save(staff=self.request.user)
@@ -192,195 +138,16 @@ class RentalViewSet(viewsets.ModelViewSet):
     serializer_class = RentalSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self):
-        queryset = self.queryset
-        search = self.request.query_params.get('search')
-        status = self.request.query_params.get('status')
-        start_date = self.request.query_params.get('start_date')
-        end_date = self.request.query_params.get('end_date')
-
-        if search:
-            if search.startswith('#'):
-                try:
-                    queryset = queryset.filter(id=search.replace('#', ''))
-                except: pass
-            else:
-                queryset = queryset.filter(customer_data__full_name__icontains=search) | \
-                           queryset.filter(customer_name__icontains=search)
-        
-        if status and status != 'all':
-            queryset = queryset.filter(status=status)
-
-        if start_date:
-            queryset = queryset.filter(created_at__date__gte=start_date)
-        if end_date:
-            queryset = queryset.filter(created_at__date__lte=end_date)
-            
-        return queryset
-
     def perform_create(self, serializer):
-        serializer.save(staff=self.request.user)
+        serializer.save(staff=self.request.user, last_updated_by=self.request.user)
 
-class InvoiceViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Invoice.objects.all()
+    def perform_update(self, serializer):
+        serializer.save(last_updated_by=self.request.user)
+
+class InvoiceViewSet(viewsets.ModelViewSet):
+    queryset = Invoice.objects.all().order_by('-created_at')
     serializer_class = InvoiceSerializer
     permission_classes = [permissions.IsAuthenticated]
-
-class AnalyticsViewSet(viewsets.ViewSet):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def list(self, request):
-        # Daily Sales
-        daily_sales = Sale.objects.annotate(date=TruncDate('created_at')) \
-            .values('date').annotate(total=Sum('total')).order_by('date')
-        
-        # Daily Rentals
-        daily_rentals = Rental.objects.annotate(date=TruncDate('created_at')) \
-            .values('date').annotate(total=Sum('total')).order_by('date')
-
-        # Top Sales Staff
-        top_sales_staff = User.objects.annotate(sales_count=Count('sales_handled')) \
-            .order_by('-sales_count')[:5].values('username', 'sales_count')
-
-        # Top Rental Staff
-        top_rental_staff = User.objects.annotate(rentals_count=Count('rentals_handled')) \
-            .order_by('-rentals_count')[:5].values('username', 'rentals_count')
-
-        return Response({
-            'daily_sales': daily_sales,
-            'daily_rentals': daily_rentals,
-            'top_sales_staff': top_sales_staff,
-            'top_rental_staff': top_rental_staff
-        })
-
-class CashViewSet(viewsets.ViewSet):
-    permission_classes = [permissions.IsAuthenticated]
-
-    @action(detail=False, methods=['get'])
-    def summary(self, request):
-        start_date = request.query_params.get('start_date')
-        end_date = request.query_params.get('end_date')
-
-        payment_qs = Payment.objects.all()
-        movement_qs = Movement.objects.all()
-
-        if start_date:
-            payment_qs = payment_qs.filter(created_at__date__gte=start_date)
-            movement_qs = movement_qs.filter(created_at__date__gte=start_date)
-        if end_date:
-            payment_qs = payment_qs.filter(created_at__date__lte=end_date)
-            movement_qs = movement_qs.filter(created_at__date__lte=end_date)
-        
-        # Net Income (Payments - excluding "Garantia")
-        net_payments = payment_qs.exclude(label__icontains='garantia').aggregate(Sum('amount'))['amount__sum'] or 0
-        
-        # Internal Movements (IN - OUT) - excluding guarantee returns
-        in_movements = movement_qs.filter(movement_type='IN').aggregate(Sum('amount'))['amount__sum'] or 0
-        out_movements = movement_qs.filter(movement_type='OUT').exclude(description__icontains='Devolución Garantía').aggregate(Sum('amount'))['amount__sum'] or 0
-        
-        net_income = float(net_payments) + float(in_movements) - float(out_movements)
-        
-        # Total Guarantees (Total IN - Total OUT returns)
-        total_in_guarantees = float(payment_qs.filter(label__icontains='garantia').aggregate(Sum('amount'))['amount__sum'] or 0)
-        total_out_guarantees = float(movement_qs.filter(movement_type='OUT', description__icontains='Devolución Garantía').aggregate(Sum('amount'))['amount__sum'] or 0)
-        total_guarantees = total_in_guarantees - total_out_guarantees
-
-        # Distribution by Channel (Banks + Cash)
-        channels_detailed = []
-
-        # 1. Handle Cash
-        cash_inc = float(payment_qs.exclude(label__icontains='garantia').filter(payment_method='efectivo').aggregate(Sum('amount'))['amount__sum'] or 0)
-        cash_move_in = float(movement_qs.filter(movement_type='IN', payment_method='efectivo').aggregate(Sum('amount'))['amount__sum'] or 0)
-        cash_move_out = float(movement_qs.filter(movement_type='OUT', payment_method='efectivo').exclude(description__icontains='Devolución Garantía').aggregate(Sum('amount'))['amount__sum'] or 0)
-        
-        cash_guar_in = float(payment_qs.filter(label__icontains='garantia', payment_method='efectivo').aggregate(Sum('amount'))['amount__sum'] or 0)
-        cash_guar_out = float(movement_qs.filter(movement_type='OUT', payment_method='efectivo', description__icontains='Devolución Garantía').aggregate(Sum('amount'))['amount__sum'] or 0)
-        
-        channels_detailed.append({
-            'channel': 'Efectivo',
-            'income': cash_inc + cash_move_in - cash_move_out,
-            'guarantees': cash_guar_in - cash_guar_out,
-            'total': (cash_inc + cash_move_in - cash_move_out) + (cash_guar_in - cash_guar_out)
-        })
-
-        # 2. Handle Banks
-        all_banks = ['nequi', 'bancolombia', 'daviplata', 'banco_bogota', 'otro']
-        for b in all_banks:
-            b_inc = float(payment_qs.exclude(label__icontains='garantia').filter(payment_method='transaccion', bank=b).aggregate(Sum('amount'))['amount__sum'] or 0)
-            b_move_in = float(movement_qs.filter(movement_type='IN', payment_method='transaccion', bank=b).aggregate(Sum('amount'))['amount__sum'] or 0)
-            b_move_out = float(movement_qs.filter(movement_type='OUT', payment_method='transaccion', bank=b).exclude(description__icontains='Devolución Garantía').aggregate(Sum('amount'))['amount__sum'] or 0)
-            
-            b_guar_in = float(payment_qs.filter(label__icontains='garantia', payment_method='transaccion', bank=b).aggregate(Sum('amount'))['amount__sum'] or 0)
-            b_guar_out = float(movement_qs.filter(movement_type='OUT', payment_method='transaccion', bank=b, description__icontains='Devolución Garantía').aggregate(Sum('amount'))['amount__sum'] or 0)
-            
-            total_val = (b_inc + b_move_in - b_move_out) + (b_guar_in - b_guar_out)
-            if total_val != 0:
-                channels_detailed.append({
-                    'channel': b,
-                    'income': b_inc + b_move_in - b_move_out,
-                    'guarantees': b_guar_in - b_guar_out,
-                    'total': total_val
-                })
-
-        income_by_method = list(payment_qs.exclude(label__icontains='garantia').values('payment_method').annotate(total=Sum('amount')))
-
-        return Response({
-            'net_income': net_income,
-            'total_guarantees': total_guarantees,
-            'channels_detailed': channels_detailed,
-            'income_by_method': income_by_method,
-        })
-
-    @action(detail=False, methods=['get'])
-    def movements(self, request):
-        start_date = request.query_params.get('start_date')
-        end_date = request.query_params.get('end_date')
-        page = int(request.query_params.get('page', 1))
-        page_size = 10
-
-        payments = Payment.objects.all()
-        movements = Movement.objects.all()
-
-        if start_date:
-            payments = payments.filter(created_at__date__gte=start_date)
-            movements = movements.filter(created_at__date__gte=start_date)
-        if end_date:
-            payments = payments.filter(created_at__date__lte=end_date)
-            movements = movements.filter(created_at__date__lte=end_date)
-
-        unified = []
-        for p in payments:
-            unified.append({
-                'id': f"p_{p.id}",
-                'amount': float(p.amount),
-                'type': 'IN',
-                'method': p.payment_method,
-                'bank': p.bank,
-                'label': p.label,
-                'date': p.created_at,
-                'staff': p.staff.username if p.staff else 'N/A'
-            })
-        for m in movements:
-            unified.append({
-                'id': f"m_{m.id}",
-                'amount': float(m.amount),
-                'type': m.movement_type,
-                'method': m.payment_method,
-                'bank': m.bank,
-                'label': m.description,
-                'date': m.created_at,
-                'staff': m.staff.username if m.staff else 'N/A'
-            })
-
-        unified.sort(key=lambda x: x['date'], reverse=True)
-        total_count = len(unified)
-        start_idx = (page - 1) * page_size
-        end_idx = start_idx + page_size
-        
-        return Response({
-            'results': unified[start_idx:end_idx],
-            'has_more': end_idx < total_count
-        })
 
 class PaymentViewSet(viewsets.ModelViewSet):
     queryset = Payment.objects.all().order_by('-created_at')
@@ -391,61 +158,189 @@ class PaymentViewSet(viewsets.ModelViewSet):
         serializer.save(staff=self.request.user)
 
 class NotificationViewSet(viewsets.ModelViewSet):
-    queryset = Notification.objects.all()
     serializer_class = NotificationSerializer
-    permission_classes = [permissions.IsAuthenticated]
 
+    def get_queryset(self):
+        return Notification.objects.filter(is_hidden=False).order_by('-created_at')
+
+    def perform_destroy(self, instance):
+        instance.is_hidden = True
+        instance.save()
+    
     @action(detail=False, methods=['post'])
     def refresh(self, request):
-        today = date.today()
-        upcoming_3 = today + timedelta(days=3)
-        upcoming_1 = today + timedelta(days=1)
-
-        def create_notif(rental, n_type, title, message):
-            if not Notification.objects.filter(related_rental=rental, title=title, is_read=False).exists():
+        from django.utils import timezone
+        from .models import Rental, Product
+        
+        # 1. Auto-generate stock alerts
+        products = Product.objects.filter(stock__lte=2)
+        for p in products:
+            title = f"Stock Bajo: {p.name}"
+            if not Notification.objects.filter(title=title).exists():
                 Notification.objects.create(
-                    related_rental=rental,
-                    notification_type=n_type,
                     title=title,
-                    message=message
+                    message=f"Quedan solo {p.stock} unidades de {p.name}.",
+                    notification_type='alert',
+                    is_read=False
                 )
+            
+        # 2. Auto-generate rental due alerts
+        today = timezone.now().date()
+        due_rentals = Rental.objects.filter(
+            end_date__date__lte=today,
+            status__in=['reserved', 'preparing', 'ready', 'delivered']
+        )
+        
+        for r in due_rentals:
+            title = f"Alquiler por Vencer/Vencido: #{r.id}"
+            if not Notification.objects.filter(title=title, related_rental=r).exists():
+                status_label = r.get_status_display()
+                msg = f"El alquiler #{r.id} ({r.customer.full_name if r.customer else 'Sin cliente'}) vence hoy o está vencido. Estado actual: {status_label}."
+                Notification.objects.create(
+                    title=title,
+                    message=msg,
+                    notification_type='warning',
+                    related_rental=r,
+                    is_read=False
+                )
+            
+        return Response({"status": "refreshed"})
 
-        # 1. SALIDAS (Deliveries)
-        # Reserved -> Alistar (3 days before)
-        for r in Rental.objects.filter(start_date__lte=upcoming_3, start_date__gte=today, status='reserved'):
-            name = r.customer.full_name if (r.customer and r.customer.full_name) else r.customer_name or "Cliente"
-            create_notif(r, 'reminder', f"Alistar: {name}", f"Alquiler #{r.id} en estado Reservado. Alistar prendas.")
-
-        # Preparing -> Marcar como Listo (1-2 days before)
-        for r in Rental.objects.filter(start_date__lte=upcoming_1, start_date__gte=today, status='preparing'):
-            name = r.customer.full_name if (r.customer and r.customer.full_name) else r.customer_name or "Cliente"
-            create_notif(r, 'alert', f"Listo para entrega: {name}", f"Alquiler #{r.id} ya está alistado. Marcar como 'Listo para Entrega'.")
-
-        # Ready -> Urgente Entregar (Day of)
-        for r in Rental.objects.filter(start_date=today, status='ready'):
-            name = r.customer.full_name if (r.customer and r.customer.full_name) else r.customer_name or "Cliente"
-            create_notif(r, 'alert', f"ENTREGA HOY: {name}", f"Alquiler #{r.id} debe entregarse hoy al cliente.")
-
-        # 2. ENTRADAS (Returns)
-        # Delivered -> Alistarse para recoger (1 day before)
-        for r in Rental.objects.filter(end_date=upcoming_1, status='delivered'):
-            name = r.customer.full_name if (r.customer and r.customer.full_name) else r.customer_name or "Cliente"
-            create_notif(r, 'reminder', f"Alistar Recogida: {name}", f"Alquiler #{r.id} vence mañana. Alistarse para recoger prendas.")
-
-        # Delivered -> Recoger Hoy (Day of)
-        for r in Rental.objects.filter(end_date=today, status='delivered'):
-            name = r.customer.full_name if (r.customer and r.customer.full_name) else r.customer_name or "Cliente"
-            create_notif(r, 'alert', f"RECOGER HOY: {name}", f"Alquiler #{r.id} vence hoy. Confirmar recepción con el cliente.")
-
-        return Response({'status': 'Notificaciones actualizadas'})
+    @action(detail=False, methods=['post'])
+    def read_all(self, request):
+        Notification.objects.filter(is_read=False).update(is_read=True)
+        return Response({"status": "all marked as read"})
 
 class MovementViewSet(viewsets.ModelViewSet):
-    queryset = Movement.objects.all()
+    queryset = Movement.objects.all().order_by('-created_at')
     serializer_class = MovementSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
         serializer.save(staff=self.request.user)
+
+class CashViewSet(viewsets.ModelViewSet):
+    queryset = Movement.objects.all().order_by('-created_at')
+    serializer_class = MovementSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    @action(detail=False, methods=['get'])
+    def summary(self, request):
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        q = Q()
+        if start_date:
+            q &= Q(created_at__date__gte=start_date)
+        if end_date:
+            q &= Q(created_at__date__lte=end_date)
+            
+        movements = Movement.objects.filter(q)
+        total_in = movements.filter(movement_type='IN').aggregate(Sum('amount'))['amount__sum'] or 0
+        total_out = movements.filter(movement_type='OUT').aggregate(Sum('amount'))['amount__sum'] or 0
+        
+        return Response({
+            "total_income": total_in,
+            "total_expense": total_out,
+            "balance": total_in - total_out
+        })
+
+    @action(detail=False, methods=['get'])
+    def movements(self, request):
+        return self.list(request)
+
+class AnalyticsViewSet(viewsets.ViewSet):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def list(self, request):
+        last_30_days = timezone.now() - timedelta(days=30)
+        
+        # Daily Sales
+        daily_sales = Sale.objects.filter(created_at__gte=last_30_days)\
+            .annotate(date=TruncDate('created_at'))\
+            .values('date')\
+            .annotate(total=Sum('total'))\
+            .order_by('date')
+        
+        # Daily Rentals
+        daily_rentals = Rental.objects.filter(created_at__gte=last_30_days)\
+            .annotate(date=TruncDate('created_at'))\
+            .values('date')\
+            .annotate(total=Sum('total'))\
+            .order_by('date')
+            
+        # Top Staff Sales
+        top_sales_staff = Sale.objects.filter(created_at__gte=last_30_days)\
+            .values('staff__username')\
+            .annotate(sales_count=Count('id'))\
+            .order_by('-sales_count')[:5]
+            
+        # Top Staff Rentals
+        top_rental_staff = Rental.objects.filter(created_at__gte=last_30_days)\
+            .values('staff__username')\
+            .annotate(rentals_count=Count('id'))\
+            .order_by('-rentals_count')[:5]
+
+        # Formatting keys for frontend
+        formatted_sales_staff = [{"username": item['staff__username'], "sales_count": item['sales_count']} for item in top_sales_staff]
+        formatted_rental_staff = [{"username": item['staff__username'], "rentals_count": item['rentals_count']} for item in top_rental_staff]
+
+        return Response({
+            "daily_sales": list(daily_sales),
+            "daily_rentals": list(daily_rentals),
+            "top_sales_staff": formatted_sales_staff,
+            "top_rental_staff": formatted_rental_staff
+        })
+
+class DashboardStatsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        today = timezone.now().date()
+        month_start = today.replace(day=1)
+        
+        # Today
+        sales_today = Sale.objects.filter(created_at__date=today).aggregate(total=Sum('total'))['total'] or 0
+        rentals_today = Rental.objects.filter(created_at__date=today).aggregate(total=Sum('total'))['total'] or 0
+        
+        # Month
+        sales_month = Sale.objects.filter(created_at__date__gte=month_start).aggregate(total=Sum('total'))['total'] or 0
+        rentals_month = Rental.objects.filter(created_at__date__gte=month_start).aggregate(total=Sum('total'))['total'] or 0
+        
+        # Weekly data (last 7 days)
+        weekly_revenue = []
+        for i in range(6, -1, -1):
+            d = today - timedelta(days=i)
+            day_total = (Sale.objects.filter(created_at__date=d).aggregate(total=Sum('total'))['total'] or 0) + \
+                        (Rental.objects.filter(created_at__date=d).aggregate(total=Sum('total'))['total'] or 0)
+            weekly_revenue.append({
+                "day": d.strftime('%a'),
+                "value": float(day_total)
+            })
+
+        # Recent rentals
+        recent_rentals = Rental.objects.all().order_by('-created_at')[:5]
+        recent_data = []
+        for r in recent_rentals:
+            recent_data.append({
+                "id": r.id,
+                "customer_name": r.customer.full_name if r.customer else "N/A",
+                "end_date": r.end_date,
+                "status": r.status,
+                "total": r.total
+            })
+
+        return Response({
+            "revenue_today": float(sales_today + rentals_today),
+            "monthly_sales": float(sales_month + rentals_month),
+            "active_rentals": Rental.objects.filter(status='active').count(),
+            "low_stock": Product.objects.filter(stock__lte=2).count(),
+            "upcoming_deliveries": Rental.objects.filter(start_date__date=today, status='pending').count(),
+            "returns_today": Rental.objects.filter(end_date__date=today, status='active').count(),
+            "revenue_trend": 12, # Static for now
+            "weekly_revenue": weekly_revenue,
+            "recent_rentals": recent_data
+        })
 
 class SiteConfigViewSet(viewsets.ModelViewSet):
     queryset = SiteConfig.objects.all()
@@ -467,3 +362,13 @@ class SiteConfigViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+class HeroImageViewSet(viewsets.ModelViewSet):
+    queryset = HeroImage.objects.all()
+    serializer_class = HeroImageSerializer
+    pagination_class = None
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.AllowAny()]
+        return [permissions.IsAdminUser()]

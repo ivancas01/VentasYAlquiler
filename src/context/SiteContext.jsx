@@ -13,7 +13,6 @@ export const SiteProvider = ({ children }) => {
       const data = Array.isArray(res.data) ? res.data[0] : res.data;
       if (data && data.id) {
         setConfig(data);
-        applyTheme(data);
       }
     } catch (err) {
       console.error("Error fetching site config", err);
@@ -22,16 +21,9 @@ export const SiteProvider = ({ children }) => {
     }
   };
 
-  const applyTheme = (cfg) => {
-    if (!cfg) return;
-    document.body.className = '';
-    document.body.classList.add(`theme-${cfg.theme || 'noir'}`);
-    document.body.classList.add(`font-${cfg.typography || 'modern'}`);
-  };
 
   const updateConfig = (newConfig) => {
     setConfig(newConfig);
-    applyTheme(newConfig);
   };
 
   useEffect(() => {

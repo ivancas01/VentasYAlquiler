@@ -134,36 +134,44 @@ const AdminPOS = () => {
     }
   }
 
-  const lookupCustomer = async (docId) => {
-    if (docId.length < 5) {
-      // Reset ID if doc is short, so it treats as new
+  const lookupCustomer = async (val) => {
+    if (!val || val.length < 5) {
       setCustomer(prev => ({ ...prev, id: null }))
       return
     }
     const token = localStorage.getItem('token')
     try {
-      const res = await axios.get(`http://127.0.0.1:8000/api/customers/?doc_id=${docId}`, {
+      // Use exact doc_id filter instead of general search for autocomplete
+      const res = await axios.get(`http://127.0.0.1:8000/api/customers/?doc_id=${val}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
-      const results = res.data.results || res.data
-      if (Array.isArray(results) && results.length > 0) {
+      const data = res.data.results || res.data
+      const results = Array.isArray(data) ? data : []
+      
+      if (results.length === 1) {
         const c = results[0]
-        setCustomer({
-          id: c.id,
-          full_name: c.full_name,
-          doc_type: c.doc_type,
-          doc_id: c.doc_id,
-          city: c.city || '',
-          address: c.address || '',
-          phone: c.phone,
-          phone_ref: c.phone_ref || '',
-          name_ref: c.name_ref || ''
-        })
+        // Only fill if it's an exact match of what was typed
+        if (c.doc_id === val || c.dni === val) {
+          setCustomer({
+            id: c.id,
+            full_name: c.full_name || '',
+            doc_type: c.doc_type || 'CC',
+            doc_id: c.doc_id || c.dni || val, 
+            city: c.city || '',
+            address: c.address || '',
+            phone: c.phone || '',
+            phone_ref: c.phone_ref || '',
+            name_ref: c.name_ref || ''
+          })
+        }
       } else {
-        // Not found, ensure we are in "create mode" (no ID)
+        // If no exact match, just ensure we are in "new customer" mode (id: null)
+        // but DO NOT clear the fields so the user can continue typing/editing
         setCustomer(prev => ({ ...prev, id: null }))
       }
-    } catch (err) {}
+    } catch (err) {
+      console.error("Lookup error", err)
+    }
   }
 
   const submitQuickProduct = async (e) => {
@@ -184,8 +192,7 @@ const AdminPOS = () => {
       const res = await axios.post('http://127.0.0.1:8000/api/products/', data, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
       })
-      const updatedProds = await axios.get('http://127.0.0.1:8000/api/products/')
-      setProducts(updatedProds.data)
+      fetchProducts() // Refresh the list
       addToCart(res.data)
       setShowProductModal(false)
       setProductForm({
@@ -226,15 +233,29 @@ const AdminPOS = () => {
   }
 
   const calculateTotal = () => {
-    return cart.reduce((acc, item) => acc + (parseFloat(item.custom_price) * (item.quantity || 1)), 0)
+    return cart.reduce((acc, item) => acc + (parseFloat(item.custom_price || 0) * (item.quantity || 1)), 0)
   }
 
   const handleSubmit = async () => {
-    if (cart.length === 0 || !customer.full_name || !customer.doc_id) {
-      alert("Complete los datos del cliente y agregue productos.")
+    // Trim and check
+    const name = (customer.full_name || '').trim()
+    const doc = (customer.doc_id || '').trim()
+
+    if (cart.length === 0) {
+      alert("El carrito está vacío.")
       return
     }
+    if (!name || !doc) {
+      alert("Por favor complete el nombre y documento del cliente.")
+      return
+    }
+    if (type === 'rental' && (!startDate || !endDate)) {
+      alert("Por favor seleccione las fechas de recogida y devolución.")
+      return
+    }
+
     setLoading(true)
+
     const token = localStorage.getItem('token')
     const total = calculateTotal()
 
@@ -287,6 +308,8 @@ const AdminPOS = () => {
       setCustomer({ full_name: '', doc_type: 'CC', doc_id: '', city: '', address: '', phone: '', phone_ref: '', name_ref: '' })
       setInitialPayment('0')
       setGuarantee('')
+      fetchProducts() // Refresh stock in UI
+      if (type === 'rental') fetchAvailability()
       setTimeout(() => setSuccess(false), 3000)
     } catch (err) {
       console.error(err)
@@ -341,18 +364,19 @@ const AdminPOS = () => {
                   <div style={{ height: '120px', background: 'var(--secondary)', borderRadius: '4px', marginBottom: '15px', overflow: 'hidden', position: 'relative' }}>
                     {product.image && <img src={product.image} alt="" style={{width: '100%', height: '100%', objectFit: 'cover'}} />}
                     {!isAvailable && (
-                      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase' }}>
-                        NO DISPONIBLE
+                      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '0.8rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                        {type === 'sale' ? 'AGOTADO' : 'ALQUILADO'}
                       </div>
                     )}
                   </div>
                   <h4 style={{ fontSize: '0.9rem', color: 'white', marginBottom: '8px' }}>{product.name}</h4>
                   <p style={{ color: 'var(--cta)', fontWeight: 'bold', fontSize: '0.9rem' }}>${type === 'sale' ? (product.price_sale || 0) : (product.price_rental || 0)}</p>
-                  {type === 'rental' && startDate && endDate && (
-                    <>
-                      <p style={{ fontSize: '0.65rem', color: isAvailable ? 'var(--text-dim)' : '#ef4444', marginTop: '5px' }}>
-                        Disp: {availCount}
-                      </p>
+                  
+                  <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                    <p style={{ fontSize: '0.65rem', color: isAvailable ? 'var(--text-dim)' : '#ef4444', fontWeight: 'bold' }}>
+                      {type === 'rental' ? 'DISPONIBILIDAD:' : 'STOCK VENTA:'} {availCount}
+                    </p>
+                  </div>
                       {conflicts[product.id]?.length > 0 && (
                         <div style={{ marginTop: '8px', padding: '10px', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '6px', border: '1px solid rgba(239, 68, 68, 0.1)' }}>
                           <p style={{ fontSize: '0.6rem', color: '#ef4444', fontWeight: 'bold', marginBottom: '4px', textTransform: 'uppercase' }}>Ocupado en:</p>
@@ -363,8 +387,6 @@ const AdminPOS = () => {
                           ))}
                         </div>
                       )}
-                    </>
-                  )}
                   <button 
                     onClick={() => addToCart(product)} 
                     disabled={!isAvailable}
@@ -431,7 +453,7 @@ const AdminPOS = () => {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '15px', marginBottom: '20px' }}>
           <div>
             <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Tipo Doc</label>
-            <select value={customer.doc_type} onChange={e => setCustomer({...customer, doc_type: e.target.value})} style={{ width: '100%' }}>
+            <select value={customer.doc_type || 'CC'} onChange={e => setCustomer({...customer, doc_type: e.target.value})} style={{ width: '100%' }}>
               <option value="CC">Cédula Ciudadanía</option>
               <option value="CE">Extranjería</option>
               <option value="TI">Tarjeta Identidad</option>
@@ -440,38 +462,38 @@ const AdminPOS = () => {
           </div>
           <div>
             <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Documento</label>
-            <input type="text" value={customer.doc_id} onChange={e => { setCustomer({...customer, doc_id: e.target.value}); lookupCustomer(e.target.value); }} style={{ width: '100%' }} />
+            <input type="text" value={customer.doc_id || ''} onChange={e => { setCustomer({...customer, doc_id: e.target.value}); lookupCustomer(e.target.value); }} style={{ width: '100%' }} />
           </div>
         </div>
 
         <div style={{ marginBottom: '15px' }}>
           <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Nombre Completo</label>
-          <input type="text" value={customer.full_name} onChange={e => setCustomer({...customer, full_name: e.target.value})} style={{ width: '100%' }} />
+          <input type="text" value={customer.full_name || ''} onChange={e => setCustomer({...customer, full_name: e.target.value})} style={{ width: '100%' }} />
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
           <div>
             <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Ciudad</label>
-            <input type="text" value={customer.city} onChange={e => setCustomer({...customer, city: e.target.value})} style={{ width: '100%' }} />
+            <input type="text" value={customer.city || ''} onChange={e => setCustomer({...customer, city: e.target.value})} style={{ width: '100%' }} />
           </div>
           <div>
             <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Dirección</label>
-            <input type="text" value={customer.address} onChange={e => setCustomer({...customer, address: e.target.value})} style={{ width: '100%' }} />
+            <input type="text" value={customer.address || ''} onChange={e => setCustomer({...customer, address: e.target.value})} style={{ width: '100%' }} />
           </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '30px' }}>
           <div>
             <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Teléfono Personal</label>
-            <input type="text" value={customer.phone} onChange={e => setCustomer({...customer, phone: e.target.value})} style={{ width: '100%' }} />
+            <input type="text" value={customer.phone || ''} onChange={e => setCustomer({...customer, phone: e.target.value})} style={{ width: '100%' }} />
           </div>
           <div>
             <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Nombre Referencia</label>
-            <input type="text" value={customer.name_ref} onChange={e => setCustomer({...customer, name_ref: e.target.value})} style={{ width: '100%' }} />
+            <input type="text" value={customer.name_ref || ''} onChange={e => setCustomer({...customer, name_ref: e.target.value})} style={{ width: '100%' }} />
           </div>
           <div style={{ gridColumn: 'span 2' }}>
             <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Teléfono Referencia</label>
-            <input type="text" value={customer.phone_ref} onChange={e => setCustomer({...customer, phone_ref: e.target.value})} style={{ width: '100%' }} />
+            <input type="text" value={customer.phone_ref || ''} onChange={e => setCustomer({...customer, phone_ref: e.target.value})} style={{ width: '100%' }} />
           </div>
         </div>
 
@@ -484,25 +506,25 @@ const AdminPOS = () => {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
               <div>
                 <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Recogida</label>
-                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={{ width: '100%' }} />
+                <input type="date" value={startDate || ''} onChange={e => setStartDate(e.target.value)} style={{ width: '100%' }} />
               </div>
               <div>
                 <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Devolución</label>
-                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} style={{ width: '100%' }} />
+                <input type="date" value={endDate || ''} onChange={e => setEndDate(e.target.value)} style={{ width: '100%' }} />
               </div>
             </div>
             
             <div style={{ marginBottom: '20px' }}>
               <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Garantía</label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '8px' }}>
-                <select value={guaranteeType} onChange={e => setGuaranteeType(e.target.value)} style={{ width: '100%' }}>
+                <select value={guaranteeType || 'documento'} onChange={e => setGuaranteeType(e.target.value)} style={{ width: '100%' }}>
                   <option value="documento">DOCUMENTO</option>
                   <option value="monto">MONTO EFECTIVO</option>
                   <option value="otro">OTRO</option>
                 </select>
                 <input 
                   type="text" 
-                  value={guarantee} 
+                  value={guarantee || ''} 
                   onChange={(e) => setGuarantee(e.target.value)} 
                   style={{ width: '100%' }} 
                   placeholder={guaranteeType === 'monto' ? 'Monto $' : 'Detalle...'} 
@@ -515,15 +537,15 @@ const AdminPOS = () => {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
           <div>
             <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Método de Pago</label>
-            <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} style={{ width: '100%' }}>
+            <select value={paymentMethod || 'efectivo'} onChange={e => setPaymentMethod(e.target.value)} style={{ width: '100%' }}>
               <option value="efectivo">EFECTIVO</option>
-              <option value="transaccion">TRANSFERENCIA</option>
+              <option value="transferencia">TRANSFERENCIA</option>
             </select>
           </div>
-          {paymentMethod === 'transaccion' && (
+          {paymentMethod === 'transferencia' && (
             <div>
               <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Banco</label>
-              <select value={bank} onChange={e => setBank(e.target.value)} style={{ width: '100%' }}>
+              <select value={bank || 'nequi'} onChange={e => setBank(e.target.value)} style={{ width: '100%' }}>
                 <option value="nequi">NEQUI</option>
                 <option value="bancolombia">BANCOLOMBIA</option>
                 <option value="daviplata">DAVIPLATA</option>
@@ -536,7 +558,7 @@ const AdminPOS = () => {
 
         <div style={{ marginBottom: '25px' }}>
           <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Abono Inicial</label>
-          <input type="number" value={initialPayment} onChange={e => setInitialPayment(e.target.value)} style={{ width: '100%', fontSize: '1.1rem', color: 'var(--cta)', fontWeight: 'bold' }} />
+          <input type="number" value={initialPayment || '0'} onChange={e => setInitialPayment(e.target.value)} style={{ width: '100%', fontSize: '1.1rem', color: 'var(--cta)', fontWeight: 'bold' }} />
         </div>
 
         {cart.length > 0 && (

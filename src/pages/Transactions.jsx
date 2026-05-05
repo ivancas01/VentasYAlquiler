@@ -237,7 +237,7 @@ const Transactions = () => {
   }
 
   const updateStatus = async (id, newStatus) => {
-    const rentalInfo = selectedRental || transactions.find(t => t.id === id)
+    const rentalInfo = selectedRental || rentals.find(t => t.id === id)
     
     if (newStatus === 'delivered' && parseFloat(rentalInfo.total_paid) < parseFloat(rentalInfo.total)) {
       alert("No se puede entregar el alquiler porque aún tiene saldo pendiente. El valor total debe estar cancelado.")
@@ -284,7 +284,7 @@ const Transactions = () => {
         rental: selectedRental.id,
         amount: paymentAmount,
         payment_method: paymentMethod,
-        bank: paymentMethod === 'transaccion' ? bank : null,
+        bank: paymentMethod === 'transferencia' ? bank : null,
         label: paymentLabel
       }, { headers: { Authorization: `Bearer ${token}` } })
       setPaymentAmount('')
@@ -485,7 +485,13 @@ const Transactions = () => {
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ marginBottom: '40px' }}>
               <h3 className="urban-font gold-text" style={{ fontSize: '1.8rem', marginBottom: '10px' }}>GESTIÓN DE ALQUILER #{selectedRental.id}</h3>
-              <p style={{ color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '1px' }}>Cliente: {selectedRental.customer_data?.full_name || selectedRental.customer_name}</p>
+              <p style={{ color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.7rem' }}>
+                Alquilado por: <span style={{color: 'white'}}>{selectedRental.staff_name}</span> | 
+                Último cambio por: <span style={{color: 'var(--cta)'}}>{selectedRental.last_updated_by_name || 'N/A'}</span>
+              </p>
+              <p style={{ color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.7rem', marginTop: '5px' }}>
+                Cliente: {selectedRental.customer_data?.full_name || selectedRental.customer_name}
+              </p>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '50px' }}>
@@ -547,49 +553,101 @@ const Transactions = () => {
                 <h4 className="urban-font" style={{ marginBottom: '25px', display: 'flex', alignItems: 'center', gap: '15px', fontSize: '1rem', color: 'var(--cta)' }}>
                   <DollarSign size={22} /> Pagos y Abonos
                 </h4>
-                <div className="glass-card" style={{ padding: '30px', marginBottom: '30px', background: 'var(--secondary)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', color: 'var(--text-dim)' }}>
-                    <span>Total Alquiler:</span>
-                    <span style={{ fontWeight: 'bold', color: 'white' }}>${selectedRental.total}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', color: 'var(--text-dim)' }}>
-                    <span>Total Pagado:</span>
-                    <span style={{ fontWeight: 'bold', color: '#10b981' }}>${selectedRental.total_paid}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '15px' }}>
-                    <span className="urban-font" style={{fontSize: '0.8rem'}}>Saldo Pendiente:</span>
-                    <span className="gold-text" style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>${(selectedRental.total - selectedRental.total_paid).toFixed(2)}</span>
+
+                {/* History moved outside the form to ensure it's always visible */}
+                <div className="glass-card" style={{ padding: '20px', marginBottom: '20px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <label style={{ color: 'var(--text-dim)', textTransform: 'uppercase', fontSize: '0.65rem', display: 'block', marginBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '5px' }}>
+                    Historial de Transacciones
+                  </label>
+                  <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                    {selectedRental.payments?.map(p => (
+                      <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                        <div>
+                          <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'white' }}>{p.label}</div>
+                          <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)' }}>{p.created_at?.split('T')[0]} | {p.payment_method.toUpperCase()}</div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: '0.9rem', color: '#10b981', fontWeight: 'bold' }}>${p.amount}</div>
+                          <div style={{ fontSize: '0.6rem', color: 'var(--text-dim)' }}>Por: {p.staff_name || 'N/A'}</div>
+                        </div>
+                      </div>
+                    ))}
+                    {(!selectedRental.payments || selectedRental.payments.length === 0) && (
+                      <div style={{ textAlign: 'center', color: 'var(--text-dim)', fontSize: '0.75rem', padding: '10px' }}>No hay registros de pagos.</div>
+                    )}
                   </div>
                 </div>
 
-                <form onSubmit={addPayment} style={{ display: 'flex', gap: '15px', alignItems: 'flex-end' }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: '0.6rem', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '5px', display: 'block' }}>Concepto</label>
-                    <select value={paymentLabel} onChange={e => setPaymentLabel(e.target.value)} style={{ width: '100%', marginBottom: '10px' }}>
-                      <option value="Abono">Abono</option>
-                      <option value="Saldo">Pago de Saldo</option>
-                      <option value="Garantia">Garantía</option>
-                      <option value="Multa">Multa / Otros</option>
-                    </select>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
-                      <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} style={{ width: '100%' }}>
-                        <option value="efectivo">EFECTIVO</option>
-                        <option value="transaccion">TRANSFERENCIA</option>
-                      </select>
-                      {paymentMethod === 'transaccion' && (
-                        <select value={bank} onChange={e => setBank(e.target.value)} style={{ width: '100%' }}>
-                          <option value="nequi">NEQUI</option>
-                          <option value="bancolombia">BANCOLOMBIA</option>
-                          <option value="daviplata">DAVIPLATA</option>
-                          <option value="banco_bogota">B. BOGOTÁ</option>
-                          <option value="otro">OTRO</option>
-                        </select>
-                      )}
-                    </div>
-                    <input type="number" placeholder="Monto $" value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} style={{ width: '100%' }} />
+                <div className="glass-card" style={{ padding: '30px', marginBottom: '30px', background: 'var(--secondary)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: 'var(--text-dim)', fontSize: '0.9rem' }}>
+                    <span>Costo Alquiler:</span>
+                    <span style={{ fontWeight: 'bold', color: 'white' }}>${selectedRental.total}</span>
                   </div>
-                  <button type="submit" className="btn-primary" style={{ height: 'fit-content' }}>Registrar</button>
-                </form>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: 'var(--text-dim)', fontSize: '0.9rem' }}>
+                    <span>Abonos Realizados:</span>
+                    <span style={{ fontWeight: 'bold', color: '#10b981' }}>${selectedRental.total_paid}</span>
+                  </div>
+                  
+                  {/* Separate Guarantee Display */}
+                  {selectedRental.payments?.some(p => p.label === 'Garantia') && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', padding: '5px 10px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '4px', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
+                      <span style={{ color: 'var(--cta)', fontSize: '0.8rem', fontWeight: 'bold' }}>GARANTÍA EN CAJA:</span>
+                      <span style={{ fontWeight: 'bold', color: 'var(--cta)' }}>
+                        ${selectedRental.payments.filter(p => p.label === 'Garantia').reduce((acc, p) => acc + parseFloat(p.amount), 0).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '15px', marginTop: '5px' }}>
+                    <span className="urban-font" style={{fontSize: '0.8rem'}}>SALDO PENDIENTE:</span>
+                    <span className="gold-text" style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>
+                      ${(parseFloat(selectedRental.total) - parseFloat(selectedRental.total_paid)).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+
+                {selectedRental.status !== 'received' && (
+                  <form onSubmit={addPayment} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                      <div>
+                        <label style={{ fontSize: '0.6rem', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '5px', display: 'block' }}>Concepto</label>
+                        <select value={paymentLabel} onChange={e => setPaymentLabel(e.target.value)} style={{ width: '100%' }}>
+                          <option value="Abono">Abono</option>
+                          <option value="Saldo">Pago de Saldo</option>
+                          <option value="Garantia">Garantía</option>
+                          <option value="Multa">Multa / Otros</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.6rem', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '5px', display: 'block' }}>Método</label>
+                        <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} style={{ width: '100%' }}>
+                          <option value="efectivo">EFECTIVO</option>
+                          <option value="transferencia">TRANSFERENCIA</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: paymentMethod === 'transferencia' ? '1fr 1fr' : '1fr', gap: '15px' }}>
+                      {paymentMethod === 'transferencia' && (
+                        <div>
+                          <label style={{ fontSize: '0.6rem', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '5px', display: 'block' }}>Banco</label>
+                          <select value={bank} onChange={e => setBank(e.target.value)} style={{ width: '100%' }}>
+                            <option value="nequi">NEQUI</option>
+                            <option value="bancolombia">BANCOLOMBIA</option>
+                            <option value="daviplata">DAVIPLATA</option>
+                            <option value="banco_bogota">B. BOGOTÁ</option>
+                            <option value="otro">OTRO</option>
+                          </select>
+                        </div>
+                      )}
+                      <div>
+                        <label style={{ fontSize: '0.6rem', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '5px', display: 'block' }}>Monto a Registrar</label>
+                        <input type="number" placeholder="Monto $" value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} style={{ width: '100%' }} />
+                      </div>
+                    </div>
+                    <button type="submit" className="btn-primary" style={{ width: '100%' }}>Registrar Pago</button>
+                  </form>
+                )}
               </div>
 
               <div>

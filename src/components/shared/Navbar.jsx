@@ -61,7 +61,7 @@ const Navbar = () => {
       justifyContent: 'space-between',
       alignItems: 'center',
       padding: '20px 50px',
-      background: 'rgba(5, 5, 5, 0.9)',
+      background: 'var(--bg)',
       borderBottom: '1px solid var(--glass-border)',
       backdropFilter: 'blur(10px)'
     }}>
@@ -87,7 +87,7 @@ const Navbar = () => {
                 onClick={() => setShowNotifs(!showNotifs)} 
               />
               {notifications.length > 0 && (
-                <span style={{ position: 'absolute', top: '-5px', right: '-5px', background: 'var(--cta)', color: 'black', borderRadius: '50%', width: '15px', height: '15px', fontSize: '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                <span style={{ position: 'absolute', top: '-5px', right: '-5px', background: 'var(--cta)', color: 'white', width: '15px', height: '15px', fontSize: '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
                   {notifications.length}
                 </span>
               )}
@@ -99,7 +99,7 @@ const Navbar = () => {
                     <p style={{ fontSize: '0.8rem', color: '#999', textAlign: 'center' }}>Sin avisos</p>
                   ) : (
                     notifications.map(n => (
-                      <div key={n.id} style={{ padding: '12px', marginBottom: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', borderLeft: `3px solid ${n.notification_type === 'alert' ? '#ef4444' : 'var(--cta)'}` }}>
+                      <div key={n.id} style={{ padding: '12px', marginBottom: '12px', background: 'rgba(255,255,255,0.05)', borderLeft: `3px solid ${n.notification_type === 'alert' ? '#ef4444' : 'var(--cta)'}` }}>
                         <p style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>{n.title}</p>
                         <p style={{ fontSize: '0.7rem', color: '#ccc', margin: '5px 0' }}>{n.message}</p>
                         <button onClick={() => markAsRead(n.id)} style={{ fontSize: '0.65rem', color: 'var(--cta)', border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 'bold', textTransform: 'uppercase' }}>Leído</button>

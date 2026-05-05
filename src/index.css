@@ -1,75 +1,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Inter:wght@300;400;600;800&family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Space+Grotesk:wght@300;400;600;700&display=swap');
 
 :root {
-  /* Default Theme: Urban Noir */
-  --primary: #0a0a0a;
-  --secondary: #171717;
-  --cta: #c5a059;
-  --cta-glow: rgba(197, 160, 89, 0.3);
-  --bg: #050505;
-  --text: #ffffff;
-  --text-dim: #a3a3a3;
-  --glass: rgba(23, 23, 23, 0.8);
-  --glass-border: rgba(197, 160, 89, 0.2);
+  /* Urban Corporate Theme */
+  --primary: #0f172a;
+  --secondary: #1e293b;
+  --cta: #2563eb;
+  --cta-glow: rgba(37, 99, 235, 0.3);
+  --bg: #020617;
+  --text: #f8fafc;
+  --text-dim: #94a3b8;
+  --glass: rgba(15, 23, 42, 0.8);
+  --glass-border: rgba(37, 99, 235, 0.2);
   --shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-  --accent-gradient: linear-gradient(135deg, #c5a059 0%, #f1d38e 50%, #c5a059 100%);
+  --accent-gradient: linear-gradient(135deg, #2563eb 0%, #60a5fa 100%);
+  --gold-gradient: var(--accent-gradient); /* Compatibility with older components */
   
   /* Font Variables */
   --font-main: 'Inter', sans-serif;
   --font-heading: 'Syncopate', sans-serif;
-}
-
-/* Theme: Minimal Arctic (Light) */
-body.theme-arctic {
-  --primary: #ffffff;
-  --secondary: #f3f4f6;
-  --cta: #374151;
-  --cta-glow: rgba(55, 65, 81, 0.1);
-  --bg: #f9fafb;
-  --text: #111827;
-  --text-dim: #6b7280;
-  --glass: rgba(255, 255, 255, 0.8);
-  --glass-border: rgba(55, 65, 81, 0.1);
-  --shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
-  --accent-gradient: linear-gradient(135deg, #374151 0%, #6b7280 100%);
-}
-
-body.theme-arctic input, 
-body.theme-arctic select, 
-body.theme-arctic textarea {
-  color: #111827;
-  background: white;
-  border: 1px solid #d1d5db;
-}
-
-/* Theme: Street Cyber (Neon Purple) */
-body.theme-cyber {
-  --primary: #0f0a1a;
-  --secondary: #1a1429;
-  --cta: #a855f7;
-  --cta-glow: rgba(168, 85, 247, 0.4);
-  --bg: #07040e;
-  --text: #f5f3ff;
-  --text-dim: #a78bfa;
-  --glass: rgba(26, 20, 41, 0.85);
-  --glass-border: rgba(168, 85, 247, 0.3);
-  --shadow: 0 0 30px rgba(168, 85, 247, 0.15);
-  --accent-gradient: linear-gradient(135deg, #a855f7 0%, #d8b4fe 100%);
-}
-
-/* Typography Variations */
-body.font-modern {
-  --font-main: 'Outfit', sans-serif;
-}
-
-body.font-classic {
-  --font-main: 'Inter', sans-serif;
-  --font-heading: 'Playfair Display', serif;
-}
-
-body.font-tech {
-  --font-main: 'Space Grotesk', sans-serif;
-  --font-heading: 'Space Grotesk', sans-serif;
 }
 
 * {
@@ -77,6 +25,7 @@ body.font-tech {
   padding: 0;
   box-sizing: border-box;
   font-family: var(--font-main);
+  border-radius: 0px !important; /* Force urban sharp edges everywhere */
 }
 
 body {
@@ -97,7 +46,7 @@ h1, h2, h3, .urban-font {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
-  border-radius: 12px;
+  border-radius: 0px;
   box-shadow: var(--shadow);
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -109,9 +58,9 @@ h1, h2, h3, .urban-font {
 
 .btn-primary {
   background: var(--accent-gradient);
-  color: var(--primary);
+  color: white;
   padding: 12px 26px;
-  border-radius: 10px;
+  border-radius: 0px;
   border: none;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -140,7 +89,7 @@ h1, h2, h3, .urban-font {
   color: var(--cta);
   border: 1px solid var(--cta);
   padding: 12px 26px;
-  border-radius: 10px;
+  border-radius: 0px;
   font-weight: 700;
   font-size: 0.85rem;
   text-transform: uppercase;
@@ -151,13 +100,13 @@ h1, h2, h3, .urban-font {
 
 .btn-outline:hover {
   background: var(--cta);
-  color: var(--primary);
+  color: white;
 }
 
 .btn-sm {
   padding: 8px 18px;
   font-size: 0.75rem;
-  border-radius: 8px;
+  border-radius: 0px;
 }
 
 .btn-icon {
@@ -166,7 +115,7 @@ h1, h2, h3, .urban-font {
   color: white;
   cursor: pointer;
   padding: 8px;
-  border-radius: 8px;
+  border-radius: 0px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -183,7 +132,7 @@ h1, h2, h3, .urban-font {
   color: #ef4444;
   cursor: pointer;
   padding: 8px;
-  border-radius: 8px;
+  border-radius: 0px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -204,7 +153,7 @@ input, select, textarea {
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: var(--text);
   padding: 12px;
-  border-radius: 8px;
+  border-radius: 0px;
   transition: all 0.3s ease;
 }
 
@@ -232,7 +181,7 @@ input:focus, select:focus {
 }
 ::-webkit-scrollbar-thumb {
   background: var(--secondary);
-  border-radius: 4px;
+  border-radius: 0px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--cta);
@@ -242,4 +191,27 @@ input:focus, select:focus {
   background: var(--accent-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+@keyframes bell-ring {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(15deg); }
+  40% { transform: rotate(-15deg); }
+  60% { transform: rotate(10deg); }
+  80% { transform: rotate(-10deg); }
+}
+
+.bell-animation {
+  animation: bell-ring 1s ease-in-out infinite;
+  transform-origin: top center;
+  color: #fbbf24 !important;
+}
+
+.pulse-badge {
+  animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-red {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }

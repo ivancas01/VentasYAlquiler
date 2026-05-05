@@ -213,11 +213,11 @@ const Customers = () => {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px' }}>
               <div style={{ gridColumn: 'span 2' }}>
                 <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nombre Completo</label>
-                <input type="text" value={formData.full_name} onChange={e => setFormData({...formData, full_name: e.target.value})} required style={{ width: '100%' }} />
+                <input type="text" value={formData.full_name || ''} onChange={e => setFormData({...formData, full_name: e.target.value})} required style={{ width: '100%' }} />
               </div>
               <div>
                 <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Tipo Doc</label>
-                <select value={formData.doc_type} onChange={e => setFormData({...formData, doc_type: e.target.value})} style={{ width: '100%' }}>
+                <select value={formData.doc_type || 'CC'} onChange={e => setFormData({...formData, doc_type: e.target.value})} style={{ width: '100%' }}>
                   <option value="CC">Cédula Ciudadanía</option>
                   <option value="CE">Extranjería</option>
                   <option value="TI">Tarjeta Identidad</option>
@@ -226,27 +226,27 @@ const Customers = () => {
               </div>
               <div>
                 <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Número Documento</label>
-                <input type="text" value={formData.doc_id} onChange={e => setFormData({...formData, doc_id: e.target.value})} required style={{ width: '100%' }} />
+                <input type="text" value={formData.doc_id || ''} onChange={e => setFormData({...formData, doc_id: e.target.value})} required style={{ width: '100%' }} />
               </div>
               <div>
                 <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Ciudad</label>
-                <input type="text" value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} style={{ width: '100%' }} />
+                <input type="text" value={formData.city || ''} onChange={e => setFormData({...formData, city: e.target.value})} style={{ width: '100%' }} />
               </div>
               <div>
                 <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Dirección</label>
-                <input type="text" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} style={{ width: '100%' }} />
+                <input type="text" value={formData.address || ''} onChange={e => setFormData({...formData, address: e.target.value})} style={{ width: '100%' }} />
               </div>
               <div>
                 <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Teléfono Personal</label>
-                <input type="text" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} required style={{ width: '100%' }} />
+                <input type="text" value={formData.phone || ''} onChange={e => setFormData({...formData, phone: e.target.value})} required style={{ width: '100%' }} />
               </div>
               <div>
                 <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nombre Referencia</label>
-                <input type="text" value={formData.name_ref} onChange={e => setFormData({...formData, name_ref: e.target.value})} style={{ width: '100%' }} />
+                <input type="text" value={formData.name_ref || ''} onChange={e => setFormData({...formData, name_ref: e.target.value})} style={{ width: '100%' }} />
               </div>
               <div style={{ gridColumn: 'span 2' }}>
                 <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Teléfono Referencia</label>
-                <input type="text" value={formData.phone_ref} onChange={e => setFormData({...formData, phone_ref: e.target.value})} style={{ width: '100%' }} />
+                <input type="text" value={formData.phone_ref || ''} onChange={e => setFormData({...formData, phone_ref: e.target.value})} style={{ width: '100%' }} />
               </div>
             </div>
             <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '40px' }}>

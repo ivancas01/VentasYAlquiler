@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     User, Category, Product, Sale, Rental, Invoice, 
-    Payment, Notification, Customer, SiteConfig
+    Payment, Notification, Customer, SiteConfig, HeroImage
 )
 
 @admin.register(User)
@@ -31,7 +31,7 @@ class RentalAdmin(admin.ModelAdmin):
 
 @admin.register(Invoice)
 class InvoiceAdmin(admin.ModelAdmin):
-    list_display = ('invoice_number', 'created_at')
+    list_display = ('number', 'created_at')
 
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
@@ -43,9 +43,13 @@ class NotificationAdmin(admin.ModelAdmin):
 
 @admin.register(Customer)
 class CustomerAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'doc_id', 'phone')
-    search_fields = ('full_name', 'doc_id')
+    list_display = ('full_name', 'dni', 'phone')
+    search_fields = ('full_name', 'dni')
 
 @admin.register(SiteConfig)
 class SiteConfigAdmin(admin.ModelAdmin):
     list_display = ('company_name_white', 'company_name_gold')
+
+@admin.register(HeroImage)
+class HeroImageAdmin(admin.ModelAdmin):
+    list_display = ('id', 'image', 'order', 'created_at')

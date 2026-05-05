@@ -425,9 +425,31 @@ const Inventory = () => {
 
               <div>
                 <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Categoría</label>
-                <select value={productForm.category} onChange={e => setProductForm({...productForm, category: e.target.value})} style={{ width: '100%' }}>
-                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <select value={productForm.category} onChange={e => setProductForm({...productForm, category: e.target.value})} style={{ flex: 1 }}>
+                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      const name = prompt("Nombre de la nueva categoría:")
+                      if (name) {
+                        const slug = name.toLowerCase().trim().replace(/\s+/g, '-')
+                        const token = localStorage.getItem('token')
+                        axios.post('http://127.0.0.1:8000/api/categories/', { name, slug }, {
+                          headers: { Authorization: `Bearer ${token}` }
+                        }).then(res => {
+                          setCategories([...categories, res.data])
+                          setProductForm({...productForm, category: res.data.id})
+                        }).catch(err => alert("Error al crear categoría rápida"))
+                      }
+                    }} 
+                    className="btn-icon" 
+                    style={{ background: 'var(--secondary)', border: '1px solid rgba(255,255,255,0.1)' }}
+                  >
+                    <Plus size={20} />
+                  </button>
+                </div>
               </div>
 
               <div style={{ gridColumn: 'span 2' }}>
