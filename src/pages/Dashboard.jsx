@@ -73,7 +73,7 @@ const Dashboard = () => {
       </div>
 
       {/* Primary Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '25px', marginBottom: '40px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '30px', marginBottom: '50px' }}>
         <StatCard 
           title="Ingresos Hoy" 
           value={`$${stats.revenue_today.toLocaleString()}`} 
@@ -102,53 +102,55 @@ const Dashboard = () => {
         />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '30px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '35px' }}>
         
         {/* Recent Activity Table */}
-        <div className="glass-card" style={{ padding: '30px' }}>
+        <div className="glass-card" style={{ padding: '35px', display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
             <h3 className="urban-font" style={{ fontSize: '1.2rem', color: 'white' }}>ALQUILERES RECIENTES</h3>
-            <Link to="/admin/transactions" style={{ fontSize: '0.75rem', color: 'var(--cta)', fontWeight: 'bold' }}>VER TODO</Link>
+            <Link to="/admin/transactions" style={{ fontSize: '0.75rem', color: 'var(--cta)', fontWeight: 'bold', letterSpacing: '1px' }}>VER TODO</Link>
           </div>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <th style={{ padding: '15px 10px', fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Cliente</th>
-                <th style={{ padding: '15px 10px', fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Vence</th>
-                <th style={{ padding: '15px 10px', fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Estado</th>
-                <th style={{ padding: '15px 10px', fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', textAlign: 'right' }}>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {stats.recent_rentals.map(r => (
-                <tr key={r.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                  <td style={{ padding: '15px 10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div style={{ width: '32px', height: '32px', background: 'var(--secondary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', color: 'var(--cta)', fontWeight: 'bold' }}>
-                        {r.customer_name?.[0] || 'C'}
-                      </div>
-                      <span style={{ fontSize: '0.9rem' }}>{r.customer_name}</span>
-                    </div>
-                  </td>
-                  <td style={{ padding: '15px 10px', fontSize: '0.85rem', color: 'var(--text-dim)' }}>
-                    {new Date(r.end_date).toLocaleDateString()}
-                  </td>
-                  <td style={{ padding: '15px 10px' }}>
-                    <span style={{ 
-                      fontSize: '0.65rem', padding: '4px 10px', borderRadius: '4px', background: 'var(--secondary)', 
-                      color: r.status === 'delivered' ? '#3b82f6' : r.status === 'overdue' ? '#ef4444' : 'var(--cta)',
-                      border: '1px solid rgba(255,255,255,0.05)', textTransform: 'uppercase'
-                    }}>
-                      {r.status}
-                    </span>
-                  </td>
-                  <td style={{ padding: '15px 10px', textAlign: 'right', fontWeight: 'bold', fontSize: '0.9rem' }}>
-                    ${parseFloat(r.total).toLocaleString()}
-                  </td>
+          <div className="table-container">
+            <table className="urban-table" style={{ width: '100%' }}>
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Vence</th>
+                  <th>Estado</th>
+                  <th style={{ textAlign: 'right' }}>Total</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {stats.recent_rentals.map(r => (
+                  <tr key={r.id}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '36px', height: '36px', background: 'var(--secondary)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', color: 'var(--cta)', fontWeight: 'bold', border: '1px solid rgba(255,255,255,0.05)' }}>
+                          {r.customer_name?.[0] || 'C'}
+                        </div>
+                        <span style={{ fontSize: '0.9rem', fontWeight: '500' }}>{r.customer_name}</span>
+                      </div>
+                    </td>
+                    <td style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>
+                      {new Date(r.end_date).toLocaleDateString()}
+                    </td>
+                    <td>
+                      <span style={{ 
+                        fontSize: '0.65rem', padding: '5px 12px', borderRadius: '6px', background: 'var(--secondary)', 
+                        color: r.status === 'delivered' ? '#3b82f6' : r.status === 'overdue' ? '#ef4444' : 'var(--cta)',
+                        border: '1px solid rgba(255,255,255,0.05)', textTransform: 'uppercase', fontWeight: 'bold'
+                      }}>
+                        {r.status}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'right', fontWeight: 'bold', fontSize: '1rem', color: 'white' }}>
+                      ${parseFloat(r.total).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* Actionable Alerts Area */}

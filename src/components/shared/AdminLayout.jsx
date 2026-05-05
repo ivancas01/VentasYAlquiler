@@ -131,12 +131,14 @@ const AdminLayout = ({ children }) => {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                       padding: '12px 15px',
+                      padding: '14px 18px',
                       color: isActive ? 'white' : 'var(--text-dim)',
                       background: isActive ? 'var(--accent-gradient)' : 'transparent',
-                      transition: 'all 0.3s ease',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                       fontWeight: isActive ? 'bold' : 'normal',
-                      fontSize: '0.9rem'
+                      fontSize: '0.9rem',
+                      borderRadius: '0px',
+                      marginBottom: '4px'
                     }}
                     onMouseOver={(e) => !isActive && (e.currentTarget.style.color = 'white')}
                     onMouseOut={(e) => !isActive && (e.currentTarget.style.color = 'var(--text-dim)')}
@@ -161,14 +163,15 @@ const AdminLayout = ({ children }) => {
               display: 'flex',
               alignItems: 'center',
               gap: '12px',
-              padding: '12px 15px',
+              padding: '14px 18px',
               width: '100%',
               background: 'transparent',
               border: 'none',
               color: '#ef4444',
               cursor: 'pointer',
               fontSize: '0.9rem',
-              transition: 'all 0.3s'
+              transition: 'all 0.3s',
+              borderRadius: '0px'
             }}
             onMouseOver={(e) => (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)')}
             onMouseOut={(e) => (e.currentTarget.style.background = 'transparent')}
@@ -183,9 +186,10 @@ const AdminLayout = ({ children }) => {
       <main style={{ 
         flex: 1, 
         marginLeft: '280px', 
-        padding: '40px 60px',
+        padding: '60px',
         minHeight: '100vh',
-        background: 'radial-gradient(circle at top right, var(--secondary) 0%, var(--bg) 100%)'
+        background: 'radial-gradient(circle at top right, var(--secondary) 0%, var(--bg) 100%)',
+        overflowX: 'hidden'
       }}>
         {children}
       </main>

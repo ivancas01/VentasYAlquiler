@@ -80,16 +80,16 @@ const Movements = () => {
         </div>
       </div>
 
-      <div className="glass-card" style={{ padding: '0', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <div className="table-container" style={{ background: 'var(--primary)', border: '1px solid var(--glass-border)' }}>
+        <table className="urban-table" style={{ width: '100%' }}>
           <thead>
-            <tr style={{ background: 'var(--secondary)', textAlign: 'left' }}>
-              <th style={{ padding: '20px', color: 'var(--cta)', fontSize: '0.8rem' }}>FECHA</th>
-              <th style={{ padding: '20px', color: 'var(--cta)', fontSize: '0.8rem' }}>TIPO</th>
-              <th style={{ padding: '20px', color: 'var(--cta)', fontSize: '0.8rem' }}>REFERENCIA</th>
-              <th style={{ padding: '20px', color: 'var(--cta)', fontSize: '0.8rem' }}>RESPONSABLE</th>
-              <th style={{ padding: '20px', color: 'var(--cta)', fontSize: '0.8rem' }}>MÉTODO</th>
-              <th style={{ padding: '20px', color: 'var(--cta)', fontSize: '0.8rem', textAlign: 'right' }}>MONTO</th>
+            <tr>
+              <th>FECHA</th>
+              <th>TIPO</th>
+              <th>REFERENCIA</th>
+              <th>RESPONSABLE</th>
+              <th>MÉTODO</th>
+              <th style={{ textAlign: 'right' }}>MONTO</th>
             </tr>
           </thead>
           <tbody>
@@ -98,19 +98,19 @@ const Movements = () => {
                 <td colSpan="6" style={{ padding: '100px', textAlign: 'center', color: 'var(--text-dim)' }}>Cargando movimientos...</td>
               </tr>
             ) : filteredMovements.map(m => (
-              <tr key={m.id} style={{ borderBottom: '1px solid #222' }}>
-                <td style={{ padding: '20px', fontSize: '0.9rem' }}>
+              <tr key={m.id}>
+                <td style={{ fontSize: '0.9rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <Calendar size={14} color="var(--text-dim)" />
                     {new Date(m.created_at).toLocaleDateString()}
                   </div>
                 </td>
-                <td style={{ padding: '20px' }}>
+                <td>
                   <span style={{ color: 'var(--cta)', fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
                     {m.label}
                   </span>
                 </td>
-                <td style={{ padding: '20px' }}>
+                <td>
                   <button 
                     onClick={() => goToTransaction(m)}
                     className="hover-gold"
@@ -121,29 +121,31 @@ const Movements = () => {
                       cursor: 'pointer', 
                       display: 'flex', 
                       alignItems: 'center', 
-                      gap: '8px' 
+                      gap: '8px',
+                      padding: '0'
                     }}
                   >
                     <span style={{ color: 'white', fontWeight: 'bold', fontSize: '0.9rem' }}>{m.reference}</span>
                     <ExternalLink size={14} color="var(--cta)" />
                   </button>
                 </td>
-                <td style={{ padding: '20px', color: 'var(--text-dim)', fontSize: '0.9rem' }}>
+                <td style={{ color: 'var(--text-dim)', fontSize: '0.9rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <User size={14} /> {m.staff_name}
                   </div>
                 </td>
-                <td style={{ padding: '20px' }}>
+                <td>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <span style={{ 
                       padding: '4px 12px', 
-                      borderRadius: '20px', 
+                      borderRadius: '6px', 
                       fontSize: '0.7rem', 
                       background: m.payment_method === 'efectivo' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(59, 130, 246, 0.1)',
                       color: m.payment_method === 'efectivo' ? '#10b981' : '#3b82f6',
                       textTransform: 'uppercase',
                       width: 'fit-content',
-                      border: `1px solid ${m.payment_method === 'efectivo' ? '#10b98133' : '#3b82f633'}`
+                      border: `1px solid ${m.payment_method === 'efectivo' ? '#10b98133' : '#3b82f633'}`,
+                      fontWeight: 'bold'
                     }}>
                       {m.payment_method}
                     </span>
@@ -154,7 +156,7 @@ const Movements = () => {
                     )}
                   </div>
                 </td>
-                <td style={{ padding: '20px', textAlign: 'right' }}>
+                <td style={{ textAlign: 'right' }}>
                   <div style={{ color: 'white', fontWeight: 'bold', fontSize: '1.1rem' }}>
                     ${parseFloat(m.amount).toLocaleString()}
                   </div>

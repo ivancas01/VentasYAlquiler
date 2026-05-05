@@ -355,7 +355,7 @@ const Transactions = () => {
   if (loading) return <div style={{ padding: '200px', textAlign: 'center', color: 'var(--cta)' }}>CARGANDO HISTORIAL...</div>
 
   return (
-    <div className="fade-in" style={{ maxWidth: '1400px', margin: '0 auto' }}>
+    <div className="fade-in" style={{ width: '100%', margin: '0' }}>
       <h2 className="urban-font gold-text" style={{ fontSize: '2.5rem', marginBottom: '50px', display: 'flex', alignItems: 'center', gap: '25px' }}>
         <History size={48} /> Historial
       </h2>
@@ -406,24 +406,24 @@ const Transactions = () => {
       </div>
 
       <div style={{ display: 'flex', gap: '40px', marginBottom: '40px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '20px' }}>
-        <button onClick={() => { setActiveTab('sales'); setStatusFilter('all'); }} className="urban-font" style={{ border: 'none', background: 'transparent', fontSize: '1.2rem', color: activeTab === 'sales' ? 'var(--cta)' : 'var(--text-dim)', cursor: 'pointer', borderBottom: activeTab === 'sales' ? '2px solid var(--cta)' : 'none', paddingBottom: '15px' }}>
+        <button onClick={() => { setActiveTab('sales'); setStatusFilter('all'); }} className="urban-font" style={{ border: 'none', background: 'transparent', fontSize: '1.2rem', fontWeight: 'bold', color: activeTab === 'sales' ? 'var(--cta)' : 'var(--text-dim)', cursor: 'pointer', borderBottom: activeTab === 'sales' ? '3px solid var(--cta)' : '3px solid transparent', paddingBottom: '15px', transition: 'all 0.3s' }}>
           Ventas
         </button>
-        <button onClick={() => { setActiveTab('rentals'); setStatusFilter('all'); }} className="urban-font" style={{ border: 'none', background: 'transparent', fontSize: '1.2rem', color: activeTab === 'rentals' ? 'var(--cta)' : 'var(--text-dim)', cursor: 'pointer', borderBottom: activeTab === 'rentals' ? '2px solid var(--cta)' : 'none', paddingBottom: '15px' }}>
+        <button onClick={() => { setActiveTab('rentals'); setStatusFilter('all'); }} className="urban-font" style={{ border: 'none', background: 'transparent', fontSize: '1.2rem', fontWeight: 'bold', color: activeTab === 'rentals' ? 'var(--cta)' : 'var(--text-dim)', cursor: 'pointer', borderBottom: activeTab === 'rentals' ? '3px solid var(--cta)' : '3px solid transparent', paddingBottom: '15px', transition: 'all 0.3s' }}>
           Alquileres
         </button>
       </div>
 
-      <div className="glass-card" style={{ overflow: 'hidden', background: 'rgba(255,255,255,0.02)' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+      <div className="table-container" style={{ background: 'var(--primary)', border: '1px solid var(--glass-border)' }}>
+        <table className="urban-table" style={{ width: '100%' }}>
           <thead>
-            <tr style={{ background: 'rgba(255,255,255,0.05)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
-              <th style={{ padding: '20px' }}>ID</th>
-              <th style={{ padding: '20px' }}>Cliente</th>
-              <th style={{ padding: '20px' }}>{activeTab === 'sales' ? 'Items' : 'Fechas'}</th>
-              <th style={{ padding: '20px' }}>Total</th>
-              <th style={{ padding: '20px' }}>Estado / Vendedor</th>
-              <th style={{ padding: '20px' }}>Acciones</th>
+            <tr>
+              <th>ID</th>
+              <th>Cliente</th>
+              <th>{activeTab === 'sales' ? 'Items' : 'Fechas'}</th>
+              <th>Total</th>
+              <th>Estado / Vendedor</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -434,18 +434,17 @@ const Transactions = () => {
                   : (index === rentals.length - 1 ? lastRentalRef : null)
                 }
                 key={t.id} 
-                style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'background 0.3s' }}
               >
-                <td style={{ padding: '20px', color: 'var(--cta)', fontWeight: 'bold' }}>#{t.id}</td>
-                <td style={{ padding: '20px', fontWeight: '600' }}>{t.customer_data?.full_name || t.customer_name || 'CONSUMIDOR FINAL'}</td>
-                <td style={{ padding: '20px', fontSize: '0.85rem', color: 'var(--text-dim)' }}>
+                <td style={{ color: 'var(--cta)', fontWeight: 'bold' }}>#{t.id}</td>
+                <td style={{ fontWeight: '600' }}>{t.customer_data?.full_name || t.customer_name || 'CONSUMIDOR FINAL'}</td>
+                <td style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>
                   {activeTab === 'sales' ? (
                     <span>{t.items?.length} productos</span>
                   ) : (
                     <span>{t.start_date} <ArrowRight size={12} style={{verticalAlign: 'middle'}} /> {t.end_date}</span>
                   )}
                 </td>
-                <td style={{ padding: '20px' }}>
+                <td>
                   <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>${t.total}</div>
                   {activeTab === 'rentals' && (
                     <div style={{ fontSize: '0.7rem', color: parseFloat(t.total_paid) >= parseFloat(t.total) ? '#10b981' : 'var(--cta)' }}>
@@ -453,10 +452,10 @@ const Transactions = () => {
                     </div>
                   )}
                 </td>
-                <td style={{ padding: '20px' }}>
+                <td>
                   <span style={{ 
                     padding: '6px 15px', 
-                    borderRadius: '4px', 
+                    borderRadius: '6px', 
                     fontSize: '0.7rem', 
                     textTransform: 'uppercase',
                     fontWeight: 'bold',
@@ -465,7 +464,7 @@ const Transactions = () => {
                     border: '1px solid rgba(255,255,255,0.1)'
                   }}>{t.status || t.staff_name}</span>
                 </td>
-                <td style={{ padding: '20px' }}>
+                <td>
                   <button onClick={() => activeTab === 'rentals' ? setSelectedRental(t) : null} className="btn-icon btn-sm">
                     <Eye size={18} />
                   </button>
@@ -555,13 +554,13 @@ const Transactions = () => {
                 </h4>
 
                 {/* History moved outside the form to ensure it's always visible */}
-                <div className="glass-card" style={{ padding: '20px', marginBottom: '20px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div className="glass-card" style={{ padding: '20px', marginBottom: '20px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column' }}>
                   <label style={{ color: 'var(--text-dim)', textTransform: 'uppercase', fontSize: '0.65rem', display: 'block', marginBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '5px' }}>
                     Historial de Transacciones
                   </label>
-                  <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                  <div style={{ maxHeight: '180px', overflowY: 'auto', paddingRight: '10px' }}>
                     {selectedRental.payments?.map(p => (
-                      <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                      <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
                         <div>
                           <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'white' }}>{p.label}</div>
                           <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)' }}>{p.created_at?.split('T')[0]} | {p.payment_method.toUpperCase()}</div>
@@ -573,24 +572,24 @@ const Transactions = () => {
                       </div>
                     ))}
                     {(!selectedRental.payments || selectedRental.payments.length === 0) && (
-                      <div style={{ textAlign: 'center', color: 'var(--text-dim)', fontSize: '0.75rem', padding: '10px' }}>No hay registros de pagos.</div>
+                      <div style={{ textAlign: 'center', color: 'var(--text-dim)', fontSize: '0.75rem', padding: '20px' }}>No hay registros de pagos.</div>
                     )}
                   </div>
                 </div>
 
-                <div className="glass-card" style={{ padding: '30px', marginBottom: '30px', background: 'var(--secondary)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: 'var(--text-dim)', fontSize: '0.9rem' }}>
+                <div className="glass-card" style={{ padding: '25px', marginBottom: '30px', background: 'var(--secondary)', border: '1px solid rgba(212, 175, 55, 0.1)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', color: 'var(--text-dim)', fontSize: '0.9rem' }}>
                     <span>Costo Alquiler:</span>
                     <span style={{ fontWeight: 'bold', color: 'white' }}>${selectedRental.total}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: 'var(--text-dim)', fontSize: '0.9rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', color: 'var(--text-dim)', fontSize: '0.9rem' }}>
                     <span>Abonos Realizados:</span>
                     <span style={{ fontWeight: 'bold', color: '#10b981' }}>${selectedRental.total_paid}</span>
                   </div>
                   
                   {/* Separate Guarantee Display */}
                   {selectedRental.payments?.some(p => p.label === 'Garantia') && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', padding: '5px 10px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '4px', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', padding: '8px 12px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '8px', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
                       <span style={{ color: 'var(--cta)', fontSize: '0.8rem', fontWeight: 'bold' }}>GARANTÍA EN CAJA:</span>
                       <span style={{ fontWeight: 'bold', color: 'var(--cta)' }}>
                         ${selectedRental.payments.filter(p => p.label === 'Garantia').reduce((acc, p) => acc + parseFloat(p.amount), 0).toFixed(2)}
@@ -598,9 +597,9 @@ const Transactions = () => {
                     </div>
                   )}
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '15px', marginTop: '5px' }}>
-                    <span className="urban-font" style={{fontSize: '0.8rem'}}>SALDO PENDIENTE:</span>
-                    <span className="gold-text" style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '15px', marginTop: '10px' }}>
+                    <span className="urban-font" style={{fontSize: '0.85rem', color: 'white'}}>SALDO PENDIENTE:</span>
+                    <span className="gold-text" style={{ fontWeight: 'bold', fontSize: '1.4rem' }}>
                       ${(parseFloat(selectedRental.total) - parseFloat(selectedRental.total_paid)).toFixed(2)}
                     </span>
                   </div>

@@ -249,50 +249,50 @@ const Staff = () => {
       </div>
 
       {activeTab === 'users' ? (
-        <div className="glass-card" style={{ padding: '0', overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div className="table-container" style={{ background: 'var(--primary)', border: '1px solid var(--glass-border)' }}>
+          <table className="urban-table" style={{ width: '100%' }}>
             <thead>
-              <tr style={{ background: 'var(--secondary)', textAlign: 'left' }}>
-                <th style={{ padding: '20px', color: 'var(--cta)', fontSize: '0.8rem' }}>USUARIO</th>
-                <th style={{ padding: '20px', color: 'var(--cta)', fontSize: '0.8rem' }}>ROL</th>
-                <th style={{ padding: '20px', color: 'var(--cta)', fontSize: '0.8rem' }}>GRUPOS</th>
-                <th style={{ padding: '20px', color: 'var(--cta)', fontSize: '0.8rem' }}>CONTACTO</th>
-                <th style={{ padding: '20px', color: 'var(--cta)', fontSize: '0.8rem', textAlign: 'right' }}>ACCIONES</th>
+              <tr>
+                <th>USUARIO</th>
+                <th>ROL</th>
+                <th>GRUPOS</th>
+                <th>CONTACTO</th>
+                <th style={{ textAlign: 'right' }}>ACCIONES</th>
               </tr>
             </thead>
             <tbody>
               {users.map(u => (
-                <tr key={u.id} style={{ borderBottom: '1px solid #222' }}>
-                  <td style={{ padding: '20px' }}>
+                <tr key={u.id}>
+                  <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ width: '35px', height: '35px', borderRadius: '50%', background: 'var(--gold-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'black', fontWeight: 'bold' }}>
+                      <div style={{ width: '35px', height: '35px', borderRadius: '10px', background: 'var(--secondary)', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--cta)', fontWeight: 'bold' }}>
                         {u.username[0].toUpperCase()}
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ fontWeight: 'bold' }}>{u.username}</span>
+                        <span style={{ fontWeight: 'bold', fontSize: '1rem' }}>{u.username}</span>
                         <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>{u.email}</span>
                       </div>
                     </div>
                   </td>
-                  <td style={{ padding: '20px' }}>
-                    <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', padding: '4px 10px', borderRadius: '4px', background: u.role === 'admin' ? 'rgba(184, 158, 72, 0.1)' : 'rgba(255,255,255,0.05)', color: u.role === 'admin' ? 'var(--cta)' : 'white' }}>
+                  <td>
+                    <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', padding: '5px 12px', borderRadius: '6px', background: u.role === 'admin' ? 'rgba(184, 158, 72, 0.1)' : 'rgba(255,255,255,0.05)', color: u.role === 'admin' ? 'var(--cta)' : 'white', fontWeight: 'bold' }}>
                       {u.role}
                     </span>
                   </td>
-                  <td style={{ padding: '20px' }}>
+                  <td>
                     <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
                       {(u.groups_data || []).map(g => (
-                        <span key={g.id} style={{ fontSize: '0.65rem', padding: '2px 8px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-dim)' }}>
+                        <span key={g.id} style={{ fontSize: '0.65rem', padding: '3px 10px', borderRadius: '20px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', color: 'var(--text-dim)' }}>
                           {g.name}
                         </span>
                       ))}
                     </div>
                   </td>
-                  <td style={{ padding: '20px', color: 'var(--text-dim)', fontSize: '0.85rem' }}>{u.phone || '-'}</td>
-                  <td style={{ padding: '20px', textAlign: 'right' }}>
+                  <td style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>{u.phone || '-'}</td>
+                  <td style={{ textAlign: 'right' }}>
                     <div style={{ display: 'flex', gap: '15px', justifyContent: 'flex-end' }}>
-                      <button onClick={() => handleOpenUserModal(u)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}><Edit size={18} /></button>
-                      <button onClick={() => handleDeleteUser(u.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={18} /></button>
+                      <button onClick={() => handleOpenUserModal(u)} className="btn-icon"><Edit size={18} /></button>
+                      <button onClick={() => handleDeleteUser(u.id)} className="btn-icon" style={{ color: '#ef4444' }}><Trash2 size={18} /></button>
                     </div>
                   </td>
                 </tr>
@@ -301,7 +301,7 @@ const Staff = () => {
           </table>
           {hasMore && (
             <div style={{ textAlign: 'center', padding: '30px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-              <button onClick={fetchMoreUsers} className="btn-outline btn-sm" disabled={loadingMore}>
+              <button onClick={fetchMoreUsers} className="btn-outline" disabled={loadingMore}>
                 {loadingMore ? 'CARGANDO...' : 'CARGAR MÁS PERSONAL'}
               </button>
             </div>

@@ -220,6 +220,27 @@ const CMS = () => {
           </div>
         </div>
 
+        {/* Section Titles */}
+        <div className="glass-card" style={{ padding: '40px', gridColumn: 'span 2' }}>
+          <h3 className="urban-font" style={{ fontSize: '1rem', color: 'var(--cta)', marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Layout size={18} /> TÍTULOS DE SECCIONES
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
+            <div>
+              <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Título Sección "Nosotros"</label>
+              <input type="text" name="nosotros_title" value={config.nosotros_title || ''} onChange={handleChange} style={{ width: '100%' }} />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Título Sección "Contacto"</label>
+              <input type="text" name="contacto_title" value={config.contacto_title || ''} onChange={handleChange} style={{ width: '100%' }} />
+            </div>
+            <div style={{ gridColumn: 'span 2' }}>
+              <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Subtítulo Sección "Contacto"</label>
+              <input type="text" name="contacto_subtitle" value={config.contacto_subtitle || ''} onChange={handleChange} style={{ width: '100%' }} />
+            </div>
+          </div>
+        </div>
+
         {/* Contact Details */}
         <div className="glass-card" style={{ padding: '40px' }}>
           <h3 className="urban-font" style={{ fontSize: '1rem', color: 'var(--cta)', marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -239,12 +260,12 @@ const CMS = () => {
           </div>
         </div>
 
-        {/* Social Media */}
+        {/* Social Media & Footer */}
         <div className="glass-card" style={{ padding: '40px' }}>
           <h3 className="urban-font" style={{ fontSize: '1rem', color: 'var(--cta)', marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Share2 size={18} /> REDES SOCIALES (URLs)
+            <Share2 size={18} /> REDES Y PIE DE PÁGINA
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
             <div>
               <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Facebook</label>
               <input type="url" name="facebook_url" value={config.facebook_url || ''} onChange={handleChange} placeholder="https://..." style={{ width: '100%' }} />
@@ -253,14 +274,10 @@ const CMS = () => {
               <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Instagram</label>
               <input type="url" name="instagram_url" value={config.instagram_url || ''} onChange={handleChange} placeholder="https://..." style={{ width: '100%' }} />
             </div>
-            <div>
-              <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>TikTok</label>
-              <input type="url" name="tiktok_url" value={config.tiktok_url || ''} onChange={handleChange} placeholder="https://..." style={{ width: '100%' }} />
-            </div>
-            <div>
-              <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>WhatsApp (Link)</label>
-              <input type="url" name="whatsapp_url" value={config.whatsapp_url || ''} onChange={handleChange} placeholder="https://wa.me/..." style={{ width: '100%' }} />
-            </div>
+          </div>
+          <div>
+            <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Texto del Pie de Página (Footer)</label>
+            <textarea name="footer_text" value={config.footer_text || ''} onChange={handleChange} rows="2" style={{ width: '100%' }} />
           </div>
         </div>
 

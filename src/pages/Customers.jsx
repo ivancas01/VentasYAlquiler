@@ -155,15 +155,15 @@ const Customers = () => {
         </div>
       </div>
 
-      <div className="glass-card" style={{ padding: '0', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <div className="table-container" style={{ background: 'var(--primary)', border: '1px solid var(--glass-border)' }}>
+        <table className="urban-table" style={{ width: '100%' }}>
           <thead>
-            <tr style={{ background: 'var(--secondary)', textAlign: 'left' }}>
-              <th style={{ padding: '20px', color: 'var(--cta)', fontSize: '0.8rem', textTransform: 'uppercase' }}>Cliente</th>
-              <th style={{ padding: '20px', color: 'var(--cta)', fontSize: '0.8rem', textTransform: 'uppercase' }}>Documento</th>
-              <th style={{ padding: '20px', color: 'var(--cta)', fontSize: '0.8rem', textTransform: 'uppercase' }}>Ubicación</th>
-              <th style={{ padding: '20px', color: 'var(--cta)', fontSize: '0.8rem', textTransform: 'uppercase' }}>Contacto</th>
-              <th style={{ padding: '20px', color: 'var(--cta)', fontSize: '0.8rem', textTransform: 'uppercase', textAlign: 'right' }}>Acciones</th>
+            <tr>
+              <th>Cliente</th>
+              <th>Documento</th>
+              <th>Ubicación</th>
+              <th>Contacto</th>
+              <th style={{ textAlign: 'right' }}>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -171,31 +171,28 @@ const Customers = () => {
               <tr 
                 ref={index === filteredCustomers.length - 1 ? lastCustomerRef : null}
                 key={c.id} 
-                style={{ borderBottom: '1px solid #222' }}
               >
-                <td style={{ padding: '20px' }}>
+                <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--gold-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'black', fontWeight: 'bold' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--secondary)', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--cta)', fontWeight: 'bold' }}>
                       {c.full_name[0].toUpperCase()}
                     </div>
-                    <span style={{ fontWeight: 'bold' }}>{c.full_name}</span>
+                    <span style={{ fontWeight: 'bold', fontSize: '1rem' }}>{c.full_name}</span>
                   </div>
                 </td>
-                <td style={{ padding: '20px' }}>
-                  <span style={{ fontSize: '0.9rem', color: 'var(--text-dim)' }}>{c.doc_type} {c.doc_id}</span>
+                <td style={{ color: 'var(--text-dim)', fontSize: '0.9rem' }}>
+                  {c.doc_type} {c.doc_id}
                 </td>
-                <td style={{ padding: '20px' }}>
+                <td>
                   <div style={{ fontSize: '0.85rem' }}>
-                    <div>{c.city}</div>
+                    <div style={{ fontWeight: '500' }}>{c.city}</div>
                     <div style={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>{c.address}</div>
                   </div>
                 </td>
-                <td style={{ padding: '20px' }}>
-                  <div style={{ fontSize: '0.85rem' }}>
-                    <div>{c.phone}</div>
-                  </div>
+                <td style={{ fontSize: '0.85rem' }}>
+                  {c.phone}
                 </td>
-                <td style={{ padding: '20px', textAlign: 'right' }}>
+                <td style={{ textAlign: 'right' }}>
                   <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                     <button onClick={() => handleOpenModal(c)} className="btn-icon"><Edit size={18} /></button>
                   </div>

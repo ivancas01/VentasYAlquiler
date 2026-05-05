@@ -206,6 +206,11 @@ class SiteConfig(models.Model):
     tiktok_url = models.URLField(blank=True, null=True)
     whatsapp_url = models.URLField(blank=True, null=True)
     
+    # Section Titles & Descriptions
+    nosotros_title = models.CharField(max_length=100, default='NOSOTROS')
+    contacto_title = models.CharField(max_length=100, default='CONTACTO')
+    contacto_subtitle = models.CharField(max_length=255, default='¿Tienes alguna pregunta? Estamos listos para asesorarte de manera personalizada.')
+    
     footer_text = models.TextField(default='© 2026 Urban Luxury. Todos los derechos reservados.')
     
     def __str__(self):

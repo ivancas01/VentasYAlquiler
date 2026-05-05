@@ -268,7 +268,7 @@ const Inventory = () => {
   }
 
   return (
-    <div className="fade-in" style={{ maxWidth: '1400px', margin: '0 auto' }}>
+    <div className="fade-in" style={{ width: '100%', margin: '0' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '50px' }}>
         <h2 className="urban-font gold-text" style={{ fontSize: '2.5rem', display: 'flex', alignItems: 'center', gap: '20px' }}>
           <Package size={40} /> Inventario
@@ -283,23 +283,23 @@ const Inventory = () => {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '30px', marginBottom: '30px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '15px' }}>
-        <button onClick={() => setActiveTab('products')} className="urban-font" style={{ border: 'none', background: 'transparent', fontSize: '1.1rem', color: activeTab === 'products' ? 'var(--cta)' : 'var(--text-dim)', cursor: 'pointer', borderBottom: activeTab === 'products' ? '2px solid var(--cta)' : 'none', paddingBottom: '10px' }}>PRODUCTOS</button>
-        <button onClick={() => setActiveTab('categories')} className="urban-font" style={{ border: 'none', background: 'transparent', fontSize: '1.1rem', color: activeTab === 'categories' ? 'var(--cta)' : 'var(--text-dim)', cursor: 'pointer', borderBottom: activeTab === 'categories' ? '2px solid var(--cta)' : 'none', paddingBottom: '10px' }}>CATEGORÍAS</button>
+      <div style={{ display: 'flex', gap: '40px', marginBottom: '40px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '10px' }}>
+        <button onClick={() => setActiveTab('products')} className="urban-font" style={{ border: 'none', background: 'transparent', fontSize: '1.2rem', fontWeight: 'bold', color: activeTab === 'products' ? 'var(--cta)' : 'var(--text-dim)', cursor: 'pointer', borderBottom: activeTab === 'products' ? '3px solid var(--cta)' : '3px solid transparent', paddingBottom: '15px', transition: 'all 0.3s' }}>PRODUCTOS</button>
+        <button onClick={() => setActiveTab('categories')} className="urban-font" style={{ border: 'none', background: 'transparent', fontSize: '1.2rem', fontWeight: 'bold', color: activeTab === 'categories' ? 'var(--cta)' : 'var(--text-dim)', cursor: 'pointer', borderBottom: activeTab === 'categories' ? '3px solid var(--cta)' : '3px solid transparent', paddingBottom: '15px', transition: 'all 0.3s' }}>CATEGORÍAS</button>
       </div>
 
       {activeTab === 'products' ? (
-        <div className="glass-card" style={{ overflow: 'hidden', background: 'rgba(255,255,255,0.02)' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+        <div className="table-container" style={{ background: 'var(--primary)', border: '1px solid var(--glass-border)' }}>
+          <table className="urban-table" style={{ width: '100%' }}>
             <thead>
-              <tr style={{ background: 'rgba(255,255,255,0.05)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                <th style={{ padding: '20px' }}>Producto</th>
-                <th style={{ padding: '20px' }}>Categoría</th>
-                <th style={{ padding: '20px' }}>Detalles</th>
-                <th style={{ padding: '20px' }}>Tipo</th>
-                <th style={{ padding: '20px' }}>Precios</th>
-                <th style={{ padding: '20px' }}>Stock</th>
-                <th style={{ padding: '20px' }}>Acciones</th>
+              <tr>
+                <th>Producto</th>
+                <th>Categoría</th>
+                <th>Detalles</th>
+                <th>Tipo</th>
+                <th>Precios</th>
+                <th>Stock</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -307,38 +307,37 @@ const Inventory = () => {
                 <tr 
                   ref={index === products.length - 1 ? lastProductRef : null}
                   key={p.id} 
-                  style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}
                 >
-                  <td style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <div style={{ width: '50px', height: '50px', background: 'var(--secondary)', borderRadius: '4px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <td style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    <div style={{ width: '55px', height: '55px', background: 'var(--secondary)', borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
                       {p.image && <img src={p.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontWeight: 'bold' }}>{p.name}</span>
+                      <span style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>{p.name}</span>
                       <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>ID: #{p.id}</span>
                     </div>
                   </td>
-                  <td style={{ padding: '20px', color: 'var(--text-dim)' }}>{p.category_name}</td>
-                  <td style={{ padding: '20px' }}>
+                  <td style={{ color: 'var(--text-dim)' }}>{p.category_name}</td>
+                  <td>
                     <div style={{ fontSize: '0.8rem' }}>
                       <div><span style={{color: 'var(--text-dim)'}}>Color:</span> {p.color || '-'}</div>
                       <div><span style={{color: 'var(--text-dim)'}}>Talla:</span> {p.size || '-'}</div>
                     </div>
                   </td>
-                  <td style={{ padding: '20px' }}>
-                     <span style={{ padding: '4px 10px', borderRadius: '4px', fontSize: '0.7rem', textTransform: 'uppercase', background: 'var(--secondary)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--cta)' }}>{p.product_type}</span>
+                  <td>
+                     <span style={{ padding: '6px 12px', borderRadius: '6px', fontSize: '0.7rem', textTransform: 'uppercase', background: 'var(--secondary)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--cta)', fontWeight: 'bold' }}>{p.product_type}</span>
                   </td>
-                  <td style={{ padding: '20px' }}>
+                  <td>
                     <div style={{ fontSize: '0.85rem' }}>
                       {p.price_sale && <div><span style={{color: 'var(--text-dim)'}}>Venta:</span> ${parseFloat(p.price_sale).toLocaleString()}</div>}
                       {p.price_rental && <div><span style={{color: 'var(--text-dim)'}}>Alq:</span> ${parseFloat(p.price_rental).toLocaleString()}</div>}
                     </div>
                   </td>
-                  <td style={{ padding: '20px', fontWeight: 'bold' }}>{p.stock}</td>
-                  <td style={{ padding: '20px' }}>
-                    <div style={{ display: 'flex', gap: '15px' }}>
-                      <button onClick={() => handleOpenProductModal(p)} className="btn-icon"><Edit size={20} /></button>
-                      <button onClick={() => handleDeleteProduct(p.id)} className="btn-icon-danger"><Trash2 size={20} /></button>
+                  <td style={{ fontWeight: 'bold', fontSize: '1rem' }}>{p.stock}</td>
+                  <td>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <button onClick={() => handleOpenProductModal(p)} className="btn-icon" style={{ padding: '8px' }}><Edit size={18} /></button>
+                      <button onClick={() => handleDeleteProduct(p.id)} className="btn-icon-danger" style={{ padding: '8px' }}><Trash2 size={18} /></button>
                     </div>
                   </td>
                 </tr>
@@ -348,24 +347,24 @@ const Inventory = () => {
           {loadingMore && <div style={{ textAlign: 'center', padding: '20px', color: 'var(--cta)', fontSize: '0.8rem' }}>CARGANDO MÁS PRODUCTOS...</div>}
         </div>
       ) : (
-        <div className="glass-card" style={{ overflow: 'hidden', background: 'rgba(255,255,255,0.02)' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+        <div className="table-container" style={{ background: 'var(--primary)', border: '1px solid var(--glass-border)' }}>
+          <table className="urban-table" style={{ width: '100%' }}>
             <thead>
-              <tr style={{ background: 'rgba(255,255,255,0.05)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                <th style={{ padding: '20px' }}>Nombre de Categoría</th>
-                <th style={{ padding: '20px' }}>Slug</th>
-                <th style={{ padding: '20px' }}>Acciones</th>
+              <tr>
+                <th>Nombre de Categoría</th>
+                <th>Slug</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {categories.map(c => (
-                <tr key={c.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                  <td style={{ padding: '20px', fontWeight: 'bold' }}>{c.name}</td>
-                  <td style={{ padding: '20px', color: 'var(--text-dim)' }}>{c.slug}</td>
-                  <td style={{ padding: '20px' }}>
-                    <div style={{ display: 'flex', gap: '15px' }}>
-                      <button onClick={() => handleOpenCategoryModal(c)} className="btn-icon"><Edit size={20} /></button>
-                      <button onClick={() => handleDeleteCategory(c.id)} className="btn-icon-danger"><Trash2 size={20} /></button>
+                <tr key={c.id}>
+                  <td style={{ fontWeight: 'bold' }}>{c.name}</td>
+                  <td style={{ color: 'var(--text-dim)' }}>{c.slug}</td>
+                  <td>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <button onClick={() => handleOpenCategoryModal(c)} className="btn-icon" style={{ padding: '8px' }}><Edit size={18} /></button>
+                      <button onClick={() => handleDeleteCategory(c.id)} className="btn-icon-danger" style={{ padding: '8px' }}><Trash2 size={18} /></button>
                     </div>
                   </td>
                 </tr>

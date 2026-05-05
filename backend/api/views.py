@@ -155,7 +155,24 @@ class PaymentViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(staff=self.request.user)
+        from .models import Movement
+        payment = serializer.save(staff=self.request.user)
+        
+        # Determine description
+        desc = f"Pago de Alquiler #{payment.rental.id}" if payment.rental else f"Pago de Venta #{payment.sale.id}"
+        if payment.label == 'Garantia':
+            desc = f"Garantía de Alquiler #{payment.rental.id}"
+            
+        # Register in Movements table for Cash Register
+        Movement.objects.create(
+            staff=self.request.user,
+            amount=payment.amount,
+            movement_type='IN',
+            payment_method=payment.payment_method,
+            bank=payment.bank,
+            description=desc
+        )
+
 
 class NotificationViewSet(viewsets.ModelViewSet):
     serializer_class = NotificationSerializer
@@ -226,23 +243,93 @@ class CashViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def summary(self, request):
+        from .models import Payment, Movement, Rental
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
         
-        q = Q()
+        q_pay = Q()
+        q_move = Q()
         if start_date:
-            q &= Q(created_at__date__gte=start_date)
+            q_pay &= Q(created_at__date__gte=start_date)
+            q_move &= Q(created_at__date__gte=start_date)
         if end_date:
-            q &= Q(created_at__date__lte=end_date)
+            q_pay &= Q(created_at__date__lte=end_date)
+            q_move &= Q(created_at__date__lte=end_date)
             
-        movements = Movement.objects.filter(q)
-        total_in = movements.filter(movement_type='IN').aggregate(Sum('amount'))['amount__sum'] or 0
-        total_out = movements.filter(movement_type='OUT').aggregate(Sum('amount'))['amount__sum'] or 0
+        # 1. Income from Sales and Rentals (excluding Guarantees)
+        payments_normal = Payment.objects.filter(q_pay).exclude(label='Garantia')
+        total_payments = payments_normal.aggregate(Sum('amount'))['amount__sum'] or 0
         
+        # 2. Manual Movements (only those NOT from payments)
+        movements_manual = Movement.objects.filter(q_move).exclude(description__icontains='Pago de Alquiler #').exclude(description__icontains='Pago de Venta #')
+        manual_in = movements_manual.filter(movement_type='IN').aggregate(Sum('amount'))['amount__sum'] or 0
+        manual_out = movements_manual.filter(movement_type='OUT').aggregate(Sum('amount'))['amount__sum'] or 0
+        
+        # Net Income (Utilidad en flujo) = Payments + Manual IN - Manual OUT
+        net_income = float(total_payments) + float(manual_in) - float(manual_out)
+        
+        # 3. Active Guarantees (Security deposits in custody)
+        # These are payments labeled 'Garantia' for rentals that are NOT yet 'received' or 'cancelled'
+        guarantees_in_custody = Payment.objects.filter(
+            label='Garantia',
+            rental__status__in=['reserved', 'preparing', 'ready', 'delivered']
+        ).aggregate(Sum('amount'))['amount__sum'] or 0
+
+        # 4. Detailed Breakdown for "Disponibilidad de Fondos"
+        # We group by specific entities (Nequi, Bancolombia, etc.) or method (Efectivo)
+        channels_to_check = [
+            {'label': 'Efectivo', 'method': 'efectivo', 'bank': None},
+            {'label': 'Nequi', 'method': 'transferencia', 'bank': 'nequi'},
+            {'label': 'Bancolombia', 'method': 'transferencia', 'bank': 'bancolombia'},
+            {'label': 'Daviplata', 'method': 'transferencia', 'bank': 'daviplata'},
+            {'label': 'Otros Bancos', 'method': 'transferencia', 'bank': 'otro'},
+        ]
+        
+        channels_detailed = []
+        income_by_method = []
+        
+        for ch in channels_to_check:
+            # Filters
+            p_q = Q(payment_method=ch['method'])
+            m_q = Q(payment_method=ch['method'])
+            
+            if ch['bank']:
+                p_q &= Q(bank=ch['bank'])
+                m_q &= Q(bank=ch['bank'])
+            
+            # Income
+            m_sum = Payment.objects.filter(q_pay).filter(p_q).exclude(label='Garantia').aggregate(Sum('amount'))['amount__sum'] or 0
+            m_move_in = movements_manual.filter(m_q).filter(movement_type='IN').aggregate(Sum('amount'))['amount__sum'] or 0
+            m_move_out = movements_manual.filter(m_q).filter(movement_type='OUT').aggregate(Sum('amount'))['amount__sum'] or 0
+            
+            # Guarantees (Active)
+            m_guarantees = Payment.objects.filter(
+                p_q,
+                label='Garantia',
+                rental__status__in=['reserved', 'preparing', 'ready', 'delivered']
+            ).aggregate(Sum('amount'))['amount__sum'] or 0
+            
+            total_method_income = float(m_sum) + float(m_move_in) - float(m_move_out)
+            
+            channels_detailed.append({
+                "channel": ch['label'],
+                "income": total_method_income,
+                "guarantees": float(m_guarantees),
+                "total": total_method_income + float(m_guarantees)
+            })
+            
+            income_by_method.append({
+                "payment_method": ch['label'],
+                "total": total_method_income
+            })
+
         return Response({
-            "total_income": total_in,
-            "total_expense": total_out,
-            "balance": total_in - total_out
+            "net_income": net_income,
+            "total_guarantees": float(guarantees_in_custody),
+            "total_income": float(total_payments) + float(manual_in),
+            "total_expense": float(manual_out),
+            "channels_detailed": channels_detailed,
+            "income_by_method": income_by_method
         })
 
     @action(detail=False, methods=['get'])
@@ -303,10 +390,23 @@ class DashboardStatsView(APIView):
         sales_today = Sale.objects.filter(created_at__date=today).aggregate(total=Sum('total'))['total'] or 0
         rentals_today = Rental.objects.filter(created_at__date=today).aggregate(total=Sum('total'))['total'] or 0
         
+        # Trend calculation (this month vs last month)
+        last_month_start = (month_start - timedelta(days=1)).replace(day=1)
+        last_month_end = month_start - timedelta(days=1)
+        
+        sales_last_month = Sale.objects.filter(created_at__date__gte=last_month_start, created_at__date__lte=last_month_end).aggregate(total=Sum('total'))['total'] or 0
+        rentals_last_month = Rental.objects.filter(created_at__date__gte=last_month_start, created_at__date__lte=last_month_end).aggregate(total=Sum('total'))['total'] or 0
+        last_month_total = float(sales_last_month + rentals_last_month)
         # Month
         sales_month = Sale.objects.filter(created_at__date__gte=month_start).aggregate(total=Sum('total'))['total'] or 0
         rentals_month = Rental.objects.filter(created_at__date__gte=month_start).aggregate(total=Sum('total'))['total'] or 0
+        this_month_total = float(sales_month + rentals_month)
         
+        if last_month_total > 0:
+            revenue_trend = round(((this_month_total - last_month_total) / last_month_total) * 100, 1)
+        else:
+            revenue_trend = 100 if this_month_total > 0 else 0
+
         # Weekly data (last 7 days)
         weekly_revenue = []
         for i in range(6, -1, -1):
@@ -314,7 +414,7 @@ class DashboardStatsView(APIView):
             day_total = (Sale.objects.filter(created_at__date=d).aggregate(total=Sum('total'))['total'] or 0) + \
                         (Rental.objects.filter(created_at__date=d).aggregate(total=Sum('total'))['total'] or 0)
             weekly_revenue.append({
-                "day": d.strftime('%a'),
+                "day": d.strftime('%a').upper(),
                 "value": float(day_total)
             })
 
@@ -324,20 +424,20 @@ class DashboardStatsView(APIView):
         for r in recent_rentals:
             recent_data.append({
                 "id": r.id,
-                "customer_name": r.customer.full_name if r.customer else "N/A",
+                "customer_name": r.customer.full_name if r.customer else "Anónimo",
                 "end_date": r.end_date,
                 "status": r.status,
-                "total": r.total
+                "total": float(r.total)
             })
 
         return Response({
             "revenue_today": float(sales_today + rentals_today),
-            "monthly_sales": float(sales_month + rentals_month),
-            "active_rentals": Rental.objects.filter(status='active').count(),
+            "monthly_sales": this_month_total,
+            "active_rentals": Rental.objects.filter(status='delivered').count(),
             "low_stock": Product.objects.filter(stock__lte=2).count(),
-            "upcoming_deliveries": Rental.objects.filter(start_date__date=today, status='pending').count(),
-            "returns_today": Rental.objects.filter(end_date__date=today, status='active').count(),
-            "revenue_trend": 12, # Static for now
+            "upcoming_deliveries": Rental.objects.filter(start_date__date=today, status__in=['reserved', 'preparing', 'ready']).count(),
+            "returns_today": Rental.objects.filter(end_date__date=today, status='delivered').count(),
+            "revenue_trend": revenue_trend,
             "weekly_revenue": weekly_revenue,
             "recent_rentals": recent_data
         })

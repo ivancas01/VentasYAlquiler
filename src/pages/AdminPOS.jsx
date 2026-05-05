@@ -326,17 +326,17 @@ const AdminPOS = () => {
   }) : []
 
   return (
-    <div className="fade-in" style={{ maxWidth: '1400px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 500px', gap: '40px' }}>
+    <div className="fade-in" style={{ width: '100%', margin: '0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '40px' }}>
       
-      <div className="glass-card" style={{ padding: '40px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-          <h2 className="urban-font gold-text" style={{ fontSize: '1.5rem' }}>Punto de Venta</h2>
-          <div style={{ display: 'flex', gap: '15px' }}>
-            <button onClick={() => setShowProductModal(true)} className="btn-outline" style={{ padding: '10px 20px', fontSize: '0.8rem', borderColor: 'var(--cta)', color: 'var(--cta)' }}>
-              <Plus size={16} /> NUEVO
+      <div className="glass-card" style={{ padding: '40px', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '35px' }}>
+          <h2 className="urban-font gold-text" style={{ fontSize: '1.8rem' }}>Punto de Venta</h2>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button onClick={() => setShowProductModal(true)} className="btn-outline">
+              <Plus size={18} /> NUEVO
             </button>
-            <button onClick={() => { setType('sale'); setCart([]); }} className={type === 'sale' ? 'btn-primary' : 'btn-outline'} style={{ padding: '10px 25px', fontSize: '0.8rem' }}>Venta</button>
-            <button onClick={() => { setType('rental'); setCart([]); }} className={type === 'rental' ? 'btn-primary' : 'btn-outline'} style={{ padding: '10px 25px', fontSize: '0.8rem' }}>Alquiler</button>
+            <button onClick={() => { setType('sale'); setCart([]); }} className={type === 'sale' ? 'btn-primary' : 'btn-outline'}>Venta</button>
+            <button onClick={() => { setType('rental'); setCart([]); }} className={type === 'rental' ? 'btn-primary' : 'btn-outline'}>Alquiler</button>
           </div>
         </div>
 
@@ -391,9 +391,9 @@ const AdminPOS = () => {
                     onClick={() => addToCart(product)} 
                     disabled={!isAvailable}
                     className="btn-primary" 
-                    style={{ marginTop: '10px', width: '35px', height: '35px', padding: '0', opacity: isAvailable ? 1 : 0.3 }}
+                    style={{ marginTop: '15px', width: '100%', opacity: isAvailable ? 1 : 0.3 }}
                   >
-                    <Plus size={18} />
+                    <Plus size={18} /> AGREGAR
                   </button>
                 </div>
               )
@@ -407,13 +407,13 @@ const AdminPOS = () => {
         )}
       </div>
 
-      <div className="glass-card" style={{ padding: '40px', height: 'fit-content', border: '1px solid var(--cta)' }}>
+      <div className="glass-card" style={{ padding: '40px', height: 'fit-content', border: '1px solid var(--cta)', position: 'sticky', top: '20px' }}>
         {cart.length > 0 && (
           <div style={{ marginBottom: '40px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '30px' }}>
             <h3 className="urban-font" style={{ marginBottom: '25px', color: 'white', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
               <ShoppingCart size={22} /> Items en Carrito
             </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', maxHeight: '400px', overflowY: 'auto', paddingRight: '10px' }}>
               {cart.map(item => (
                 <div key={item.id} className="glass-card" style={{ padding: '15px', background: 'rgba(255,255,255,0.03)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ flex: 1 }}>

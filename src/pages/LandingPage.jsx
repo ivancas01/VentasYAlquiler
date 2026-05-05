@@ -129,7 +129,7 @@ const LandingPage = () => {
       {/* Section: NOSOTROS */}
       <section id="nosotros" style={{ padding: '150px 20px', maxWidth: '1200px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '80px' }}>
-          <h2 className="gold-text" style={{ fontSize: '3.5rem', marginBottom: '20px' }}>NOSOTROS</h2>
+          <h2 className="gold-text" style={{ fontSize: '3.5rem', marginBottom: '20px' }}>{config?.nosotros_title || 'NOSOTROS'}</h2>
           <div style={{ width: '80px', height: '2px', background: 'var(--cta)', margin: '0 auto' }}></div>
         </div>
 
@@ -156,8 +156,8 @@ const LandingPage = () => {
       <section id="contacto" style={{ padding: '150px 20px', background: 'var(--secondary)' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '80px' }}>
-            <h2 className="gold-text" style={{ fontSize: '3.5rem', marginBottom: '20px' }}>CONTACTO</h2>
-            <p style={{ color: 'var(--text-dim)' }}>¿Tienes alguna pregunta? Estamos listos para asesorarte de manera personalizada.</p>
+            <h2 className="gold-text" style={{ fontSize: '3.5rem', marginBottom: '20px' }}>{config?.contacto_title || 'CONTACTO'}</h2>
+            <p style={{ color: 'var(--text-dim)' }}>{config?.contacto_subtitle || '¿Tienes alguna pregunta? Estamos listos para asesorarte de manera personalizada.'}</p>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '60px' }}>
