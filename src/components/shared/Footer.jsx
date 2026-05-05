@@ -16,8 +16,7 @@ const Footer = () => {
     <footer style={{
       background: 'var(--primary)',
       color: 'white',
-      padding: '80px 20px 40px',
-      marginTop: '100px'
+      padding: '80px 20px 40px'
     }}>
       <div style={{
         maxWidth: '1200px',
@@ -41,7 +40,7 @@ const Footer = () => {
         </div>
 
         <div>
-          <h3 style={{ marginBottom: '20px' }}>Enlaces Rápidos</h3>
+          <h3 style={{ marginBottom: '20px' }}>{config?.footer_links_title || 'Enlaces Rápidos'}</h3>
           <ul style={{ listStyle: 'none', padding: 0 }}>
             <li style={{ marginBottom: '10px' }}><Link to="/" style={{ color: '#a8a29e' }}>Inicio</Link></li>
             <li style={{ marginBottom: '10px' }}><Link to="/catalog" style={{ color: '#a8a29e' }}>Catálogo</Link></li>
@@ -51,7 +50,7 @@ const Footer = () => {
         </div>
 
         <div>
-          <h3 style={{ marginBottom: '20px' }}>Contacto</h3>
+          <h3 style={{ marginBottom: '20px' }}>{config?.footer_contact_title || 'Contacto'}</h3>
           <ul style={{ listStyle: 'none', padding: 0, color: '#a8a29e' }}>
             <li style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
               <MapPin size={18} /> {config?.contact_address || 'Avenida Lujo #45-12, Ciudad'}

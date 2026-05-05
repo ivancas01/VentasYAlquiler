@@ -6,6 +6,7 @@ import { SiteProvider } from './context/SiteContext'
 import Navbar from './components/shared/Navbar'
 import Footer from './components/shared/Footer'
 import AdminLayout from './components/shared/AdminLayout'
+import ProtectedRoute from './components/shared/ProtectedRoute'
 import LandingPage from './pages/LandingPage'
 import Catalog from './pages/Catalog'
 import Login from './pages/Login'
@@ -37,18 +38,18 @@ const AppContent = () => {
         <Route path="/catalog" element={<Catalog />} />
         <Route path="/login" element={<Login />} />
         
-        {/* Admin Routes wrapped in AdminLayout */}
-        <Route path="/admin" element={<AdminLayout><Dashboard /></AdminLayout>} />
-        <Route path="/admin/pos" element={<AdminLayout><AdminPOS /></AdminLayout>} />
-        <Route path="/admin/staff" element={<AdminLayout><Staff /></AdminLayout>} />
-        <Route path="/admin/reports" element={<AdminLayout><Reports /></AdminLayout>} />
-        <Route path="/admin/inventory" element={<AdminLayout><Inventory /></AdminLayout>} />
-        <Route path="/admin/cms" element={<AdminLayout><CMS /></AdminLayout>} />
-        <Route path="/admin/customers" element={<AdminLayout><Customers /></AdminLayout>} />
-        <Route path="/admin/transactions" element={<AdminLayout><Transactions /></AdminLayout>} />
-        <Route path="/admin/movements" element={<AdminLayout><Movements /></AdminLayout>} />
-        <Route path="/admin/cash" element={<AdminLayout><CashRegister /></AdminLayout>} />
-        <Route path="/admin/notifications" element={<AdminLayout><Notifications /></AdminLayout>} />
+        {/* Admin Routes wrapped in AdminLayout and ProtectedRoute */}
+        <Route path="/admin" element={<ProtectedRoute><AdminLayout><Dashboard /></AdminLayout></ProtectedRoute>} />
+        <Route path="/admin/pos" element={<ProtectedRoute><AdminLayout><AdminPOS /></AdminLayout></ProtectedRoute>} />
+        <Route path="/admin/staff" element={<ProtectedRoute><AdminLayout><Staff /></AdminLayout></ProtectedRoute>} />
+        <Route path="/admin/reports" element={<ProtectedRoute><AdminLayout><Reports /></AdminLayout></ProtectedRoute>} />
+        <Route path="/admin/inventory" element={<ProtectedRoute><AdminLayout><Inventory /></AdminLayout></ProtectedRoute>} />
+        <Route path="/admin/cms" element={<ProtectedRoute><AdminLayout><CMS /></AdminLayout></ProtectedRoute>} />
+        <Route path="/admin/customers" element={<ProtectedRoute><AdminLayout><Customers /></AdminLayout></ProtectedRoute>} />
+        <Route path="/admin/transactions" element={<ProtectedRoute><AdminLayout><Transactions /></AdminLayout></ProtectedRoute>} />
+        <Route path="/admin/movements" element={<ProtectedRoute><AdminLayout><Movements /></AdminLayout></ProtectedRoute>} />
+        <Route path="/admin/cash" element={<ProtectedRoute><AdminLayout><CashRegister /></AdminLayout></ProtectedRoute>} />
+        <Route path="/admin/notifications" element={<ProtectedRoute><AdminLayout><Notifications /></AdminLayout></ProtectedRoute>} />
       </Routes>
       {!isAdmin && <Footer />}
     </>

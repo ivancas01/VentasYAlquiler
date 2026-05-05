@@ -3,12 +3,14 @@ import { Link, useNavigate } from 'react-router-dom'
 import { ShoppingBag, Info, Phone, LayoutDashboard, User, LogOut, Bell, Shield } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import axios from 'axios'
+import LoginModal from './LoginModal'
 
 const Navbar = () => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [notifications, setNotifications] = useState([])
   const [showNotifs, setShowNotifs] = useState(false)
+  const [showLoginModal, setShowLoginModal] = useState(false)
   const [config, setConfig] = useState(null)
 
   useEffect(() => {
@@ -22,6 +24,8 @@ const Navbar = () => {
       return () => clearInterval(interval)
     }
   }, [user])
+
+  const [activeSection, setActiveSection] = useState('inicio')
 
   const fetchNotifications = async () => {
     const token = localStorage.getItem('token')
@@ -39,6 +43,30 @@ const Navbar = () => {
       }
     }
   }
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.location.pathname !== '/') return
+      
+      const sections = ['inicio', 'nosotros', 'contacto']
+      const scrollPos = window.scrollY + 200
+
+      for (const section of sections) {
+        const element = document.getElementById(section)
+        if (element) {
+          const { offsetTop, offsetHeight } = element
+          if (scrollPos >= offsetTop && scrollPos < offsetTop + offsetHeight) {
+            setActiveSection(section)
+            break
+          }
+        }
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    handleScroll() // Check initial position
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [window.location.pathname])
 
   const markAsRead = async (id) => {
     const token = localStorage.getItem('token')
@@ -72,25 +100,78 @@ const Navbar = () => {
       </Link>
       
       <div style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
-        <Link to="/catalog" className="nav-link" style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Catálogo</Link>
-        <Link to="/#nosotros" className="nav-link" style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Nosotros</Link>
-        <Link to="/#contacto" className="nav-link" style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Contacto</Link>
-        
-        <div style={{ width: '1px', height: '20px', background: 'rgba(255,255,255,0.1)' }}></div>
+        {/* Anchor Links Group (Smooth scroll section) */}
+        <div style={{ display: 'flex', gap: '40px', alignItems: 'center' }}>
+          <Link to="/#inicio" className="nav-link" style={{ 
+            fontSize: '0.75rem', 
+            textTransform: 'uppercase', 
+            letterSpacing: '1px',
+            color: (window.location.pathname === '/' && activeSection === 'inicio') ? 'var(--cta)' : 'white',
+            borderBottom: (window.location.pathname === '/' && activeSection === 'inicio') ? '2px solid var(--cta)' : '2px solid transparent',
+            paddingBottom: '5px',
+            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            fontWeight: (window.location.pathname === '/' && activeSection === 'inicio') ? 'bold' : 'normal'
+          }}>Inicio</Link>
+          <Link to="/#nosotros" className="nav-link" style={{ 
+            fontSize: '0.75rem', 
+            textTransform: 'uppercase', 
+            letterSpacing: '1px',
+            color: (window.location.pathname === '/' && activeSection === 'nosotros') ? 'var(--cta)' : 'white',
+            borderBottom: (window.location.pathname === '/' && activeSection === 'nosotros') ? '2px solid var(--cta)' : '2px solid transparent',
+            paddingBottom: '5px',
+            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            fontWeight: (window.location.pathname === '/' && activeSection === 'nosotros') ? 'bold' : 'normal'
+          }}>Nosotros</Link>
+          <Link to="/#contacto" className="nav-link" style={{ 
+            fontSize: '0.75rem', 
+            textTransform: 'uppercase', 
+            letterSpacing: '1px',
+            color: (window.location.pathname === '/' && activeSection === 'contacto') ? 'var(--cta)' : 'white',
+            borderBottom: (window.location.pathname === '/' && activeSection === 'contacto') ? '2px solid var(--cta)' : '2px solid transparent',
+            paddingBottom: '5px',
+            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            fontWeight: (window.location.pathname === '/' && activeSection === 'contacto') ? 'bold' : 'normal'
+          }}>Contacto</Link>
+        </div>
 
-        {user ? (
-          <>
+        {/* Visual Separator */}
+        <div style={{ width: '1px', height: '20px', background: 'rgba(255,255,255,0.1)', margin: '0 10px' }}></div>
+
+        {/* Global Navigation */}
+        <Link to="/catalog" className="nav-link" style={{ 
+          fontSize: '0.75rem', 
+          textTransform: 'uppercase', 
+          letterSpacing: '1px',
+          color: window.location.pathname === '/catalog' ? 'var(--cta)' : 'white',
+          borderBottom: window.location.pathname === '/catalog' ? '2px solid var(--cta)' : '2px solid transparent',
+          paddingBottom: '5px',
+          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+          fontWeight: window.location.pathname === '/catalog' ? 'bold' : 'normal'
+        }}>Catálogo</Link>
+        
+        {!user ? (
+          <button 
+            onClick={() => setShowLoginModal(true)} 
+            className="btn-primary" 
+            style={{ padding: '8px 25px', fontSize: '0.7rem', height: '40px' }}
+          >
+            ACCEDER
+          </button>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <div style={{ position: 'relative' }}>
-              <Bell 
-                size={20} 
-                style={{ cursor: 'pointer', color: notifications.length > 0 ? 'var(--cta)' : 'white' }} 
-                onClick={() => setShowNotifs(!showNotifs)} 
-              />
-              {notifications.length > 0 && (
-                <span style={{ position: 'absolute', top: '-5px', right: '-5px', background: 'var(--cta)', color: 'white', width: '15px', height: '15px', fontSize: '0.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
-                  {notifications.length}
-                </span>
-              )}
+              <button 
+                onClick={() => setShowNotifs(!showNotifs)}
+                className={notifications.length > 0 ? 'bell-animation' : ''} 
+                style={{ background: 'transparent', border: 'none', color: notifications.length > 0 ? '#fbbf24' : 'white', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+              >
+                <Bell size={20} />
+                {notifications.length > 0 && (
+                  <span className="pulse-badge" style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#ef4444', color: 'white', fontSize: '0.6rem', width: '15px', height: '15px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                    {notifications.length}
+                  </span>
+                )}
+              </button>
 
               {showNotifs && (
                 <div className="glass-card" style={{ position: 'absolute', top: '40px', right: '0', width: '320px', maxHeight: '400px', overflowY: 'auto', padding: '20px', background: 'var(--secondary)', zIndex: 11000, borderColor: 'var(--cta)' }}>
@@ -114,11 +195,11 @@ const Navbar = () => {
             <button onClick={() => { logout(); navigate('/'); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'white' }}>
               <LogOut size={18} />
             </button>
-          </>
-        ) : (
-          <Link to="/login" className="btn-primary" style={{ padding: '8px 20px', fontSize: '0.75rem' }}>Acceder</Link>
+          </div>
         )}
       </div>
+
+      <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
     </nav>
   )
 }

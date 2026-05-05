@@ -14,25 +14,30 @@ const CMS = () => {
   const [success, setSuccess] = useState(false)
   
   const [heroImages, setHeroImages] = useState([])
+  const [aboutImages, setAboutImages] = useState([])
   const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     if (globalConfig) {
       setConfig(globalConfig)
     }
-    fetchHeroImages()
+    fetchImages()
   }, [globalConfig])
 
-  const fetchHeroImages = async () => {
+  const fetchImages = async () => {
     try {
-      const res = await axios.get('http://127.0.0.1:8000/api/hero-images/')
-      setHeroImages(res.data)
+      const [hRes, aRes] = await Promise.all([
+        axios.get('http://127.0.0.1:8000/api/hero-images/'),
+        axios.get('http://127.0.0.1:8000/api/about-images/')
+      ])
+      setHeroImages(hRes.data)
+      setAboutImages(aRes.data)
     } catch (err) {
-      console.error("Error fetching hero images", err)
+      console.error("Error fetching images", err)
     }
   }
 
-  const handleImageUpload = async (e) => {
+  const handleImageUpload = async (e, type) => {
     const file = e.target.files[0]
     if (!file) return
 
@@ -41,29 +46,31 @@ const CMS = () => {
     formData.append('image', file)
     
     const token = localStorage.getItem('token')
+    const endpoint = type === 'hero' ? 'hero-images' : 'about-images'
     try {
-      await axios.post('http://127.0.0.1:8000/api/hero-images/', formData, {
+      await axios.post(`http://127.0.0.1:8000/api/${endpoint}/`, formData, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
         }
       })
-      fetchHeroImages()
+      fetchImages()
     } catch (err) {
       alert("Error al subir imagen")
     }
     setUploading(false)
   }
 
-  const handleDeleteImage = async (id) => {
-    if (!window.confirm("¿Eliminar esta imagen del fondo?")) return
+  const handleDeleteImage = async (id, type) => {
+    if (!window.confirm("¿Eliminar esta imagen?")) return
     
     const token = localStorage.getItem('token')
+    const endpoint = type === 'hero' ? 'hero-images' : 'about-images'
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/hero-images/${id}/`, {
+      await axios.delete(`http://127.0.0.1:8000/api/${endpoint}/${id}/`, {
         headers: { Authorization: `Bearer ${token}` }
       })
-      fetchHeroImages()
+      fetchImages()
     } catch (err) {
       alert("Error al eliminar")
     }
@@ -123,7 +130,7 @@ const CMS = () => {
           <h3 className="urban-font" style={{ fontSize: '1rem', color: 'var(--cta)', marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Globe size={18} /> IDENTIDAD VISUAL
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', marginBottom: '20px' }}>
             <div>
               <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nombre Empresa (Blanco)</label>
               <input type="text" name="company_name_white" value={config.company_name_white || ''} onChange={handleChange} style={{ width: '100%' }} />
@@ -131,6 +138,10 @@ const CMS = () => {
             <div>
               <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nombre Empresa (Dorado)</label>
               <input type="text" name="company_name_gold" value={config.company_name_gold || ''} onChange={handleChange} style={{ width: '100%' }} />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nombre Legal / Copyright</label>
+              <input type="text" name="company_name" value={config.company_name || ''} onChange={handleChange} style={{ width: '100%' }} />
             </div>
           </div>
           <div style={{ marginBottom: '20px' }}>
@@ -165,35 +176,58 @@ const CMS = () => {
         </div>
 
         {/* Hero Background Images Management */}
-        <div className="glass-card" style={{ padding: '40px', gridColumn: 'span 2' }}>
+        <div className="glass-card" style={{ padding: '40px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
             <h3 className="urban-font" style={{ fontSize: '1rem', color: 'var(--cta)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <ImageIcon size={18} /> IMÁGENES DE FONDO (HERO)
+              <ImageIcon size={18} /> IMÁGENES DE INICIO (HERO)
             </h3>
-            <label className="btn-primary" style={{ padding: '10px 20px', cursor: 'pointer', fontSize: '0.8rem' }}>
-              {uploading ? <RefreshCw className="spin" size={16} /> : <Plus size={16} />} 
-              {uploading ? 'SUBIENDO...' : 'AGREGAR IMAGEN'}
-              <input type="file" hidden onChange={handleImageUpload} accept="image/*" />
+            <label className="btn-primary" style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '0.75rem' }}>
+              {uploading ? <RefreshCw className="spin" size={14} /> : <Plus size={14} />} 
+              {uploading ? '...' : 'AGREGAR'}
+              <input type="file" hidden onChange={(e) => handleImageUpload(e, 'hero')} accept="image/*" />
             </label>
           </div>
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '15px' }}>
             {heroImages.map(img => (
-              <div key={img.id} style={{ position: 'relative', height: '200px', border: '1px solid var(--glass-border)' }}>
+              <div key={img.id} style={{ position: 'relative', height: '120px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
                 <img src={img.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 <button 
-                  onClick={() => handleDeleteImage(img.id)}
-                  style={{ position: 'absolute', top: '10px', right: '10px', background: '#ef4444', border: 'none', color: 'white', padding: '5px', cursor: 'pointer' }}
+                  onClick={() => handleDeleteImage(img.id, 'hero')}
+                  style={{ position: 'absolute', top: '5px', right: '5px', background: '#ef4444', border: 'none', color: 'white', padding: '4px', cursor: 'pointer', borderRadius: '4px' }}
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={12} />
                 </button>
               </div>
             ))}
-            {heroImages.length === 0 && (
-              <div style={{ gridColumn: 'span 12', padding: '40px', textAlign: 'center', color: 'var(--text-dim)', border: '1px dashed var(--glass-border)' }}>
-                No hay imágenes personalizadas. Se mostrarán las de respaldo.
+          </div>
+        </div>
+
+        {/* About Images Management */}
+        <div className="glass-card" style={{ padding: '40px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+            <h3 className="urban-font" style={{ fontSize: '1rem', color: 'var(--cta)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <ImageIcon size={18} /> IMÁGENES DE NOSOTROS
+            </h3>
+            <label className="btn-primary" style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '0.75rem' }}>
+              {uploading ? <RefreshCw className="spin" size={14} /> : <Plus size={14} />} 
+              {uploading ? '...' : 'AGREGAR'}
+              <input type="file" hidden onChange={(e) => handleImageUpload(e, 'about')} accept="image/*" />
+            </label>
+          </div>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '15px' }}>
+            {aboutImages.map(img => (
+              <div key={img.id} style={{ position: 'relative', height: '120px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
+                <img src={img.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <button 
+                  onClick={() => handleDeleteImage(img.id, 'about')}
+                  style={{ position: 'absolute', top: '5px', right: '5px', background: '#ef4444', border: 'none', color: 'white', padding: '4px', cursor: 'pointer', borderRadius: '4px' }}
+                >
+                  <Trash2 size={12} />
+                </button>
               </div>
-            )}
+            ))}
           </div>
         </div>
 
@@ -265,7 +299,7 @@ const CMS = () => {
           <h3 className="urban-font" style={{ fontSize: '1rem', color: 'var(--cta)', marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Share2 size={18} /> REDES Y PIE DE PÁGINA
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', marginBottom: '20px' }}>
             <div>
               <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Facebook</label>
               <input type="url" name="facebook_url" value={config.facebook_url || ''} onChange={handleChange} placeholder="https://..." style={{ width: '100%' }} />
@@ -274,9 +308,23 @@ const CMS = () => {
               <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Instagram</label>
               <input type="url" name="instagram_url" value={config.instagram_url || ''} onChange={handleChange} placeholder="https://..." style={{ width: '100%' }} />
             </div>
+            <div>
+              <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>WhatsApp (Link)</label>
+              <input type="url" name="whatsapp_url" value={config.whatsapp_url || ''} onChange={handleChange} placeholder="https://wa.me/..." style={{ width: '100%' }} />
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+            <div>
+              <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Título "Enlaces Rápidos"</label>
+              <input type="text" name="footer_links_title" value={config.footer_links_title || ''} onChange={handleChange} style={{ width: '100%' }} />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Título "Contacto"</label>
+              <input type="text" name="footer_contact_title" value={config.footer_contact_title || ''} onChange={handleChange} style={{ width: '100%' }} />
+            </div>
           </div>
           <div>
-            <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Texto del Pie de Página (Footer)</label>
+            <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Descripción del Pie de Página (Footer)</label>
             <textarea name="footer_text" value={config.footer_text || ''} onChange={handleChange} rows="2" style={{ width: '100%' }} />
           </div>
         </div>

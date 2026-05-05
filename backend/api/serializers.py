@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import (
     User, Category, Product, Sale, SaleItem, Rental, RentalItem, 
-    Invoice, Payment, Notification, Customer, SiteConfig, Movement, HeroImage
+    Invoice, Payment, Notification, Customer, SiteConfig, Movement, HeroImage, AboutImage
 )
 from django.contrib.auth.models import Group, Permission
 
@@ -29,7 +29,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'role', 'phone', 'groups_data', 'group_ids', 'password')
+        fields = ('id', 'username', 'email', 'password', 'role', 'phone', 'full_name', 'document_number', 'is_superuser', 'groups', 'groups_data', 'group_ids')
+        extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
         password = validated_data.pop('password', None)
@@ -284,4 +285,9 @@ class SiteConfigSerializer(serializers.ModelSerializer):
 class HeroImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = HeroImage
+        fields = '__all__'
+
+class AboutImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AboutImage
         fields = '__all__'

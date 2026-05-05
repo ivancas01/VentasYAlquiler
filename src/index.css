@@ -157,17 +157,27 @@ a {
 }
 
 input, select, textarea {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--text);
-  padding: 12px;
-  border-radius: 0px;
-  transition: all 0.3s ease;
+  background: var(--secondary) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+  padding: 12px 15px;
+  border-radius: 0px !important;
+  transition: all 0.3s ease !important;
+  font-size: 0.9rem;
 }
 
-input:focus, select:focus {
-  outline: none;
-  border-color: var(--cta);
+input:focus, select:focus, textarea:focus {
+  outline: none !important;
+  border-color: var(--cta) !important;
+  background: var(--primary) !important;
+  box-shadow: 0 0 15px var(--cta-glow) !important;
+}
+
+/* Style for select options dropdown */
+select option {
+  background: var(--secondary);
+  color: white;
+  padding: 10px;
 }
 
 /* Transitions */

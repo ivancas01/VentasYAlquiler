@@ -4,6 +4,7 @@ import axios from 'axios'
 import { useLocation } from 'react-router-dom'
 import { History, ShoppingBag, Calendar, User, DollarSign, ChevronRight, Eye, Edit3, CheckCircle, Package, Truck, RotateCcw, X, Plus, Trash2, ArrowRight, Search, Filter, Shield } from 'lucide-react'
 import { useCallback, useRef } from 'react'
+import { formatCurrency, formatDate } from '../utils/format'
 
 const Modal = ({ children, onClose }) => {
   return createPortal(
@@ -441,14 +442,14 @@ const Transactions = () => {
                   {activeTab === 'sales' ? (
                     <span>{t.items?.length} productos</span>
                   ) : (
-                    <span>{t.start_date} <ArrowRight size={12} style={{verticalAlign: 'middle'}} /> {t.end_date}</span>
+                    <span>{formatDate(t.start_date)} <ArrowRight size={12} style={{verticalAlign: 'middle'}} /> {formatDate(t.end_date)}</span>
                   )}
                 </td>
                 <td>
-                  <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>${t.total}</div>
+                  <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{formatCurrency(t.total)}</div>
                   {activeTab === 'rentals' && (
                     <div style={{ fontSize: '0.7rem', color: parseFloat(t.total_paid) >= parseFloat(t.total) ? '#10b981' : 'var(--cta)' }}>
-                      Pagado: ${t.total_paid}
+                      Pagado: {formatCurrency(t.total_paid)}
                     </div>
                   )}
                 </td>
@@ -540,11 +541,11 @@ const Transactions = () => {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                     <div>
                       <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Salida</label>
-                      <div style={{ color: 'white', fontWeight: 'bold', marginTop: '5px' }}>{selectedRental.start_date}</div>
+                      <div style={{ color: 'white', fontWeight: 'bold', marginTop: '5px' }}>{formatDate(selectedRental.start_date)}</div>
                     </div>
                     <div>
                       <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Devolución</label>
-                      <div style={{ color: 'white', fontWeight: 'bold', marginTop: '5px' }}>{selectedRental.end_date}</div>
+                      <div style={{ color: 'white', fontWeight: 'bold', marginTop: '5px' }}>{formatDate(selectedRental.end_date)}</div>
                     </div>
                   </div>
                 </div>
@@ -566,7 +567,7 @@ const Transactions = () => {
                           <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)' }}>{p.created_at?.split('T')[0]} | {p.payment_method.toUpperCase()}</div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontSize: '0.9rem', color: '#10b981', fontWeight: 'bold' }}>${p.amount}</div>
+                          <div style={{ fontSize: '0.9rem', color: '#10b981', fontWeight: 'bold' }}>{formatCurrency(p.amount)}</div>
                           <div style={{ fontSize: '0.6rem', color: 'var(--text-dim)' }}>Por: {p.staff_name || 'N/A'}</div>
                         </div>
                       </div>
@@ -580,11 +581,11 @@ const Transactions = () => {
                 <div className="glass-card" style={{ padding: '25px', marginBottom: '30px', background: 'var(--secondary)', border: '1px solid rgba(212, 175, 55, 0.1)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', color: 'var(--text-dim)', fontSize: '0.9rem' }}>
                     <span>Costo Alquiler:</span>
-                    <span style={{ fontWeight: 'bold', color: 'white' }}>${selectedRental.total}</span>
+                    <span style={{ fontWeight: 'bold', color: 'white' }}>{formatCurrency(selectedRental.total)}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', color: 'var(--text-dim)', fontSize: '0.9rem' }}>
                     <span>Abonos Realizados:</span>
-                    <span style={{ fontWeight: 'bold', color: '#10b981' }}>${selectedRental.total_paid}</span>
+                    <span style={{ fontWeight: 'bold', color: '#10b981' }}>{formatCurrency(selectedRental.total_paid)}</span>
                   </div>
                   
                   {/* Separate Guarantee Display */}
@@ -600,7 +601,7 @@ const Transactions = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '15px', marginTop: '10px' }}>
                     <span className="urban-font" style={{fontSize: '0.85rem', color: 'white'}}>SALDO PENDIENTE:</span>
                     <span className="gold-text" style={{ fontWeight: 'bold', fontSize: '1.4rem' }}>
-                      ${(parseFloat(selectedRental.total) - parseFloat(selectedRental.total_paid)).toFixed(2)}
+                      {formatCurrency(parseFloat(selectedRental.total) - parseFloat(selectedRental.total_paid))}
                     </span>
                   </div>
                 </div>
@@ -667,7 +668,7 @@ const Transactions = () => {
                       </div>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: '0.9rem', fontWeight: '500' }}>{item.product_name}</div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--cta)', fontWeight: 'bold' }}>${item.price_at_rental}</div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--cta)', fontWeight: 'bold' }}>{formatCurrency(item.price_at_rental)}</div>
                       </div>
                       {(selectedRental.status === 'reserved' || selectedRental.status === 'preparing' || selectedRental.status === 'ready') && (
                         <button onClick={() => removeItemFromRental(item.product)} style={{ border: 'none', background: 'transparent', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={18} /></button>

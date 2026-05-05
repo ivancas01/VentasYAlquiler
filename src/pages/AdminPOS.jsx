@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { Plus, Trash2, ShoppingCart, Calendar, CheckCircle, CreditCard, Shield, Edit3, ArrowRight, Search, Filter, User, MapPin, Phone, CreditCard as CardIcon, Landmark, X, Upload } from 'lucide-react'
 import { createPortal } from 'react-dom'
+import { formatCurrency } from '../utils/format'
 
 const Modal = ({ children, onClose, title }) => {
   return createPortal(
@@ -370,7 +371,7 @@ const AdminPOS = () => {
                     )}
                   </div>
                   <h4 style={{ fontSize: '0.9rem', color: 'white', marginBottom: '8px' }}>{product.name}</h4>
-                  <p style={{ color: 'var(--cta)', fontWeight: 'bold', fontSize: '0.9rem' }}>${type === 'sale' ? (product.price_sale || 0) : (product.price_rental || 0)}</p>
+                  <p style={{ color: 'var(--cta)', fontWeight: 'bold', fontSize: '0.9rem' }}>{formatCurrency(type === 'sale' ? (product.price_sale || 0) : (product.price_rental || 0))}</p>
                   
                   <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
                     <p style={{ fontSize: '0.65rem', color: isAvailable ? 'var(--text-dim)' : '#ef4444', fontWeight: 'bold' }}>
@@ -565,11 +566,11 @@ const AdminPOS = () => {
           <div style={{ background: 'var(--secondary)', padding: '20px', borderRadius: '8px', marginBottom: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '1.4rem', color: 'white', marginBottom: '8px' }}>
               <span>TOTAL</span>
-              <span className="gold-text">${calculateTotal().toFixed(2)}</span>
+              <span className="gold-text">{formatCurrency(calculateTotal())}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--cta)', fontSize: '0.9rem', fontWeight: 'bold' }}>
               <span>PENDIENTE</span>
-              <span>${(calculateTotal() - parseFloat(initialPayment || 0)).toFixed(2)}</span>
+              <span>{formatCurrency(calculateTotal() - parseFloat(initialPayment || 0))}</span>
             </div>
           </div>
         )}

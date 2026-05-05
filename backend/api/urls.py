@@ -4,7 +4,7 @@ from .views import (
     UserViewSet, CategoryViewSet, ProductViewSet,
     SaleViewSet, RentalViewSet, InvoiceViewSet, AnalyticsViewSet,
     PaymentViewSet, NotificationViewSet, CustomerViewSet, DashboardStatsView,
-    GroupViewSet, PermissionViewSet, SiteConfigViewSet, CashViewSet, MovementViewSet, HeroImageViewSet
+    GroupViewSet, PermissionViewSet, SiteConfigViewSet, CashViewSet, MovementViewSet, HeroImageViewSet, AboutImageViewSet
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -28,6 +28,7 @@ router.register(r'config', SiteConfigViewSet, basename='config')
 router.register(r'cash', CashViewSet, basename='cash')
 router.register(r'movements', MovementViewSet)
 router.register(r'hero-images', HeroImageViewSet)
+router.register(r'about-images', AboutImageViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

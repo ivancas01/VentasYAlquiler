@@ -6,6 +6,7 @@ import {
   DollarSign, ShoppingBag, RefreshCcw
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { formatCurrency, formatDate } from '../utils/format'
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -76,7 +77,7 @@ const Dashboard = () => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '30px', marginBottom: '50px' }}>
         <StatCard 
           title="Ingresos Hoy" 
-          value={`$${stats.revenue_today.toLocaleString()}`} 
+          value={formatCurrency(stats.revenue_today)} 
           icon={<DollarSign />} 
           color="var(--cta)" 
           trend={stats.revenue_trend >= 0 ? "up" : "down"} 
@@ -84,7 +85,7 @@ const Dashboard = () => {
         />
         <StatCard 
           title="Ventas del Mes" 
-          value={`$${stats.monthly_sales.toLocaleString()}`} 
+          value={formatCurrency(stats.monthly_sales)} 
           icon={<TrendingUp />} 
           color="#3b82f6" 
         />
@@ -132,7 +133,7 @@ const Dashboard = () => {
                       </div>
                     </td>
                     <td style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>
-                      {new Date(r.end_date).toLocaleDateString()}
+                      {formatDate(r.end_date)}
                     </td>
                     <td>
                       <span style={{ 
@@ -144,7 +145,7 @@ const Dashboard = () => {
                       </span>
                     </td>
                     <td style={{ textAlign: 'right', fontWeight: 'bold', fontSize: '1rem', color: 'white' }}>
-                      ${parseFloat(r.total).toLocaleString()}
+                      {formatCurrency(r.total)}
                     </td>
                   </tr>
                 ))}

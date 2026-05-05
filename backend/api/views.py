@@ -7,12 +7,12 @@ from django.db.models.functions import TruncMonth, TruncDate
 from django.utils import timezone
 from .models import (
     User, Category, Product, Sale, Rental, Invoice, 
-    Payment, Notification, Customer, SiteConfig, Movement, HeroImage
+    Payment, Notification, Customer, SiteConfig, Movement, HeroImage, AboutImage
 )
 from .serializers import (
     UserSerializer, CategorySerializer, ProductSerializer, SaleSerializer,
     RentalSerializer, InvoiceSerializer, PaymentSerializer, NotificationSerializer,
-    CustomerSerializer, SiteConfigSerializer, MovementSerializer, HeroImageSerializer,
+    CustomerSerializer, SiteConfigSerializer, MovementSerializer, HeroImageSerializer, AboutImageSerializer,
     GroupSerializer, PermissionSerializer
 )
 from django.contrib.auth.models import Group, Permission
@@ -34,9 +34,10 @@ class GroupViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
 class PermissionViewSet(viewsets.ModelViewSet):
-    queryset = Permission.objects.all()
+    queryset = Permission.objects.all().order_by('id')
     serializer_class = PermissionSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = None
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -343,27 +344,34 @@ class AnalyticsViewSet(viewsets.ViewSet):
         last_30_days = timezone.now() - timedelta(days=30)
         
         # Daily Sales
-        daily_sales = Sale.objects.filter(created_at__gte=last_30_days)\
+        sales_qs = Sale.objects.all()
+        rentals_qs = Rental.objects.all()
+
+        if request.user.role != 'admin' and not request.user.is_superuser:
+            sales_qs = sales_qs.filter(staff=request.user)
+            rentals_qs = rentals_qs.filter(staff=request.user)
+
+        daily_sales = sales_qs.filter(created_at__gte=last_30_days)\
             .annotate(date=TruncDate('created_at'))\
             .values('date')\
             .annotate(total=Sum('total'))\
             .order_by('date')
         
         # Daily Rentals
-        daily_rentals = Rental.objects.filter(created_at__gte=last_30_days)\
+        daily_rentals = rentals_qs.filter(created_at__gte=last_30_days)\
             .annotate(date=TruncDate('created_at'))\
             .values('date')\
             .annotate(total=Sum('total'))\
             .order_by('date')
             
         # Top Staff Sales
-        top_sales_staff = Sale.objects.filter(created_at__gte=last_30_days)\
+        top_sales_staff = sales_qs.filter(created_at__gte=last_30_days)\
             .values('staff__username')\
             .annotate(sales_count=Count('id'))\
             .order_by('-sales_count')[:5]
             
         # Top Staff Rentals
-        top_rental_staff = Rental.objects.filter(created_at__gte=last_30_days)\
+        top_rental_staff = rentals_qs.filter(created_at__gte=last_30_days)\
             .values('staff__username')\
             .annotate(rentals_count=Count('id'))\
             .order_by('-rentals_count')[:5]
@@ -386,20 +394,28 @@ class DashboardStatsView(APIView):
         today = timezone.now().date()
         month_start = today.replace(day=1)
         
+        sales_qs = Sale.objects.all()
+        rentals_qs = Rental.objects.all()
+
+        if request.user.role != 'admin' and not request.user.is_superuser:
+            sales_qs = sales_qs.filter(staff=request.user)
+            rentals_qs = rentals_qs.filter(staff=request.user)
+
         # Today
-        sales_today = Sale.objects.filter(created_at__date=today).aggregate(total=Sum('total'))['total'] or 0
-        rentals_today = Rental.objects.filter(created_at__date=today).aggregate(total=Sum('total'))['total'] or 0
+        sales_today = sales_qs.filter(created_at__date=today).aggregate(total=Sum('total'))['total'] or 0
+        rentals_today = rentals_qs.filter(created_at__date=today).aggregate(total=Sum('total'))['total'] or 0
         
         # Trend calculation (this month vs last month)
         last_month_start = (month_start - timedelta(days=1)).replace(day=1)
         last_month_end = month_start - timedelta(days=1)
         
-        sales_last_month = Sale.objects.filter(created_at__date__gte=last_month_start, created_at__date__lte=last_month_end).aggregate(total=Sum('total'))['total'] or 0
-        rentals_last_month = Rental.objects.filter(created_at__date__gte=last_month_start, created_at__date__lte=last_month_end).aggregate(total=Sum('total'))['total'] or 0
+        sales_last_month = sales_qs.filter(created_at__date__gte=last_month_start, created_at__date__lte=last_month_end).aggregate(total=Sum('total'))['total'] or 0
+        rentals_last_month = rentals_qs.filter(created_at__date__gte=last_month_start, created_at__date__lte=last_month_end).aggregate(total=Sum('total'))['total'] or 0
         last_month_total = float(sales_last_month + rentals_last_month)
+
         # Month
-        sales_month = Sale.objects.filter(created_at__date__gte=month_start).aggregate(total=Sum('total'))['total'] or 0
-        rentals_month = Rental.objects.filter(created_at__date__gte=month_start).aggregate(total=Sum('total'))['total'] or 0
+        sales_month = sales_qs.filter(created_at__date__gte=month_start).aggregate(total=Sum('total'))['total'] or 0
+        rentals_month = rentals_qs.filter(created_at__date__gte=month_start).aggregate(total=Sum('total'))['total'] or 0
         this_month_total = float(sales_month + rentals_month)
         
         if last_month_total > 0:
@@ -411,15 +427,15 @@ class DashboardStatsView(APIView):
         weekly_revenue = []
         for i in range(6, -1, -1):
             d = today - timedelta(days=i)
-            day_total = (Sale.objects.filter(created_at__date=d).aggregate(total=Sum('total'))['total'] or 0) + \
-                        (Rental.objects.filter(created_at__date=d).aggregate(total=Sum('total'))['total'] or 0)
+            day_total = (sales_qs.filter(created_at__date=d).aggregate(total=Sum('total'))['total'] or 0) + \
+                        (rentals_qs.filter(created_at__date=d).aggregate(total=Sum('total'))['total'] or 0)
             weekly_revenue.append({
                 "day": d.strftime('%a').upper(),
                 "value": float(day_total)
             })
 
         # Recent rentals
-        recent_rentals = Rental.objects.all().order_by('-created_at')[:5]
+        recent_rentals = rentals_qs.order_by('-created_at')[:5]
         recent_data = []
         for r in recent_rentals:
             recent_data.append({
@@ -433,10 +449,10 @@ class DashboardStatsView(APIView):
         return Response({
             "revenue_today": float(sales_today + rentals_today),
             "monthly_sales": this_month_total,
-            "active_rentals": Rental.objects.filter(status='delivered').count(),
+            "active_rentals": rentals_qs.filter(status='delivered').count(),
             "low_stock": Product.objects.filter(stock__lte=2).count(),
-            "upcoming_deliveries": Rental.objects.filter(start_date__date=today, status__in=['reserved', 'preparing', 'ready']).count(),
-            "returns_today": Rental.objects.filter(end_date__date=today, status='delivered').count(),
+            "upcoming_deliveries": rentals_qs.filter(start_date__date=today, status__in=['reserved', 'preparing', 'ready']).count(),
+            "returns_today": rentals_qs.filter(end_date__date=today, status='delivered').count(),
             "revenue_trend": revenue_trend,
             "weekly_revenue": weekly_revenue,
             "recent_rentals": recent_data
@@ -466,6 +482,16 @@ class SiteConfigViewSet(viewsets.ModelViewSet):
 class HeroImageViewSet(viewsets.ModelViewSet):
     queryset = HeroImage.objects.all()
     serializer_class = HeroImageSerializer
+    pagination_class = None
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.AllowAny()]
+        return [permissions.IsAdminUser()]
+
+class AboutImageViewSet(viewsets.ModelViewSet):
+    queryset = AboutImage.objects.all()
+    serializer_class = AboutImageSerializer
     pagination_class = None
 
     def get_permissions(self):

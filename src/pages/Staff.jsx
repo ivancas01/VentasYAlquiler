@@ -70,10 +70,13 @@ const Staff = () => {
       const permsData = pRes.data.results || pRes.data
 
       setGroups(groupsData)
-      const relevantModels = ['product', 'rental', 'sale', 'category', 'customer', 'payment', 'user', 'group', 'notification']
-      const filteredPerms = permsData.filter(p => 
-        relevantModels.some(model => p.codename.endsWith(model))
-      )
+      // Use a more inclusive approach: show everything except core Django internals
+      const excludedModels = ['logentry', 'contenttype', 'session', 'permission']
+      const filteredPerms = permsData.filter(p => {
+        const parts = p.codename.split('_')
+        const model = parts[1]
+        return !excludedModels.includes(model)
+      })
       setPermissions(filteredPerms)
     } catch (err) {
       console.error(err)
@@ -103,11 +106,13 @@ const Staff = () => {
         confirmPassword: '',
         role: user.role,
         group_ids: (user.groups_data || []).map(g => g.id),
-        phone: user.phone || ''
+        phone: user.phone || '',
+        full_name: user.full_name || '',
+        document_number: user.document_number || ''
       })
     } else {
       setEditingItem(null)
-      setUserForm({ username: '', email: '', password: '', confirmPassword: '', role: 'staff', group_ids: [], phone: '' })
+      setUserForm({ username: '', email: '', password: '', confirmPassword: '', role: 'staff', group_ids: [], phone: '', full_name: '', document_number: '' })
     }
     setShowUserModal(true)
   }
@@ -197,33 +202,61 @@ const Staff = () => {
   }
 
   const translatePermission = (name) => {
-    const translations = {
-      'Can add product': 'Crear Productos',
-      'Can change product': 'Editar Productos',
-      'Can delete product': 'Eliminar Productos',
-      'Can view product': 'Ver Inventario',
-      'Can add rental': 'Crear Alquileres',
-      'Can change rental': 'Gestionar Alquileres',
-      'Can delete rental': 'Eliminar Alquileres',
-      'Can view rental': 'Ver Historial Alquileres',
-      'Can add sale': 'Procesar Ventas',
-      'Can change sale': 'Editar Ventas',
-      'Can delete sale': 'Anular Ventas',
-      'Can view sale': 'Ver Historial Ventas',
-      'Can add category': 'Crear Categorías',
-      'Can view category': 'Ver Categorías',
-      'Can add customer': 'Registrar Clientes',
-      'Can view customer': 'Ver Clientes',
-      'Can add payment': 'Registrar Pagos',
-      'Can view payment': 'Ver Movimientos',
-      'Can add user': 'Crear Personal',
-      'Can view user': 'Ver Personal',
-      'Can add group': 'Crear Roles',
-      'Can view group': 'Ver Roles',
-      'Can add notification': 'Crear Alertas',
-      'Can view notification': 'Ver Alertas',
+    const actionMap = { 'add': 'Crear', 'change': 'Editar', 'delete': 'Eliminar', 'view': 'Ver' }
+    const modelMap = {
+      'product': 'Productos',
+      'rental': 'Alquileres',
+      'sale': 'Ventas',
+      'category': 'Categorías',
+      'customer': 'Clientes',
+      'payment': 'Pagos',
+      'user': 'Personal',
+      'group': 'Roles',
+      'notification': 'Alertas',
+      'siteconfig': 'Sitio Web',
+      'movement': 'Caja',
+      'heroimage': 'Banner',
+      'invoice': 'Facturas',
+      'rentalitem': 'Items Alquiler',
+      'saleitem': 'Items Venta'
     }
-    return translations[name] || name
+
+    // Try to find action and model from name "Can [action] [model]"
+    const parts = name.toLowerCase().split(' ')
+    if (parts[0] === 'can' && parts.length >= 3) {
+      const action = actionMap[parts[1]] || parts[1]
+      const modelKey = parts.slice(2).join('').replace(/\s/g, '')
+      const model = modelMap[modelKey] || modelKey
+      return `${action} ${model}`
+    }
+    return name
+  }
+
+  // Group permissions by model for the UI
+  const groupedPermissions = permissions.reduce((acc, p) => {
+    const parts = p.codename.split('_')
+    const model = parts[1]
+    if (!acc[model]) acc[model] = []
+    acc[model].push(p)
+    return acc
+  }, {})
+
+  const modelNames = {
+    'product': 'INVENTARIO Y PRODUCTOS',
+    'rental': 'ALQUILERES (HISTORIAL Y GESTIÓN)',
+    'sale': 'VENTAS Y REPORTES',
+    'category': 'CATEGORÍAS DE PRODUCTO',
+    'customer': 'BASE DE DATOS DE CLIENTES',
+    'payment': 'PAGOS Y ABONOS',
+    'user': 'PERSONAL Y SEGURIDAD',
+    'group': 'GESTIÓN DE ROLES',
+    'notification': 'ALERTAS DEL SISTEMA',
+    'siteconfig': 'CONTENIDO WEB (CMS)',
+    'movement': 'CAJA Y MOVIMIENTOS',
+    'heroimage': 'IMÁGENES DEL BANNER',
+    'invoice': 'FACTURACIÓN Y RECIBOS',
+    'rentalitem': 'DETALLES DE ALQUILER',
+    'saleitem': 'DETALLES DE VENTA'
   }
 
   return (
@@ -309,18 +342,31 @@ const Staff = () => {
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '25px' }}>
-          {groups.map(g => (
-            <div key={g.id} className="glass-card" style={{ padding: '30px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ background: 'var(--secondary)', padding: '10px', borderRadius: '8px' }}>
-                    <Shield size={24} color="var(--cta)" />
+          {groups.length === 0 ? (
+            <div className="glass-card" style={{ padding: '40px', textAlign: 'center', gridColumn: '1 / -1' }}>
+              <Shield size={48} color="var(--text-dim)" style={{ marginBottom: '20px', opacity: 0.3 }} />
+              <p style={{ color: 'var(--text-dim)' }}>No hay roles personalizados creados todavía.</p>
+              <button onClick={() => handleOpenGroupModal()} className="btn-outline" style={{ marginTop: '20px' }}>CREAR PRIMER ROL</button>
+            </div>
+          ) : (
+            groups.map(g => (
+            <div key={g.id} className="glass-card" style={{ padding: '30px', border: '1px solid var(--glass-border)', transition: 'transform 0.3s ease', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '25px', gap: '15px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flex: 1, minWidth: 0 }}>
+                  <div style={{ background: 'linear-gradient(135deg, var(--secondary), rgba(184, 158, 72, 0.1))', padding: '12px', borderRadius: '12px', flexShrink: 0, border: '1px solid rgba(184, 158, 72, 0.2)' }}>
+                    <Shield size={22} color="var(--cta)" />
                   </div>
-                  <h3 className="urban-font" style={{ fontSize: '1.2rem' }}>{g.name.toUpperCase()}</h3>
+                  <h3 className="urban-font" style={{ fontSize: '1.1rem', margin: 0, wordBreak: 'break-word', lineHeight: '1.2', color: 'white' }}>
+                    {g.name.toUpperCase()}
+                  </h3>
                 </div>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button onClick={() => handleOpenGroupModal(g)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}><Edit size={16} /></button>
-                  <button onClick={() => handleDeleteGroup(g.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={16} /></button>
+                <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                  <button onClick={() => handleOpenGroupModal(g)} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', cursor: 'pointer', padding: '8px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Editar Rol">
+                    <Edit size={14} />
+                  </button>
+                  <button onClick={() => handleDeleteGroup(g.id)} style={{ background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', cursor: 'pointer', padding: '8px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Eliminar Rol">
+                    <Trash2 size={14} />
+                  </button>
                 </div>
               </div>
               <p style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginBottom: '15px', textTransform: 'uppercase' }}>Permisos Asignados:</p>
@@ -332,7 +378,8 @@ const Staff = () => {
                 ))}
               </div>
             </div>
-          ))}
+            ))
+          )}
         </div>
       )}
 
@@ -341,13 +388,25 @@ const Staff = () => {
         <Modal onClose={() => setShowUserModal(false)} title={editingItem ? 'EDITAR PERSONAL' : 'REGISTRAR PERSONAL'}>
           <form onSubmit={submitUser}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px' }}>
+              <div style={{ gridColumn: 'span 2' }}>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nombre Completo</label>
+                <input type="text" value={userForm.full_name} onChange={e => setUserForm({...userForm, full_name: e.target.value})} required placeholder="Ej: Juan Pérez" style={{ width: '100%' }} />
+              </div>
               <div>
                 <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Usuario</label>
                 <input type="text" value={userForm.username} onChange={e => setUserForm({...userForm, username: e.target.value})} required style={{ width: '100%' }} />
               </div>
               <div>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Número de Documento</label>
+                <input type="text" value={userForm.document_number} onChange={e => setUserForm({...userForm, document_number: e.target.value})} required placeholder="DNI / CC / Pasaporte" style={{ width: '100%' }} />
+              </div>
+              <div>
                 <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Email</label>
                 <input type="email" value={userForm.email} onChange={e => setUserForm({...userForm, email: e.target.value})} style={{ width: '100%' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Teléfono</label>
+                <input type="text" value={userForm.phone} onChange={e => setUserForm({...userForm, phone: e.target.value})} style={{ width: '100%' }} />
               </div>
               <div>
                 <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Contraseña {editingItem && '(Opcional)'}</label>
@@ -357,29 +416,28 @@ const Staff = () => {
                 <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Confirmar Contraseña</label>
                 <input type="password" value={userForm.confirmPassword} onChange={e => setUserForm({...userForm, confirmPassword: e.target.value})} required={!editingItem || userForm.password} style={{ width: '100%' }} />
               </div>
-              <div>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Rol Principal</label>
-                <select value={userForm.role} onChange={e => setUserForm({...userForm, role: e.target.value})} style={{ width: '100%' }}>
-                  <option value="staff">Personal Operativo</option>
-                  <option value="admin">Administrador</option>
-                </select>
-              </div>
+              
               <div style={{ gridColumn: 'span 2' }}>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '15px' }}>Asignar a Grupos (Roles Detallados)</label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '15px' }}>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '15px' }}>Seleccionar Rol de Acceso</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '15px' }}>
                   {groups.map(g => (
-                    <label key={g.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', background: userForm.group_ids.includes(g.id) ? 'rgba(184, 158, 72, 0.1)' : 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '8px', border: '1px solid', borderColor: userForm.group_ids.includes(g.id) ? 'var(--cta)' : 'rgba(255,255,255,0.05)' }}>
+                    <label key={g.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', background: userForm.group_ids.includes(g.id) ? 'rgba(184, 158, 72, 0.1)' : 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '12px', border: '1px solid', borderColor: userForm.group_ids.includes(g.id) ? 'var(--cta)' : 'rgba(255,255,255,0.05)', transition: 'all 0.2s ease' }}>
                       <input 
-                        type="checkbox" 
+                        type="radio" 
+                        name="userRole"
                         checked={userForm.group_ids.includes(g.id)} 
                         onChange={() => {
-                          const newIds = userForm.group_ids.includes(g.id) 
-                            ? userForm.group_ids.filter(id => id !== g.id)
-                            : [...userForm.group_ids, g.id]
-                          setUserForm({...userForm, group_ids: newIds})
+                          setUserForm({
+                            ...userForm, 
+                            group_ids: [g.id],
+                            role: g.name.toLowerCase().includes('admin') ? 'admin' : 'staff'
+                          })
                         }}
                       />
-                      <span style={{ fontSize: '0.8rem' }}>{g.name}</span>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: userForm.group_ids.includes(g.id) ? 'white' : 'var(--text-dim)' }}>{g.name}</span>
+                        <span style={{ fontSize: '0.65rem', color: 'var(--text-dim)' }}>{g.name.toLowerCase().includes('admin') ? 'Acceso Total' : 'Acceso Limitado'}</span>
+                      </div>
                     </label>
                   ))}
                 </div>
@@ -395,32 +453,39 @@ const Staff = () => {
       {/* Group Modal */}
       {showGroupModal && (
         <Modal onClose={() => setShowGroupModal(false)} title={editingItem ? 'EDITAR ROL' : 'NUEVO ROL DE ACCESO'}>
-          <form onSubmit={submitGroup}>
-            <div style={{ marginBottom: '30px' }}>
+          <form onSubmit={submitGroup} style={{ display: 'flex', flexDirection: 'column', maxHeight: '75vh' }}>
+            <div style={{ marginBottom: '20px' }}>
               <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nombre del Rol</label>
               <input type="text" value={groupForm.name} onChange={e => setGroupForm({...groupForm, name: e.target.value})} required placeholder="Ej: Cajero, Gestor de Inventario" style={{ width: '100%' }} />
             </div>
             
-            <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '15px' }}>Permisos del Rol</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px', maxHeight: '300px', overflowY: 'auto', padding: '10px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
-              {permissions.map(p => (
-                <label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.75rem', padding: '8px' }}>
-                  <input 
-                    type="checkbox" 
-                    checked={groupForm.permission_ids.includes(p.id)}
-                    onChange={() => {
-                      const newIds = groupForm.permission_ids.includes(p.id)
-                        ? groupForm.permission_ids.filter(id => id !== p.id)
-                        : [...groupForm.permission_ids, p.id]
-                      setGroupForm({...groupForm, permission_ids: newIds})
-                    }}
-                  />
-                  <span>{translatePermission(p.name)}</span>
-                </label>
+            <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '15px' }}>Permisos del Rol (Agrupados por Módulo)</label>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '15px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              {Object.keys(groupedPermissions).sort().map(modelKey => (
+                <div key={modelKey} style={{ marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '15px' }}>
+                  <h4 style={{ fontSize: '0.7rem', color: 'var(--cta)', letterSpacing: '1px', marginBottom: '10px' }}>{modelNames[modelKey] || modelKey.toUpperCase()}</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '8px' }}>
+                    {groupedPermissions[modelKey].map(p => (
+                      <label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.75rem', padding: '5px' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={groupForm.permission_ids.includes(p.id)}
+                          onChange={() => {
+                            const newIds = groupForm.permission_ids.includes(p.id)
+                              ? groupForm.permission_ids.filter(id => id !== p.id)
+                              : [...groupForm.permission_ids, p.id]
+                            setGroupForm({...groupForm, permission_ids: newIds})
+                          }}
+                        />
+                        <span>{translatePermission(p.name)}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
 
-            <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', marginTop: '40px' }}>
+            <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', marginTop: '20px', flexShrink: 0 }}>
               {loading ? 'GUARDANDO...' : 'GUARDAR ROL'}
             </button>
           </form>

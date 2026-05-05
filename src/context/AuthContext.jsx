@@ -52,8 +52,16 @@ export const AuthProvider = ({ children }) => {
     setUser(null)
   }
 
+  const hasPermission = (permCodename) => {
+    if (user?.is_superuser || user?.role === 'admin') return true
+    if (!user?.groups_data) return false
+    return user.groups_data.some(group => 
+      group.permissions.some(p => p.codename === permCodename)
+    )
+  }
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, loading, hasPermission }}>
       {children}
     </AuthContext.Provider>
   )

@@ -33,6 +33,8 @@ class User(AbstractUser):
     )
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='staff')
     phone = models.CharField(max_length=20, blank=True, null=True)
+    full_name = models.CharField(max_length=255, blank=True, null=True)
+    document_number = models.CharField(max_length=50, blank=True, null=True)
     
     objects = UserManager()
 
@@ -188,6 +190,7 @@ class Notification(models.Model):
 class SiteConfig(models.Model):
     company_name_white = models.CharField(max_length=100, default='URBAN')
     company_name_gold = models.CharField(max_length=100, default='LUXURY')
+    company_name = models.CharField(max_length=100, default='Urban Luxury')
     hero_title_white = models.CharField(max_length=100, default='URBAN')
     hero_title_gold = models.CharField(max_length=100, default='LUXURY')
     hero_tagline = models.CharField(max_length=255, default='ESTILO SIN LÍMITES')
@@ -211,7 +214,9 @@ class SiteConfig(models.Model):
     contacto_title = models.CharField(max_length=100, default='CONTACTO')
     contacto_subtitle = models.CharField(max_length=255, default='¿Tienes alguna pregunta? Estamos listos para asesorarte de manera personalizada.')
     
-    footer_text = models.TextField(default='© 2026 Urban Luxury. Todos los derechos reservados.')
+    footer_text = models.TextField(default='La plataforma líder en gestión de activos, brindando soluciones eficientes para ventas y alquileres industriales y comerciales.')
+    footer_links_title = models.CharField(max_length=100, default='Enlaces Rápidos')
+    footer_contact_title = models.CharField(max_length=100, default='Contacto')
     
     def __str__(self):
         return f"Configuración de {self.company_name_white} {self.company_name_gold}"
@@ -222,4 +227,15 @@ class HeroImage(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        verbose_name = 'Imagen de Inicio'
+        verbose_name_plural = 'Imágenes de Inicio'
+
+class AboutImage(models.Model):
+    image = models.ImageField(upload_to='about_images/')
+    order = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Imagen de Nosotros'
+        verbose_name_plural = 'Imágenes de Nosotros'
         ordering = ['order', '-created_at']

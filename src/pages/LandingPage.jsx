@@ -2,12 +2,15 @@ import React, { useEffect } from 'react'
 import axios from 'axios'
 import { Link, useLocation } from 'react-router-dom'
 import { ArrowRight, Mail, Phone, MapPin, Send, ChevronDown } from 'lucide-react'
+import { formatCurrency } from '../utils/format'
 
 const LandingPage = () => {
   const { hash } = useLocation()
   const [products, setProducts] = React.useState([])
   const [heroImages, setHeroImages] = React.useState([])
+  const [aboutImages, setAboutImages] = React.useState([])
   const [config, setConfig] = React.useState(null)
+  const [currentAboutImage, setCurrentAboutImage] = React.useState(0)
 
   useEffect(() => {
     axios.get('http://127.0.0.1:8000/api/config/')
@@ -24,7 +27,20 @@ const LandingPage = () => {
     axios.get('http://127.0.0.1:8000/api/hero-images/')
       .then(res => setHeroImages(res.data))
       .catch(err => console.error(err))
+
+    axios.get('http://127.0.0.1:8000/api/about-images/')
+      .then(res => setAboutImages(res.data))
+      .catch(err => console.error(err))
   }, [])
+
+  useEffect(() => {
+    if (aboutImages.length > 1) {
+      const timer = setInterval(() => {
+        setCurrentAboutImage(prev => (prev + 1) % aboutImages.length)
+      }, 5000)
+      return () => clearInterval(timer)
+    }
+  }, [aboutImages])
 
   useEffect(() => {
     if (hash) {
@@ -36,6 +52,13 @@ const LandingPage = () => {
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
   }, [hash])
+
+  const aboutFallbacks = [
+    'https://images.unsplash.com/photo-1441984969813-91c70513e273?q=80&w=1200',
+    'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1200'
+  ]
+
+  const displayAboutImages = aboutImages.length > 0 ? aboutImages.map(img => img.image) : aboutFallbacks
 
   return (
     <div className="fade-in">
@@ -77,7 +100,7 @@ const LandingPage = () => {
             
             const fallbackImage = fallbackImages[i % fallbackImages.length] + '?q=80&w=800&auto=format&fit=crop';
             const imageUrl = p.image 
-              ? (p.image.startsWith('http') ? p.image : `http://127.0.0.1:8000${p.image}`)
+              ? (typeof p.image === 'string' && p.image.startsWith('http') ? p.image : `http://127.0.0.1:8000${p.image}`)
               : fallbackImage;
             
             return (
@@ -121,39 +144,149 @@ const LandingPage = () => {
           </div>
         </div>
 
-        <a href="#nosotros" style={{ position: 'absolute', bottom: '40px', left: '50%', transform: 'translateX(-50%)', color: 'var(--text-dim)', animation: 'bounce 2s infinite' }}>
+        <a href="#productos-destacados" style={{ position: 'absolute', bottom: '40px', left: '50%', transform: 'translateX(-50%)', color: 'var(--text-dim)', animation: 'bounce 2s infinite' }}>
           <ChevronDown size={32} />
         </a>
       </section>
 
-      {/* Section: NOSOTROS */}
-      <section id="nosotros" style={{ padding: '150px 20px', maxWidth: '1200px', margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: '80px' }}>
-          <h2 className="gold-text" style={{ fontSize: '3.5rem', marginBottom: '20px' }}>{config?.nosotros_title || 'NOSOTROS'}</h2>
-          <div style={{ width: '80px', height: '2px', background: 'var(--cta)', margin: '0 auto' }}></div>
-        </div>
+      {/* Section: PRODUCTOS DESTACADOS */}
+      <section id="productos-destacados" style={{ padding: '100px 20px', background: 'var(--bg)', position: 'relative' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '60px' }}>
+            <div>
+              <h2 className="gold-text urban-font" style={{ fontSize: '0.8rem', letterSpacing: '4px', marginBottom: '15px' }}>COLECCIÓN EXCLUSIVA</h2>
+              <h1 style={{ fontSize: '3rem', color: 'white', margin: 0 }}>PRODUCTOS DESTACADOS</h1>
+            </div>
+            <Link to="/catalog" className="btn-outline" style={{ padding: '12px 30px', fontSize: '0.8rem' }}>EXPLORAR TODO EL CATÁLOGO</Link>
+          </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '80px', alignItems: 'center' }}>
-          <div className="glass-card" style={{ padding: '60px', borderLeft: '4px solid var(--cta)' }}>
-            <p style={{ fontSize: '1.4rem', lineHeight: '1.8', color: 'white', marginBottom: '30px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '40px' }}>
+            {products.slice(0, 3).map((p) => (
+              <div 
+                key={p.id} 
+                className="glass-card" 
+                style={{ padding: '25px', display: 'flex', flexDirection: 'column', transition: 'transform 0.4s ease', cursor: 'pointer' }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-10px)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+              >
+                <div style={{ height: '400px', background: 'var(--secondary)', marginBottom: '25px', overflow: 'hidden', position: 'relative' }}>
+                  <img 
+                    src={p.image ? (typeof p.image === 'string' && p.image.startsWith('http') ? p.image : `http://127.0.0.1:8000${p.image}`) : 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=800'} 
+                    alt={p.name} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                  
+                  {/* Status Overlay */}
+                  {p.stock === 0 && (
+                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '1.2rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '2px', zIndex: 10 }}>
+                      {p.product_type === 'sale' ? 'AGOTADO' : 'ALQUILADO'}
+                    </div>
+                  )}
+
+                  {/* Type Badge */}
+                  <div style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(0,0,0,0.7)', color: 'var(--cta)', padding: '5px 12px', fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase', border: '1px solid var(--cta)', zIndex: 11 }}>
+                    {p.product_type === 'both' ? 'VENTA / ALQUILER' : (p.product_type === 'sale' ? 'VENTA' : 'ALQUILER')}
+                  </div>
+                </div>
+
+                <h3 className="urban-font" style={{ fontSize: '1.2rem', marginBottom: '10px', color: 'white' }}>{p.name.toUpperCase()}</h3>
+                <p style={{ color: 'var(--text-dim)', fontSize: '0.85rem', marginBottom: '25px', flex: 1, lineHeight: '1.6' }}>
+                  {p.description?.length > 100 ? p.description.substring(0, 100) + '...' : p.description || 'Elegancia y distinción en cada detalle de esta pieza exclusiva.'}
+                </p>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    {p.price_sale && <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'white' }}>{formatCurrency(p.price_sale)}</div>}
+                    {p.price_rental && <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--cta)' }}>{formatCurrency(p.price_rental)} <span style={{fontSize: '0.6rem', color: 'var(--text-dim)'}}>ALQ</span></div>}
+                  </div>
+                  <Link to="/catalog" className="btn-primary" style={{ width: '100%', height: '45px', fontSize: '0.75rem' }}>VER DETALLES</Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Section: NOSOTROS */}
+      <section id="nosotros" style={{ padding: '150px 20px', maxWidth: '1400px', margin: '0 auto' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '100px', alignItems: 'center' }}>
+          <div>
+            <h2 className="gold-text urban-font" style={{ fontSize: '1rem', letterSpacing: '5px', marginBottom: '20px' }}>ESTILO Y EXCLUSIVIDAD</h2>
+            <h1 style={{ fontSize: '3.5rem', color: 'white', marginBottom: '40px', lineHeight: 1.1 }}>{config?.nosotros_title || 'NOSOTROS'}</h1>
+            <div style={{ width: '60px', height: '4px', background: 'var(--cta)', marginBottom: '50px' }}></div>
+            
+            <p style={{ fontSize: '1.3rem', lineHeight: '1.8', color: 'var(--text-dim)', marginBottom: '50px', maxWidth: '800px' }}>
               {config?.about_text || 'En Urban Luxury, redefinimos la experiencia de vestir bien. Creemos que la elegancia no debería ser una carga, sino una elección libre y flexible.'}
             </p>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '30px' }}>
-            <div className="glass-card" style={{ padding: '30px' }}>
-              <h3 style={{ fontSize: '1.1rem', color: 'var(--cta)', marginBottom: '15px' }}>Nuestra Visión</h3>
-              <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem' }}>{config?.about_vision || 'Convertirnos en el referente nacional de moda circular de lujo, promoviendo un estilo de vida sofisticado y sostenible.'}</p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
+              <div>
+                <h3 className="urban-font" style={{ fontSize: '0.8rem', color: 'var(--cta)', letterSpacing: '2px', marginBottom: '15px' }}>NUESTRA VISIÓN</h3>
+                <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', lineHeight: '1.6' }}>{config?.about_vision || 'Convertirnos en el referente nacional de moda circular de lujo, promoviendo un estilo de vida sofisticado y sostenible.'}</p>
+              </div>
+              <div>
+                <h3 className="urban-font" style={{ fontSize: '0.8rem', color: 'var(--cta)', letterSpacing: '2px', marginBottom: '15px' }}>NUESTRA MISIÓN</h3>
+                <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', lineHeight: '1.6' }}>{config?.about_mission || 'Facilitar el acceso a prendas exclusivas mediante un servicio impecable de alquiler y venta, garantizando que cada cliente se sienta su mejor versión.'}</p>
+              </div>
             </div>
-            <div className="glass-card" style={{ padding: '30px' }}>
-              <h3 style={{ fontSize: '1.1rem', color: 'var(--cta)', marginBottom: '15px' }}>Nuestra Misión</h3>
-              <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem' }}>{config?.about_mission || 'Facilitar el acceso a prendas exclusivas mediante un servicio impecable de alquiler y venta, garantizando que cada cliente se sienta su mejor versión.'}</p>
+          </div>
+
+          <div style={{ position: 'relative' }}>
+            <div style={{ 
+              width: '100%', 
+              height: '600px', 
+              background: 'var(--secondary)',
+              position: 'relative',
+              overflow: 'hidden',
+              boxShadow: '0 50px 100px rgba(0,0,0,0.5)',
+              border: '1px solid rgba(255,255,255,0.05)'
+            }}>
+              {displayAboutImages.map((img, idx) => (
+                <div 
+                  key={idx}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    backgroundImage: `url(${img})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    opacity: currentAboutImage === idx ? 1 : 0,
+                    transition: 'opacity 1.5s ease-in-out',
+                    transform: currentAboutImage === idx ? 'scale(1.05)' : 'scale(1)',
+                    transitionProperty: 'opacity, transform'
+                  }}
+                />
+              ))}
+              
+              {/* Decorative Frame */}
+              <div style={{ position: 'absolute', top: '20px', left: '20px', right: '20px', bottom: '20px', border: '1px solid rgba(184, 158, 72, 0.3)', pointerEvents: 'none' }}></div>
+            </div>
+            
+            {/* Carousel Indicators */}
+            <div style={{ position: 'absolute', bottom: '-40px', right: 0, display: 'flex', gap: '15px' }}>
+              {displayAboutImages.map((_, idx) => (
+                <div 
+                  key={idx}
+                  onClick={() => setCurrentAboutImage(idx)}
+                  style={{ 
+                    width: '40px', 
+                    height: '2px', 
+                    background: currentAboutImage === idx ? 'var(--cta)' : 'rgba(255,255,255,0.1)', 
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease'
+                  }}
+                />
+              ))}
             </div>
           </div>
         </div>
       </section>
 
       {/* Section: CONTACTO */}
-      <section id="contacto" style={{ padding: '150px 20px', background: 'var(--secondary)' }}>
+      <section id="contacto" style={{ padding: '150px 20px 80px', background: 'var(--secondary)' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '80px' }}>
             <h2 className="gold-text" style={{ fontSize: '3.5rem', marginBottom: '20px' }}>{config?.contacto_title || 'CONTACTO'}</h2>
@@ -191,19 +324,39 @@ const LandingPage = () => {
             <form className="glass-card" style={{ padding: '50px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px', marginBottom: '25px' }}>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Nombre Completo</label>
-                  <input type="text" style={{ width: '100%', padding: '15px' }} />
+                  <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Nombre Completo *</label>
+                  <input type="text" required style={{ width: '100%', padding: '15px' }} />
                 </div>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Email</label>
-                  <input type="email" style={{ width: '100%', padding: '15px' }} />
+                  <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Email *</label>
+                  <input type="email" required style={{ width: '100%', padding: '15px' }} />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px', marginBottom: '25px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Número de Documento *</label>
+                  <input type="text" required style={{ width: '100%', padding: '15px' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Teléfono *</label>
+                  <input type="tel" required style={{ width: '100%', padding: '15px' }} />
                 </div>
               </div>
               <div style={{ marginBottom: '25px' }}>
-                <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Mensaje</label>
-                <textarea rows="6" style={{ width: '100%', padding: '15px' }}></textarea>
+                <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Motivo de Contacto *</label>
+                <select required style={{ width: '100%', padding: '15px', background: 'var(--bg)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}>
+                  <option value="">Seleccione un motivo...</option>
+                  <option value="alquiler">Información sobre Alquiler</option>
+                  <option value="venta">Información sobre Venta</option>
+                  <option value="cita">Agendar Cita</option>
+                  <option value="otro">Otro</option>
+                </select>
               </div>
-              <button type="button" className="btn-primary" style={{ width: '100%', gap: '15px' }}>
+              <div style={{ marginBottom: '25px' }}>
+                <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Mensaje *</label>
+                <textarea rows="4" required style={{ width: '100%', padding: '15px' }}></textarea>
+              </div>
+              <button type="submit" className="btn-primary" style={{ width: '100%', gap: '15px' }}>
                 ENVIAR MENSAJE <Send size={20} />
               </button>
             </form>

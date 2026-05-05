@@ -24,7 +24,7 @@ const AdminLayout = ({ children }) => {
   const { config } = useSite()
   const location = useLocation()
   const navigate = useNavigate()
-  const { logout } = useAuth()
+  const { user, logout, hasPermission } = useAuth()
 
   const [notifCount, setNotifCount] = React.useState(0)
 
@@ -46,16 +46,20 @@ const AdminLayout = ({ children }) => {
 
   const menuItems = [
     { name: 'Dashboard', path: '/admin', icon: <LayoutDashboard size={20} /> },
-    { name: 'POS / Ventas', path: '/admin/pos', icon: <ShoppingCart size={20} /> },
-    { name: 'Caja', path: '/admin/cash', icon: <Wallet size={20} /> },
-    { name: 'Inventario', path: '/admin/inventory', icon: <Package size={20} /> },
-    { name: 'Historial', path: '/admin/transactions', icon: <History size={20} /> },
-    { name: 'Clientes', path: '/admin/customers', icon: <Users size={20} /> },
-    { name: 'Movimientos', path: '/admin/movements', icon: <Landmark size={20} /> },
-    { name: 'Sitio Web', path: '/admin/cms', icon: <Globe size={20} /> },
-    { name: 'Reportes', path: '/admin/reports', icon: <BarChart3 size={20} /> },
-    { name: 'Personal', path: '/admin/staff', icon: <Users size={20} /> },
-  ]
+    { name: 'POS / Ventas', path: '/admin/pos', icon: <ShoppingCart size={20} />, permission: 'add_sale' },
+    { name: 'Caja', path: '/admin/cash', icon: <Wallet size={20} />, permission: 'view_movement' },
+    { name: 'Inventario', path: '/admin/inventory', icon: <Package size={20} />, permission: 'view_product' },
+    { name: 'Historial', path: '/admin/transactions', icon: <History size={20} />, permission: 'view_sale' },
+    { name: 'Clientes', path: '/admin/customers', icon: <Users size={20} />, permission: 'view_customer' },
+    { name: 'Movimientos', path: '/admin/movements', icon: <Landmark size={20} />, permission: 'view_movement' },
+    { name: 'Sitio Web', path: '/admin/cms', icon: <Globe size={20} />, permission: 'change_siteconfig' },
+    { name: 'Reportes', path: '/admin/reports', icon: <BarChart3 size={20} />, permission: 'view_sale' },
+    { name: 'Personal', path: '/admin/staff', icon: <Users size={20} />, permission: 'view_user' },
+  ].filter(item => {
+    if (item.role === 'admin') return user?.is_superuser || user?.role === 'admin'
+    if (item.permission) return hasPermission(item.permission)
+    return true
+  })
 
   const handleLogout = () => {
     logout()
@@ -119,8 +123,28 @@ const AdminLayout = ({ children }) => {
         </div>
 
         {/* Navigation */}
-        <nav style={{ flex: 1 }}>
+        <nav style={{ flex: 1, overflowY: 'auto', paddingRight: '5px' }}>
           <ul style={{ listStyle: 'none' }}>
+            <li style={{ marginBottom: '20px' }}>
+              <Link 
+                to="/" 
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '14px 18px',
+                  color: 'var(--cta)',
+                  background: 'rgba(37, 99, 235, 0.1)',
+                  fontWeight: 'bold',
+                  fontSize: '0.8rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px'
+                }}
+              >
+                <Globe size={18} />
+                <span>Ver Sitio Público</span>
+              </Link>
+            </li>
             {menuItems.map((item) => {
               const isActive = location.pathname === item.path
               return (
@@ -157,6 +181,39 @@ const AdminLayout = ({ children }) => {
 
         {/* Footer Sidebar */}
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px' }}>
+          {/* User Profile Info */}
+          <div style={{ 
+            padding: '15px 18px', 
+            background: 'rgba(255,255,255,0.03)', 
+            marginBottom: '15px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '15px',
+            border: '1px solid rgba(255,255,255,0.05)'
+          }}>
+            <div style={{ 
+              width: '40px', 
+              height: '40px', 
+              background: 'var(--accent-gradient)', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              fontWeight: 'bold',
+              color: 'white',
+              fontSize: '1.2rem'
+            }}>
+              {user?.username?.charAt(0).toUpperCase() || 'U'}
+            </div>
+            <div style={{ overflow: 'hidden' }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'white', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {user?.username || 'Usuario'}
+              </div>
+              <div style={{ fontSize: '0.65rem', color: 'var(--cta)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                {user?.role === 'admin' ? 'Administrador' : 'Staff'}
+              </div>
+            </div>
+          </div>
+
           <button 
             onClick={handleLogout}
             style={{

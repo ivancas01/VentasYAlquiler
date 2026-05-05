@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { createPortal } from 'react-dom'
 import { Search, Filter, ShoppingBag, ArrowRight } from 'lucide-react'
+import { formatCurrency } from '../utils/format'
 
 const Catalog = () => {
   const [products, setProducts] = useState([])
@@ -159,12 +160,14 @@ const Catalog = () => {
                   {product.description?.length > 100 ? product.description.substring(0, 100) + '...' : product.description}
                 </p>
                 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px' }}>
-                  <div>
-                    {product.price_sale && <div style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>${parseFloat(product.price_sale).toLocaleString()}</div>}
-                    {product.price_rental && <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--cta)' }}>${parseFloat(product.price_rental).toLocaleString()} <span style={{fontSize: '0.6rem'}}>ALQ</span></div>}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                      {product.price_sale && <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'white' }}>{formatCurrency(product.price_sale)}</div>}
+                      {product.price_rental && <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--cta)' }}>{formatCurrency(product.price_rental)} <span style={{fontSize: '0.6rem', color: 'var(--text-dim)'}}>ALQ</span></div>}
+                    </div>
                   </div>
-                  <button onClick={() => setSelectedProduct(product)} className="btn-primary btn-sm">VER DETALLES</button>
+                  <button onClick={() => setSelectedProduct(product)} className="btn-primary" style={{ width: '100%', height: '45px', fontSize: '0.75rem' }}>VER DETALLES</button>
                 </div>
               </div>
             ))}
@@ -254,8 +257,8 @@ const Catalog = () => {
               <div style={{ marginTop: 'auto', background: 'rgba(255,255,255,0.02)', padding: '35px', border: '1px solid var(--glass-border)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    {selectedProduct.price_sale && <div style={{ fontSize: '2.2rem', fontWeight: 'bold', color: 'white' }}>${parseFloat(selectedProduct.price_sale).toLocaleString()} <span style={{fontSize: '0.8rem', color: 'var(--text-dim)'}}>VENTA</span></div>}
-                    {selectedProduct.price_rental && <div style={{ fontSize: '2.2rem', fontWeight: 'bold', color: 'var(--cta)', marginTop: '8px' }}>${parseFloat(selectedProduct.price_rental).toLocaleString()} <span style={{fontSize: '0.8rem', color: 'var(--text-dim)'}}>ALQUILER</span></div>}
+                    {selectedProduct.price_sale && <div style={{ fontSize: '2.2rem', fontWeight: 'bold', color: 'white' }}>{formatCurrency(selectedProduct.price_sale)} <span style={{fontSize: '0.8rem', color: 'var(--text-dim)'}}>VENTA</span></div>}
+                    {selectedProduct.price_rental && <div style={{ fontSize: '2.2rem', fontWeight: 'bold', color: 'var(--cta)', marginTop: '8px' }}>{formatCurrency(selectedProduct.price_rental)} <span style={{fontSize: '0.8rem', color: 'var(--text-dim)'}}>ALQUILER</span></div>}
                   </div>
                   <a 
                     href={`https://wa.me/${config?.contact_phone?.replace(/\D/g, '') || '573000000000'}?text=Hola, estoy interesado en el producto: ${selectedProduct.name}`} 
