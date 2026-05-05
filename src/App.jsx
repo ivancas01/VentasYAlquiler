@@ -9,7 +9,7 @@ import AdminLayout from './components/shared/AdminLayout'
 import ProtectedRoute from './components/shared/ProtectedRoute'
 import LandingPage from './pages/LandingPage'
 import Catalog from './pages/Catalog'
-import Login from './pages/Login'
+
 import Dashboard from './pages/Dashboard'
 import AdminPOS from './pages/AdminPOS'
 import Reports from './pages/Reports'
@@ -36,7 +36,7 @@ const AppContent = () => {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/catalog" element={<Catalog />} />
-        <Route path="/login" element={<Login />} />
+
         
         {/* Admin Routes wrapped in AdminLayout and ProtectedRoute */}
         <Route path="/admin" element={<ProtectedRoute><AdminLayout><Dashboard /></AdminLayout></ProtectedRoute>} />

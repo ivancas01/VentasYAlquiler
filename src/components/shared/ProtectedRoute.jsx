@@ -23,7 +23,7 @@ const ProtectedRoute = ({ children }) => {
 
   if (!user) {
     // Redirect to login but save the current location
-    return <Navigate to="/login" state={{ from: location }} replace />
+    return <Navigate to="/" state={{ from: location }} replace />
   }
 
   return children
