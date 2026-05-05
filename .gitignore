@@ -1,32 +1,71 @@
-# Logs
-logs
+# Logs and databases
 *.log
+*.sqlite3
+*.sqlite3-journal
+
+# Environments and Secrets
+.env
+.env.local
+.env.*.local
+.venv/
+venv/
+ENV/
+env/
+backend/venv/
+
+# Node.js
+node_modules/
+dist/
+dist-ssr/
+*.local
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+.eslintcache
+.stylelintcache
 
-node_modules
-dist
-dist-ssr
-*.local
+# Python cache and build
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.tox/
+.coverage
+.cache
+htmlcov/
+.mypy_cache/
+backend/__pycache__/
 
-# Editor directories and files
+# Django specific
+backend/media/
+backend/static_root/
+local_settings.py
+
+# Django migrations (as requested)
+**/api/migrations/*.py
+!**/api/migrations/__init__.py
+
+# Editor and IDEs
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
 
-# Backend specific
-backend/db.sqlite3
-backend/media/
-backend/__pycache__/
-backend/venv/
-.env
-*.pyc
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# AI Agents
+.gemini/
