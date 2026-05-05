@@ -1,0 +1,245 @@
+@import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Inter:wght@300;400;600;800&family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Space+Grotesk:wght@300;400;600;700&display=swap');
+
+:root {
+  /* Default Theme: Urban Noir */
+  --primary: #0a0a0a;
+  --secondary: #171717;
+  --cta: #c5a059;
+  --cta-glow: rgba(197, 160, 89, 0.3);
+  --bg: #050505;
+  --text: #ffffff;
+  --text-dim: #a3a3a3;
+  --glass: rgba(23, 23, 23, 0.8);
+  --glass-border: rgba(197, 160, 89, 0.2);
+  --shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  --accent-gradient: linear-gradient(135deg, #c5a059 0%, #f1d38e 50%, #c5a059 100%);
+  
+  /* Font Variables */
+  --font-main: 'Inter', sans-serif;
+  --font-heading: 'Syncopate', sans-serif;
+}
+
+/* Theme: Minimal Arctic (Light) */
+body.theme-arctic {
+  --primary: #ffffff;
+  --secondary: #f3f4f6;
+  --cta: #374151;
+  --cta-glow: rgba(55, 65, 81, 0.1);
+  --bg: #f9fafb;
+  --text: #111827;
+  --text-dim: #6b7280;
+  --glass: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(55, 65, 81, 0.1);
+  --shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+  --accent-gradient: linear-gradient(135deg, #374151 0%, #6b7280 100%);
+}
+
+body.theme-arctic input, 
+body.theme-arctic select, 
+body.theme-arctic textarea {
+  color: #111827;
+  background: white;
+  border: 1px solid #d1d5db;
+}
+
+/* Theme: Street Cyber (Neon Purple) */
+body.theme-cyber {
+  --primary: #0f0a1a;
+  --secondary: #1a1429;
+  --cta: #a855f7;
+  --cta-glow: rgba(168, 85, 247, 0.4);
+  --bg: #07040e;
+  --text: #f5f3ff;
+  --text-dim: #a78bfa;
+  --glass: rgba(26, 20, 41, 0.85);
+  --glass-border: rgba(168, 85, 247, 0.3);
+  --shadow: 0 0 30px rgba(168, 85, 247, 0.15);
+  --accent-gradient: linear-gradient(135deg, #a855f7 0%, #d8b4fe 100%);
+}
+
+/* Typography Variations */
+body.font-modern {
+  --font-main: 'Outfit', sans-serif;
+}
+
+body.font-classic {
+  --font-main: 'Inter', sans-serif;
+  --font-heading: 'Playfair Display', serif;
+}
+
+body.font-tech {
+  --font-main: 'Space Grotesk', sans-serif;
+  --font-heading: 'Space Grotesk', sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: var(--font-main);
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+h1, h2, h3, .urban-font {
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.glass-card {
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.glass-card:hover {
+  border-color: var(--cta);
+  box-shadow: 0 0 20px var(--cta-glow);
+}
+
+.btn-primary {
+  background: var(--accent-gradient);
+  color: var(--primary);
+  padding: 12px 26px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px var(--cta-glow);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--cta);
+  border: 1px solid var(--cta);
+  padding: 12px 26px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-outline:hover {
+  background: var(--cta);
+  color: var(--primary);
+}
+
+.btn-sm {
+  padding: 8px 18px;
+  font-size: 0.75rem;
+  border-radius: 8px;
+}
+
+.btn-icon {
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.btn-icon:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-icon-danger {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.btn-icon-danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+input, select, textarea {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text);
+  padding: 12px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--cta);
+}
+
+/* Transitions */
+.fade-in {
+  animation: fadeIn 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(30px); filter: blur(10px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--secondary);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--cta);
+}
+
+.gold-text {
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
