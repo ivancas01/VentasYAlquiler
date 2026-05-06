@@ -327,21 +327,23 @@ const AdminPOS = () => {
   }) : []
 
   return (
-    <div className="fade-in" style={{ width: '100%', margin: '0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '40px' }}>
+    <div className="fade-in pos-main-container" style={{ width: '100%', margin: '0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '40px' }}>
       
       <div className="glass-card" style={{ padding: '40px', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '35px' }}>
-          <h2 className="urban-font gold-text" style={{ fontSize: '1.8rem' }}>Punto de Venta</h2>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button onClick={() => setShowProductModal(true)} className="btn-outline">
-              <Plus size={18} /> NUEVO
-            </button>
-            <button onClick={() => { setType('sale'); setCart([]); }} className={type === 'sale' ? 'btn-primary' : 'btn-outline'}>Venta</button>
-            <button onClick={() => { setType('rental'); setCart([]); }} className={type === 'rental' ? 'btn-primary' : 'btn-outline'}>Alquiler</button>
+      <div className="admin-header">
+        <h2 className="urban-font gold-text admin-title">Punto de Venta</h2>
+        <div className="admin-actions">
+          <button onClick={() => setShowProductModal(true)} className="btn-outline">
+            <Plus size={18} /> NUEVO
+          </button>
+          <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
+            <button onClick={() => { setType('sale'); setCart([]); }} className={type === 'sale' ? 'btn-primary' : 'btn-outline'} style={{ flex: 1 }}>Venta</button>
+            <button onClick={() => { setType('rental'); setCart([]); }} className={type === 'rental' ? 'btn-primary' : 'btn-outline'} style={{ flex: 1 }}>Alquiler</button>
           </div>
         </div>
+      </div>
 
-        <div style={{ display: 'flex', gap: '20px', marginBottom: '40px' }}>
+        <div className="pos-search-filters" style={{ display: 'flex', gap: '20px', marginBottom: '40px' }}>
           <div style={{ position: 'relative', flex: 1 }}>
             <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--cta)' }} />
             <input type="text" placeholder="Buscar producto..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={{ width: '100%', paddingLeft: '40px' }} />
@@ -416,12 +418,12 @@ const AdminPOS = () => {
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', maxHeight: '400px', overflowY: 'auto', paddingRight: '10px' }}>
               {cart.map(item => (
-                <div key={item.id} className="glass-card" style={{ padding: '15px', background: 'rgba(255,255,255,0.03)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div key={item.id} className="glass-card pos-cart-item" style={{ padding: '15px', background: 'rgba(255,255,255,0.03)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>{item.name}</div>
                     <div style={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>{item.category_name}</div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                  <div className="pos-cart-item-actions" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                     <div style={{ textAlign: 'right' }}>
                       <label style={{ fontSize: '0.6rem', color: 'var(--text-dim)', display: 'block', marginBottom: '2px' }}>PRECIO</label>
                       <input 
@@ -451,8 +453,8 @@ const AdminPOS = () => {
           )}
         </h3>
         
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '15px', marginBottom: '20px' }}>
-          <div>
+        <div className="pos-form-row">
+          <div className="pos-form-group">
             <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Tipo Doc</label>
             <select value={customer.doc_type || 'CC'} onChange={e => setCustomer({...customer, doc_type: e.target.value})} style={{ width: '100%' }}>
               <option value="CC">Cédula Ciudadanía</option>
@@ -461,7 +463,7 @@ const AdminPOS = () => {
               <option value="PP">Pasaporte</option>
             </select>
           </div>
-          <div>
+          <div className="pos-form-group">
             <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Documento</label>
             <input type="text" value={customer.doc_id || ''} onChange={e => { setCustomer({...customer, doc_id: e.target.value}); lookupCustomer(e.target.value); }} style={{ width: '100%' }} />
           </div>
@@ -472,27 +474,27 @@ const AdminPOS = () => {
           <input type="text" value={customer.full_name || ''} onChange={e => setCustomer({...customer, full_name: e.target.value})} style={{ width: '100%' }} />
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
-          <div>
+        <div className="pos-form-row">
+          <div className="pos-form-group">
             <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Ciudad</label>
             <input type="text" value={customer.city || ''} onChange={e => setCustomer({...customer, city: e.target.value})} style={{ width: '100%' }} />
           </div>
-          <div>
+          <div className="pos-form-group">
             <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Dirección</label>
             <input type="text" value={customer.address || ''} onChange={e => setCustomer({...customer, address: e.target.value})} style={{ width: '100%' }} />
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '30px' }}>
-          <div>
+        <div className="pos-form-row">
+          <div className="pos-form-group">
             <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Teléfono Personal</label>
             <input type="text" value={customer.phone || ''} onChange={e => setCustomer({...customer, phone: e.target.value})} style={{ width: '100%' }} />
           </div>
-          <div>
+          <div className="pos-form-group">
             <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Nombre Referencia</label>
             <input type="text" value={customer.name_ref || ''} onChange={e => setCustomer({...customer, name_ref: e.target.value})} style={{ width: '100%' }} />
           </div>
-          <div style={{ gridColumn: 'span 2' }}>
+          <div className="pos-form-group" style={{ gridColumn: '1 / -1' }}>
             <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Teléfono Referencia</label>
             <input type="text" value={customer.phone_ref || ''} onChange={e => setCustomer({...customer, phone_ref: e.target.value})} style={{ width: '100%' }} />
           </div>
@@ -504,12 +506,12 @@ const AdminPOS = () => {
 
         {type === 'rental' && (
           <>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
-              <div>
+            <div className="pos-form-row">
+              <div className="pos-form-group">
                 <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Recogida</label>
                 <input type="date" value={startDate || ''} onChange={e => setStartDate(e.target.value)} style={{ width: '100%' }} />
               </div>
-              <div>
+              <div className="pos-form-group">
                 <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Devolución</label>
                 <input type="date" value={endDate || ''} onChange={e => setEndDate(e.target.value)} style={{ width: '100%' }} />
               </div>
@@ -517,26 +519,30 @@ const AdminPOS = () => {
             
             <div style={{ marginBottom: '20px' }}>
               <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Garantía</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '8px' }}>
-                <select value={guaranteeType || 'documento'} onChange={e => setGuaranteeType(e.target.value)} style={{ width: '100%' }}>
-                  <option value="documento">DOCUMENTO</option>
-                  <option value="monto">MONTO EFECTIVO</option>
-                  <option value="otro">OTRO</option>
-                </select>
-                <input 
-                  type="text" 
-                  value={guarantee || ''} 
-                  onChange={(e) => setGuarantee(e.target.value)} 
-                  style={{ width: '100%' }} 
-                  placeholder={guaranteeType === 'monto' ? 'Monto $' : 'Detalle...'} 
-                />
+              <div className="pos-form-row" style={{ marginTop: '8px' }}>
+                <div className="pos-form-group">
+                  <select value={guaranteeType || 'documento'} onChange={e => setGuaranteeType(e.target.value)} style={{ width: '100%' }}>
+                    <option value="documento">DOCUMENTO</option>
+                    <option value="monto">MONTO EFECTIVO</option>
+                    <option value="otro">OTRO</option>
+                  </select>
+                </div>
+                <div className="pos-form-group">
+                  <input 
+                    type="text" 
+                    value={guarantee || ''} 
+                    onChange={(e) => setGuarantee(e.target.value)} 
+                    style={{ width: '100%' }} 
+                    placeholder={guaranteeType === 'monto' ? 'Monto $' : 'Detalle...'} 
+                  />
+                </div>
               </div>
             </div>
           </>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
-          <div>
+        <div className="pos-form-row">
+          <div className="pos-form-group">
             <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Método de Pago</label>
             <select value={paymentMethod || 'efectivo'} onChange={e => setPaymentMethod(e.target.value)} style={{ width: '100%' }}>
               <option value="efectivo">EFECTIVO</option>
@@ -544,7 +550,7 @@ const AdminPOS = () => {
             </select>
           </div>
           {paymentMethod === 'transferencia' && (
-            <div>
+            <div className="pos-form-group">
               <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Banco</label>
               <select value={bank || 'nequi'} onChange={e => setBank(e.target.value)} style={{ width: '100%' }}>
                 <option value="nequi">NEQUI</option>
@@ -587,73 +593,145 @@ const AdminPOS = () => {
       </div>
       {showProductModal && (
         <Modal onClose={() => setShowProductModal(false)} title="NUEVO PRODUCTO RÁPIDO">
-          <form onSubmit={submitQuickProduct}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px' }}>
-              
-              <div style={{ gridColumn: 'span 2', display: 'flex', gap: '30px', background: 'rgba(255,255,255,0.02)', padding: '25px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '10px' }}>
-                <div style={{ width: '150px', height: '150px', background: 'var(--secondary)', borderRadius: '8px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px dashed rgba(255,255,255,0.1)' }}>
-                  {imagePreview ? (
-                    <img src={imagePreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    <Upload size={40} color="var(--text-dim)" />
-                  )}
-                </div>
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                  <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '10px', display: 'block' }}>Imagen</label>
-                  <input type="file" onChange={e => {
-                      const file = e.target.files[0]
-                      setImageFile(file)
-                      if (file) setImagePreview(URL.createObjectURL(file))
-                    }} style={{ fontSize: '0.8rem', color: 'var(--cta)' }} />
-                </div>
+          <form onSubmit={submitQuickProduct} className="quick-product-form">
+            <div className="pos-modal-image-section" style={{ display: 'flex', gap: '20px', background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '25px' }}>
+              <div style={{ width: '80px', height: '80px', minWidth: '80px', background: 'var(--secondary)', borderRadius: '8px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px dashed rgba(255,255,255,0.1)' }}>
+                {imagePreview ? (
+                  <img src={imagePreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <Upload size={30} color="var(--text-dim)" />
+                )}
               </div>
-
-              <div style={{ gridColumn: 'span 2' }}>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nombre</label>
-                <input type="text" value={productForm.name} onChange={e => setProductForm({...productForm, name: e.target.value})} required style={{ width: '100%' }} />
+              <div className="pos-form-group" style={{ flex: 1, justifyContent: 'center' }}>
+                <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '8px' }}>Imagen del Producto</label>
+                <input type="file" onChange={e => {
+                    const file = e.target.files[0]
+                    setImageFile(file)
+                    if (file) setImagePreview(URL.createObjectURL(file))
+                  }} style={{ fontSize: '0.75rem', color: 'var(--cta)' }} />
               </div>
+            </div>
 
-              <div>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Color</label>
+            <div className="pos-form-group" style={{ marginBottom: '20px' }}>
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Nombre del Producto</label>
+              <input type="text" value={productForm.name} onChange={e => setProductForm({...productForm, name: e.target.value})} required style={{ width: '100%' }} />
+            </div>
+
+            <div className="pos-form-row">
+              <div className="pos-form-group">
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Color</label>
                 <input type="text" value={productForm.color} onChange={e => setProductForm({...productForm, color: e.target.value})} style={{ width: '100%' }} />
               </div>
-
-              <div>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Talla / Tamaño</label>
+              <div className="pos-form-group">
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Talla / Tamaño</label>
                 <input type="text" value={productForm.size} onChange={e => setProductForm({...productForm, size: e.target.value})} style={{ width: '100%' }} />
               </div>
+            </div>
 
-              <div>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Categoría</label>
+            <div className="pos-form-row">
+              <div className="pos-form-group">
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Categoría</label>
                 <select value={productForm.category} onChange={e => setProductForm({...productForm, category: e.target.value})} style={{ width: '100%' }}>
                   {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
-
-              <div>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Stock</label>
+              <div className="pos-form-group">
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Stock Disponible</label>
                 <input type="number" value={productForm.stock} onChange={e => setProductForm({...productForm, stock: e.target.value})} style={{ width: '100%' }} />
               </div>
+            </div>
 
-              <div style={{ gridColumn: 'span 2', padding: '20px', background: 'rgba(184, 158, 72, 0.05)', border: '1px solid rgba(184, 158, 72, 0.2)', borderRadius: '8px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
-                  <select value={productForm.product_type} onChange={e => setProductForm({...productForm, product_type: e.target.value})} style={{ width: '100%', background: 'var(--secondary)' }}>
-                    <option value="sale">SOLO VENTA</option>
-                    <option value="rental">SOLO ALQUILER</option>
-                    <option value="both">AMBOS</option>
-                  </select>
+            <div style={{ padding: '20px', background: 'rgba(184, 158, 72, 0.05)', border: '1px solid rgba(184, 158, 72, 0.2)', borderRadius: '8px', marginTop: '10px' }}>
+              <div className="pos-form-group" style={{ marginBottom: '15px' }}>
+                <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Modalidad de Negocio</label>
+                <select value={productForm.product_type} onChange={e => setProductForm({...productForm, product_type: e.target.value})} style={{ width: '100%', background: 'var(--secondary)' }}>
+                  <option value="sale">SOLO VENTA</option>
+                  <option value="rental">SOLO ALQUILER</option>
+                  <option value="both">AMBOS</option>
+                </select>
+              </div>
+              <div className="pos-form-row" style={{ marginBottom: 0 }}>
+                <div className="pos-form-group">
                   <input type="number" step="0.01" placeholder="Precio Venta $" value={productForm.price_sale} onChange={e => setProductForm({...productForm, price_sale: e.target.value})} disabled={productForm.product_type === 'rental'} style={{ width: '100%' }} />
+                </div>
+                <div className="pos-form-group">
                   <input type="number" step="0.01" placeholder="Precio Alquiler $" value={productForm.price_rental} onChange={e => setProductForm({...productForm, price_rental: e.target.value})} disabled={productForm.product_type === 'sale'} style={{ width: '100%' }} />
                 </div>
               </div>
-
             </div>
-            <button type="submit" disabled={loadingProduct} className="btn-primary" style={{ width: '100%', marginTop: '40px' }}>
+
+            <button type="submit" disabled={loadingProduct} className="btn-primary" style={{ width: '100%', marginTop: '30px' }}>
               {loadingProduct ? 'CREANDO...' : 'CREAR Y AGREGAR AL CARRITO'}
             </button>
           </form>
         </Modal>
       )}
+
+      <style>{`
+        @media (max-width: 1024px) {
+          .pos-main-container {
+            grid-template-columns: minmax(0, 1fr) !important;
+            gap: 20px !important;
+          }
+          .pos-search-filters {
+            flex-direction: column !important;
+            gap: 15px !important;
+          }
+          .pos-search-filters select {
+            width: 100% !important;
+          }
+          
+          /* Force all nested grids and form rows to be single column */
+          .pos-main-container div[style*="display: grid"],
+          .pos-main-container div[style*="display:grid"],
+          .pos-modal-grid div[style*="display: grid"],
+          .pos-modal-grid,
+          .pos-customer-form-grid,
+          .pos-payment-guarantee-grid,
+          .pos-business-mode-grid {
+            grid-template-columns: 1fr !important;
+            display: grid !important;
+            gap: 15px !important;
+          }
+
+          .pos-modal-image-section {
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center;
+            padding: 15px !important;
+            gap: 15px !important;
+          }
+          .pos-modal-image-section div:first-child {
+            width: 80px !important;
+            height: 80px !important;
+          }
+          
+          /* Style file input to not overflow */
+          input[type="file"] {
+            width: 100% !important;
+            font-size: 0.7rem !important;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+
+          .glass-card {
+            padding: 20px !important;
+          }
+          .pos-cart-item {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 15px !important;
+          }
+          .pos-cart-item-actions {
+            width: 100% !important;
+            justify-content: space-between !important;
+          }
+          input, select, textarea {
+            font-size: 16px !important; 
+          }
+        }
+      `}</style>
     </div>
   )
 }

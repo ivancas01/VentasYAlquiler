@@ -20,15 +20,15 @@ const Modal = ({ children, onClose }) => {
       alignItems: 'center', 
       justifyContent: 'center', 
       zIndex: 2000,
-      padding: '40px'
+      padding: '10px'
     }}>
-      <div className="glass-card fade-in" style={{ 
+      <div className="glass-card fade-in modal-content-card" style={{ 
         width: '100%', 
-        maxWidth: '1200px', 
-        maxHeight: '90vh', 
+        maxWidth: '1350px', 
+        maxHeight: '95vh', 
         overflowY: 'auto', 
         position: 'relative',
-        padding: '50px',
+        padding: '20px',
         border: '1px solid rgba(255,255,255,0.1)'
       }}>
         <button onClick={onClose} style={{ position: 'absolute', top: '25px', right: '25px', border: 'none', background: 'transparent', color: 'white', cursor: 'pointer' }}><X size={28} /></button>
@@ -357,15 +357,17 @@ const Transactions = () => {
 
   return (
     <div className="fade-in" style={{ width: '100%', margin: '0' }}>
-      <h2 className="urban-font gold-text" style={{ fontSize: '2.5rem', marginBottom: '50px', display: 'flex', alignItems: 'center', gap: '25px' }}>
-        <History size={48} /> Historial
-      </h2>
+      <div className="admin-header">
+        <h2 className="urban-font gold-text admin-title">
+          <History size={40} /> Historial
+        </h2>
+      </div>
 
       {/* Filters Section */}
-      <div className="glass-card" style={{ padding: '30px', marginBottom: '40px', background: 'rgba(255,255,255,0.02)' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 1fr', gap: '20px', alignItems: 'flex-end' }}>
-          <div>
-            <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Buscar Cliente o ID (#)</label>
+      <div className="glass-card" style={{ padding: '25px', marginBottom: '40px', background: 'rgba(255,255,255,0.02)' }}>
+        <div className="filters-grid">
+          <div className="filter-item">
+            <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Buscar Cliente o ID (#)</label>
             <div style={{ position: 'relative' }}>
               <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--cta)' }} />
               <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Ej: Juan o #15" style={{ width: '100%', paddingLeft: '40px' }} />
@@ -373,8 +375,8 @@ const Transactions = () => {
           </div>
           
           {activeTab === 'rentals' && (
-            <div>
-              <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Estado</label>
+            <div className="filter-item">
+              <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Estado</label>
               <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ width: '100%' }}>
                 <option value="all">TODOS LOS ESTADOS</option>
                 <option value="reserved">RESERVADO</option>
@@ -386,32 +388,32 @@ const Transactions = () => {
             </div>
           )}
 
-          <div>
-            <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Categoría de Artículos</label>
+          <div className="filter-item">
+            <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Categoría</label>
             <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={{ width: '100%' }}>
               <option value="all">TODAS LAS CATEGORÍAS</option>
               {categories.map(c => <option key={c.id} value={c.id}>{c.name.toUpperCase()}</option>)}
             </select>
           </div>
 
-          <div>
-            <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Desde</label>
+          <div className="filter-item">
+            <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Desde</label>
             <input type="date" value={dateFilter.start} onChange={e => setDateFilter({...dateFilter, start: e.target.value})} style={{ width: '100%' }} />
           </div>
 
-          <div>
-            <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Hasta</label>
+          <div className="filter-item">
+            <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Hasta</label>
             <input type="date" value={dateFilter.end} onChange={e => setDateFilter({...dateFilter, end: e.target.value})} style={{ width: '100%' }} />
           </div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '40px', marginBottom: '40px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '20px' }}>
-        <button onClick={() => { setActiveTab('sales'); setStatusFilter('all'); }} className="urban-font" style={{ border: 'none', background: 'transparent', fontSize: '1.2rem', fontWeight: 'bold', color: activeTab === 'sales' ? 'var(--cta)' : 'var(--text-dim)', cursor: 'pointer', borderBottom: activeTab === 'sales' ? '3px solid var(--cta)' : '3px solid transparent', paddingBottom: '15px', transition: 'all 0.3s' }}>
-          Ventas
+      <div className="history-tabs" style={{ display: 'flex', gap: '40px', marginBottom: '40px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '10px', overflowX: 'auto' }}>
+        <button onClick={() => { setActiveTab('sales'); setStatusFilter('all'); }} className={`urban-font tab-btn ${activeTab === 'sales' ? 'active' : ''}`}>
+          VENTAS
         </button>
-        <button onClick={() => { setActiveTab('rentals'); setStatusFilter('all'); }} className="urban-font" style={{ border: 'none', background: 'transparent', fontSize: '1.2rem', fontWeight: 'bold', color: activeTab === 'rentals' ? 'var(--cta)' : 'var(--text-dim)', cursor: 'pointer', borderBottom: activeTab === 'rentals' ? '3px solid var(--cta)' : '3px solid transparent', paddingBottom: '15px', transition: 'all 0.3s' }}>
-          Alquileres
+        <button onClick={() => { setActiveTab('rentals'); setStatusFilter('all'); }} className={`urban-font tab-btn ${activeTab === 'rentals' ? 'active' : ''}`}>
+          ALQUILERES
         </button>
       </div>
 
@@ -482,43 +484,43 @@ const Transactions = () => {
 
       {selectedRental && (
         <Modal onClose={() => setSelectedRental(null)}>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <div style={{ marginBottom: '40px' }}>
-              <h3 className="urban-font gold-text" style={{ fontSize: '1.8rem', marginBottom: '10px' }}>GESTIÓN DE ALQUILER #{selectedRental.id}</h3>
-              <p style={{ color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.7rem' }}>
+          <div className="modal-inner-content">
+            <div className="modal-header-section">
+              <h3 className="urban-font gold-text modal-main-title">GESTIÓN DE ALQUILER #{selectedRental.id}</h3>
+              <p className="modal-meta-text">
                 Alquilado por: <span style={{color: 'white'}}>{selectedRental.staff_name}</span> | 
                 Último cambio por: <span style={{color: 'var(--cta)'}}>{selectedRental.last_updated_by_name || 'N/A'}</span>
               </p>
-              <p style={{ color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.7rem', marginTop: '5px' }}>
+              <p className="modal-meta-text" style={{ marginTop: '5px' }}>
                 Cliente: {selectedRental.customer_data?.full_name || selectedRental.customer_name}
               </p>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '50px' }}>
+            <div className="transaction-modal-grid">
               <div>
-                <h4 className="urban-font" style={{ marginBottom: '25px', display: 'flex', alignItems: 'center', gap: '15px', fontSize: '1rem', color: 'var(--cta)' }}>
-                  <Truck size={22} /> Estado del Proceso
+                <h4 className="urban-font modal-section-title">
+                  <Truck size={18} /> Estado del Proceso
                 </h4>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', marginBottom: '40px' }}>
+                <div className="status-scroll-container">
                   {['reserved', 'preparing', 'ready', 'delivered', 'received'].map(s => (
                     <button 
                       key={s} 
                       onClick={() => updateStatus(selectedRental.id, s)} 
                       className={selectedRental.status === s ? 'btn-primary btn-sm' : 'btn-outline btn-sm'}
-                      style={{ opacity: selectedRental.status === s ? 1 : 0.5 }}
+                      style={{ opacity: selectedRental.status === s ? 1 : 0.5, fontSize: '0.65rem' }}
                     >
                       {s === 'reserved' ? 'Reservado' : s === 'preparing' ? 'Alistado' : s === 'ready' ? 'Listo' : s === 'delivered' ? 'Entregado' : 'Recibido'}
                     </button>
                   ))}
                 </div>
 
-                <h4 className="urban-font" style={{ marginBottom: '25px', display: 'flex', alignItems: 'center', gap: '15px', fontSize: '1rem', color: 'var(--cta)' }}>
-                  <Shield size={22} /> Garantía y Fechas
+                <h4 className="urban-font modal-section-title">
+                  <Shield size={18} /> Garantía y Fechas
                 </h4>
-                <div className="glass-card" style={{ padding: '30px', marginBottom: '40px', background: 'rgba(255,255,255,0.02)' }}>
+                <div className="glass-card" style={{ padding: '20px', marginBottom: '30px', background: 'rgba(255,255,255,0.02)' }}>
                   <div style={{ marginBottom: '20px' }}>
-                    <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Información de Garantía</label>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '8px' }}>
+                    <label style={{ fontSize: '0.6rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Información de Garantía</label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '12px' }}>
                       <select 
                         value={selectedRental.guarantee_type || 'documento'} 
                         onChange={e => setSelectedRental({...selectedRental, guarantee_type: e.target.value})} 
@@ -532,30 +534,30 @@ const Transactions = () => {
                         type="text" 
                         value={selectedRental.guarantee_info || ''} 
                         onChange={e => setSelectedRental({...selectedRental, guarantee_info: e.target.value})} 
-                        style={{ flex: 1 }}
+                        style={{ width: '100%' }}
                         placeholder="Detalle..."
                       />
                     </div>
-                    <button onClick={updateGuarantee} className="btn-primary" style={{ width: '100%', marginTop: '10px' }}>Actualizar Garantía</button>
+                    <button onClick={updateGuarantee} className="btn-primary" style={{ width: '100%', marginTop: '15px' }}>Actualizar Garantía</button>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     <div>
-                      <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Salida</label>
-                      <div style={{ color: 'white', fontWeight: 'bold', marginTop: '5px' }}>{formatDate(selectedRental.start_date)}</div>
+                      <label style={{ fontSize: '0.6rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Salida</label>
+                      <div style={{ color: 'white', fontWeight: 'bold', marginTop: '5px', fontSize: '0.8rem' }}>{formatDate(selectedRental.start_date)}</div>
                     </div>
-                    <div>
-                      <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Devolución</label>
-                      <div style={{ color: 'white', fontWeight: 'bold', marginTop: '5px' }}>{formatDate(selectedRental.end_date)}</div>
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '15px' }}>
+                      <label style={{ fontSize: '0.6rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Devolución</label>
+                      <div style={{ color: 'white', fontWeight: 'bold', marginTop: '5px', fontSize: '0.8rem' }}>{formatDate(selectedRental.end_date)}</div>
                     </div>
                   </div>
                 </div>
 
-                <h4 className="urban-font" style={{ marginBottom: '25px', display: 'flex', alignItems: 'center', gap: '15px', fontSize: '1rem', color: 'var(--cta)' }}>
-                  <DollarSign size={22} /> Pagos y Abonos
+                <h4 className="urban-font modal-section-title">
+                  <DollarSign size={18} /> Pagos y Abonos
                 </h4>
 
                 {/* History moved outside the form to ensure it's always visible */}
-                <div className="glass-card" style={{ padding: '20px', marginBottom: '20px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column' }}>
+                <div className="glass-card" style={{ padding: '15px', marginBottom: '15px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column' }}>
                   <label style={{ color: 'var(--text-dim)', textTransform: 'uppercase', fontSize: '0.65rem', display: 'block', marginBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '5px' }}>
                     Historial de Transacciones
                   </label>
@@ -578,7 +580,7 @@ const Transactions = () => {
                   </div>
                 </div>
 
-                <div className="glass-card" style={{ padding: '25px', marginBottom: '30px', background: 'var(--secondary)', border: '1px solid rgba(212, 175, 55, 0.1)' }}>
+                <div className="glass-card" style={{ padding: '15px', marginBottom: '25px', background: 'var(--secondary)', border: '1px solid rgba(212, 175, 55, 0.1)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', color: 'var(--text-dim)', fontSize: '0.9rem' }}>
                     <span>Costo Alquiler:</span>
                     <span style={{ fontWeight: 'bold', color: 'white' }}>{formatCurrency(selectedRental.total)}</span>
@@ -591,16 +593,16 @@ const Transactions = () => {
                   {/* Separate Guarantee Display */}
                   {selectedRental.payments?.some(p => p.label === 'Garantia') && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', padding: '8px 12px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '8px', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
-                      <span style={{ color: 'var(--cta)', fontSize: '0.8rem', fontWeight: 'bold' }}>GARANTÍA EN CAJA:</span>
-                      <span style={{ fontWeight: 'bold', color: 'var(--cta)' }}>
+                      <span style={{ color: 'var(--cta)', fontSize: '0.7rem', fontWeight: 'bold' }}>GARANTÍA EN CAJA:</span>
+                      <span style={{ fontWeight: 'bold', color: 'var(--cta)', fontSize: '0.8rem' }}>
                         ${selectedRental.payments.filter(p => p.label === 'Garantia').reduce((acc, p) => acc + parseFloat(p.amount), 0).toFixed(2)}
                       </span>
                     </div>
                   )}
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '15px', marginTop: '10px' }}>
-                    <span className="urban-font" style={{fontSize: '0.85rem', color: 'white'}}>SALDO PENDIENTE:</span>
-                    <span className="gold-text" style={{ fontWeight: 'bold', fontSize: '1.4rem' }}>
+                    <span className="urban-font" style={{fontSize: '0.75rem', color: 'white'}}>SALDO PENDIENTE:</span>
+                    <span className="gold-text" style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
                       {formatCurrency(parseFloat(selectedRental.total) - parseFloat(selectedRental.total_paid))}
                     </span>
                   </div>
@@ -651,10 +653,10 @@ const Transactions = () => {
               </div>
 
               <div>
-                <h4 className="urban-font" style={{ marginBottom: '25px', display: 'flex', alignItems: 'center', gap: '15px', fontSize: '1rem', color: 'white' }}>
-                  <Package size={22} /> Prendas del Alquiler
+                <h4 className="urban-font modal-section-title" style={{ color: 'white' }}>
+                  <Package size={18} /> Prendas del Alquiler
                 </h4>
-                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '25px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '40px' }}>
+                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '30px' }}>
                   {selectedRental.items.map(item => (
                     <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                       <div style={{ width: '50px', height: '50px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', overflow: 'hidden' }}>
@@ -751,6 +753,129 @@ const Transactions = () => {
           </div>
         </Modal>
       )}
+
+      <style>{`
+        .filters-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 20px;
+          align-items: flex-end;
+        }
+
+        @media (max-width: 1024px) {
+          .filters-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+        
+        .tab-btn {
+          border: none;
+          background: transparent;
+          font-size: 1.2rem;
+          font-weight: bold;
+          color: var(--text-dim);
+          cursor: pointer;
+          border-bottom: 3px solid transparent;
+          padding-bottom: 15px;
+          transition: all 0.3s;
+          white-space: nowrap;
+        }
+        
+        .tab-btn.active {
+          color: var(--cta);
+          border-bottom: 3px solid var(--cta);
+        }
+
+        .transaction-modal-grid {
+          display: grid;
+          grid-template-columns: 1.5fr 1fr;
+          gap: 50px;
+        }
+
+        .modal-main-title {
+          font-size: 1.4rem;
+          margin-bottom: 10px;
+        }
+
+        .modal-meta-text {
+          color: var(--text-dim);
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          font-size: 0.65rem;
+        }
+
+        .modal-header-section {
+          margin-bottom: 35px;
+        }
+
+        .modal-section-title {
+          margin-bottom: 20px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          font-size: 0.9rem;
+          color: var(--cta);
+        }
+
+        .status-scroll-container {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          margin-bottom: 40px;
+          width: 100%;
+        }
+
+        .status-scroll-container button {
+          width: 100%;
+          text-align: center;
+          padding: 12px !important;
+        }
+
+        @media (max-width: 1024px) {
+          .transaction-modal-grid {
+            grid-template-columns: 1fr !important;
+            gap: 30px !important;
+          }
+
+          .modal-header-section {
+            text-align: center !important;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+          }
+
+          .modal-main-title {
+            font-size: 1.2rem !important;
+          }
+
+          .modal-section-title {
+            justify-content: center !important;
+            font-size: 0.85rem !important;
+          }
+
+          .modal-content-card {
+            padding: 20px !important;
+          }
+
+          .admin-header {
+            grid-template-columns: 1fr !important;
+            gap: 15px !important;
+          }
+          
+          .history-tabs {
+            gap: 20px !important;
+          }
+          
+          .tab-btn {
+            font-size: 0.9rem !important;
+            padding-bottom: 10px !important;
+          }
+
+          .admin-header h2 {
+             font-size: 1.5rem !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

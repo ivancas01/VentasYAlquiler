@@ -106,13 +106,13 @@ const CMS = () => {
 
   return (
     <div className="fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
-        <div>
-          <h1 className="urban-font gold-text" style={{ fontSize: '2.5rem', marginBottom: '10px' }}>GESTIÓN DE CONTENIDO</h1>
-          <p style={{ color: 'var(--text-dim)' }}>Personaliza los textos y configuraciones del sitio web público</p>
+      <div className="admin-header">
+        <div className="admin-title-section">
+          <h1 className="urban-font gold-text admin-title" style={{ fontSize: '1.8rem', marginBottom: '5px' }}>GESTIÓN DE CONTENIDO</h1>
+          <p style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>Personaliza los textos y configuraciones del sitio web público</p>
         </div>
-        <button onClick={handleSubmit} disabled={loading} className="btn-primary">
-          {loading ? <RefreshCw className="spin" size={20} /> : <Save size={20} />} 
+        <button onClick={handleSubmit} disabled={loading} className="btn-primary" style={{ padding: '12px 25px' }}>
+          {loading ? <RefreshCw className="spin" size={18} /> : <Save size={18} />} 
           {loading ? 'GUARDANDO...' : 'GUARDAR CAMBIOS'}
         </button>
       </div>
@@ -123,78 +123,86 @@ const CMS = () => {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
+      <div className="cms-layout-stack">
         
         {/* Identidad Visual */}
-        <div className="glass-card" style={{ padding: '40px' }}>
-          <h3 className="urban-font" style={{ fontSize: '1rem', color: 'var(--cta)', marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div className="glass-card" style={{ padding: '25px' }}>
+          <h3 className="urban-font cms-section-title">
             <Globe size={18} /> IDENTIDAD VISUAL
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-            <div>
-              <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nombre Empresa (Blanco)</label>
+          <div className="pos-form-row">
+            <div className="pos-form-group">
+              <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nombre Empresa (Blanco)</label>
               <input type="text" name="company_name_white" value={config.company_name_white || ''} onChange={handleChange} style={{ width: '100%' }} />
             </div>
-            <div>
-              <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nombre Empresa (Dorado)</label>
+            <div className="pos-form-group">
+              <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nombre Empresa (Dorado)</label>
               <input type="text" name="company_name_gold" value={config.company_name_gold || ''} onChange={handleChange} style={{ width: '100%' }} />
             </div>
-            <div>
-              <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nombre Legal / Copyright</label>
+          </div>
+          <div className="pos-form-row">
+            <div className="pos-form-group">
+              <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nombre Legal / Copyright</label>
               <input type="text" name="company_name" value={config.company_name || ''} onChange={handleChange} style={{ width: '100%' }} />
             </div>
           </div>
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Texto Footer</label>
-            <textarea name="footer_text" value={config.footer_text || ''} onChange={handleChange} rows="2" style={{ width: '100%' }} />
+          <div className="pos-form-row">
+            <div className="pos-form-group">
+              <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Texto Footer</label>
+              <textarea name="footer_text" value={config.footer_text || ''} onChange={handleChange} rows="2" style={{ width: '100%' }} />
+            </div>
           </div>
         </div>
 
         {/* Hero Section */}
-        <div className="glass-card" style={{ padding: '40px' }}>
-          <h3 className="urban-font" style={{ fontSize: '1rem', color: 'var(--cta)', marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div className="glass-card" style={{ padding: '25px' }}>
+          <h3 className="urban-font cms-section-title">
             <Layout size={18} /> SECCIÓN INICIO (HERO)
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-            <div>
-              <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Título (Parte Blanca)</label>
+          <div className="pos-form-row">
+            <div className="pos-form-group">
+              <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Título (Parte Blanca)</label>
               <input type="text" name="hero_title_white" value={config.hero_title_white || ''} onChange={handleChange} style={{ width: '100%' }} />
             </div>
-            <div>
-              <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Título (Parte Dorada)</label>
+            <div className="pos-form-group">
+              <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Título (Parte Dorada)</label>
               <input type="text" name="hero_title_gold" value={config.hero_title_gold || ''} onChange={handleChange} style={{ width: '100%' }} />
             </div>
           </div>
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Tagline (Línea superior)</label>
-            <input type="text" name="hero_tagline" value={config.hero_tagline || ''} onChange={handleChange} style={{ width: '100%' }} />
+          <div className="pos-form-row">
+            <div className="pos-form-group">
+              <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Tagline (Línea superior)</label>
+              <input type="text" name="hero_tagline" value={config.hero_tagline || ''} onChange={handleChange} style={{ width: '100%' }} />
+            </div>
           </div>
-          <div>
-            <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Subtítulo / Descripción</label>
-            <textarea name="hero_subtitle" value={config.hero_subtitle || ''} onChange={handleChange} rows="3" style={{ width: '100%' }} />
+          <div className="pos-form-row">
+            <div className="pos-form-group">
+              <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Subtítulo / Descripción</label>
+              <textarea name="hero_subtitle" value={config.hero_subtitle || ''} onChange={handleChange} rows="2" style={{ width: '100%' }} />
+            </div>
           </div>
         </div>
 
         {/* Hero Background Images Management */}
-        <div className="glass-card" style={{ padding: '40px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-            <h3 className="urban-font" style={{ fontSize: '1rem', color: 'var(--cta)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <ImageIcon size={18} /> IMÁGENES DE INICIO (HERO)
+        <div className="glass-card" style={{ padding: '25px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+            <h3 className="urban-font cms-section-title" style={{ marginBottom: '0' }}>
+              <ImageIcon size={18} /> IMÁGENES INICIO
             </h3>
-            <label className="btn-primary" style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '0.75rem' }}>
+            <label className="btn-primary" style={{ padding: '6px 12px', cursor: 'pointer', fontSize: '0.7rem' }}>
               {uploading ? <RefreshCw className="spin" size={14} /> : <Plus size={14} />} 
-              {uploading ? '...' : 'AGREGAR'}
+              {uploading ? '...' : 'SUBIR'}
               <input type="file" hidden onChange={(e) => handleImageUpload(e, 'hero')} accept="image/*" />
             </label>
           </div>
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '15px' }}>
+          <div className="image-grid-cms">
             {heroImages.map(img => (
-              <div key={img.id} style={{ position: 'relative', height: '120px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
+              <div key={img.id} className="cms-img-container">
                 <img src={img.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 <button 
                   onClick={() => handleDeleteImage(img.id, 'hero')}
-                  style={{ position: 'absolute', top: '5px', right: '5px', background: '#ef4444', border: 'none', color: 'white', padding: '4px', cursor: 'pointer', borderRadius: '4px' }}
+                  className="cms-img-delete"
                 >
                   <Trash2 size={12} />
                 </button>
@@ -204,25 +212,25 @@ const CMS = () => {
         </div>
 
         {/* About Images Management */}
-        <div className="glass-card" style={{ padding: '40px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-            <h3 className="urban-font" style={{ fontSize: '1rem', color: 'var(--cta)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <ImageIcon size={18} /> IMÁGENES DE NOSOTROS
+        <div className="glass-card" style={{ padding: '25px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+            <h3 className="urban-font cms-section-title" style={{ marginBottom: '0' }}>
+              <ImageIcon size={18} /> IMÁGENES NOSOTROS
             </h3>
-            <label className="btn-primary" style={{ padding: '8px 15px', cursor: 'pointer', fontSize: '0.75rem' }}>
+            <label className="btn-primary" style={{ padding: '6px 12px', cursor: 'pointer', fontSize: '0.7rem' }}>
               {uploading ? <RefreshCw className="spin" size={14} /> : <Plus size={14} />} 
-              {uploading ? '...' : 'AGREGAR'}
+              {uploading ? '...' : 'SUBIR'}
               <input type="file" hidden onChange={(e) => handleImageUpload(e, 'about')} accept="image/*" />
             </label>
           </div>
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '15px' }}>
+          <div className="image-grid-cms">
             {aboutImages.map(img => (
-              <div key={img.id} style={{ position: 'relative', height: '120px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
+              <div key={img.id} className="cms-img-container">
                 <img src={img.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 <button 
                   onClick={() => handleDeleteImage(img.id, 'about')}
-                  style={{ position: 'absolute', top: '5px', right: '5px', background: '#ef4444', border: 'none', color: 'white', padding: '4px', cursor: 'pointer', borderRadius: '4px' }}
+                  className="cms-img-delete"
                 >
                   <Trash2 size={12} />
                 </button>
@@ -232,100 +240,105 @@ const CMS = () => {
         </div>
 
         {/* About Us */}
-        <div className="glass-card" style={{ padding: '40px', gridColumn: 'span 2' }}>
-          <h3 className="urban-font" style={{ fontSize: '1rem', color: 'var(--cta)', marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div className="glass-card" style={{ padding: '25px' }}>
+          <h3 className="urban-font cms-section-title">
             <Info size={18} /> SECCIÓN NOSOTROS
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
-            <div>
-              <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Historia / Quiénes Somos</label>
-              <textarea name="about_text" value={config.about_text || ''} onChange={handleChange} rows="6" style={{ width: '100%' }} />
+          <div className="pos-form-row">
+            <div className="pos-form-group">
+              <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Historia / Quiénes Somos</label>
+              <textarea name="about_text" value={config.about_text || ''} onChange={handleChange} rows="4" style={{ width: '100%' }} />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div>
-                <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nuestra Visión</label>
-                <textarea name="about_vision" value={config.about_vision || ''} onChange={handleChange} rows="2" style={{ width: '100%' }} />
-              </div>
-              <div>
-                <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nuestra Misión</label>
-                <textarea name="about_mission" value={config.about_mission || ''} onChange={handleChange} rows="2" style={{ width: '100%' }} />
-              </div>
+          </div>
+          <div className="pos-form-row">
+            <div className="pos-form-group">
+              <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nuestra Visión</label>
+              <textarea name="about_vision" value={config.about_vision || ''} onChange={handleChange} rows="2" style={{ width: '100%' }} />
+            </div>
+            <div className="pos-form-group">
+              <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nuestra Misión</label>
+              <textarea name="about_mission" value={config.about_mission || ''} onChange={handleChange} rows="2" style={{ width: '100%' }} />
             </div>
           </div>
         </div>
 
-        {/* Section Titles */}
-        <div className="glass-card" style={{ padding: '40px', gridColumn: 'span 2' }}>
-          <h3 className="urban-font" style={{ fontSize: '1rem', color: 'var(--cta)', marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div className="glass-card" style={{ padding: '25px' }}>
+          <h3 className="urban-font cms-section-title">
             <Layout size={18} /> TÍTULOS DE SECCIONES
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
-            <div>
-              <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Título Sección "Nosotros"</label>
+          <div className="pos-form-row">
+            <div className="pos-form-group">
+              <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Título Sección "Nosotros"</label>
               <input type="text" name="nosotros_title" value={config.nosotros_title || ''} onChange={handleChange} style={{ width: '100%' }} />
             </div>
-            <div>
-              <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Título Sección "Contacto"</label>
+            <div className="pos-form-group">
+              <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Título Sección "Contacto"</label>
               <input type="text" name="contacto_title" value={config.contacto_title || ''} onChange={handleChange} style={{ width: '100%' }} />
             </div>
-            <div style={{ gridColumn: 'span 2' }}>
-              <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Subtítulo Sección "Contacto"</label>
+          </div>
+          <div className="pos-form-row">
+            <div className="pos-form-group">
+              <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Subtítulo Sección "Contacto"</label>
               <input type="text" name="contacto_subtitle" value={config.contacto_subtitle || ''} onChange={handleChange} style={{ width: '100%' }} />
             </div>
           </div>
         </div>
 
-        {/* Contact Details */}
-        <div className="glass-card" style={{ padding: '40px' }}>
-          <h3 className="urban-font" style={{ fontSize: '1rem', color: 'var(--cta)', marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div className="glass-card" style={{ padding: '25px' }}>
+          <h3 className="urban-font cms-section-title">
             <Phone size={18} /> DATOS DE CONTACTO
           </h3>
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Teléfono / WhatsApp</label>
-            <input type="text" name="contact_phone" value={config.contact_phone || ''} onChange={handleChange} style={{ width: '100%' }} />
+          <div className="pos-form-row">
+            <div className="pos-form-group">
+              <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Teléfono / WhatsApp</label>
+              <input type="text" name="contact_phone" value={config.contact_phone || ''} onChange={handleChange} style={{ width: '100%' }} />
+            </div>
+            <div className="pos-form-group">
+              <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Email de Contacto</label>
+              <input type="email" name="contact_email" value={config.contact_email || ''} onChange={handleChange} style={{ width: '100%' }} />
+            </div>
           </div>
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Email de Contacto</label>
-            <input type="email" name="contact_email" value={config.contact_email || ''} onChange={handleChange} style={{ width: '100%' }} />
-          </div>
-          <div>
-            <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Dirección Física</label>
-            <input type="text" name="contact_address" value={config.contact_address || ''} onChange={handleChange} style={{ width: '100%' }} />
+          <div className="pos-form-row">
+            <div className="pos-form-group">
+              <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Dirección Física</label>
+              <input type="text" name="contact_address" value={config.contact_address || ''} onChange={handleChange} style={{ width: '100%' }} />
+            </div>
           </div>
         </div>
 
-        {/* Social Media & Footer */}
-        <div className="glass-card" style={{ padding: '40px' }}>
-          <h3 className="urban-font" style={{ fontSize: '1rem', color: 'var(--cta)', marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div className="glass-card" style={{ padding: '25px' }}>
+          <h3 className="urban-font cms-section-title">
             <Share2 size={18} /> REDES Y PIE DE PÁGINA
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-            <div>
-              <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Facebook</label>
+          <div className="pos-form-row">
+            <div className="pos-form-group">
+              <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Facebook</label>
               <input type="url" name="facebook_url" value={config.facebook_url || ''} onChange={handleChange} placeholder="https://..." style={{ width: '100%' }} />
             </div>
-            <div>
-              <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Instagram</label>
+            <div className="pos-form-group">
+              <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Instagram</label>
               <input type="url" name="instagram_url" value={config.instagram_url || ''} onChange={handleChange} placeholder="https://..." style={{ width: '100%' }} />
             </div>
-            <div>
-              <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>WhatsApp (Link)</label>
+            <div className="pos-form-group">
+              <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>WhatsApp (Link)</label>
               <input type="url" name="whatsapp_url" value={config.whatsapp_url || ''} onChange={handleChange} placeholder="https://wa.me/..." style={{ width: '100%' }} />
             </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-            <div>
-              <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Título "Enlaces Rápidos"</label>
+          <div className="pos-form-row">
+            <div className="pos-form-group">
+              <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Título "Enlaces Rápidos"</label>
               <input type="text" name="footer_links_title" value={config.footer_links_title || ''} onChange={handleChange} style={{ width: '100%' }} />
             </div>
-            <div>
-              <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Título "Contacto"</label>
+            <div className="pos-form-group">
+              <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Título "Contacto"</label>
               <input type="text" name="footer_contact_title" value={config.footer_contact_title || ''} onChange={handleChange} style={{ width: '100%' }} />
             </div>
           </div>
-          <div>
-            <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Descripción del Pie de Página (Footer)</label>
-            <textarea name="footer_text" value={config.footer_text || ''} onChange={handleChange} rows="2" style={{ width: '100%' }} />
+          <div className="pos-form-row">
+            <div className="pos-form-group">
+              <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Descripción del Footer</label>
+              <textarea name="footer_text" value={config.footer_text || ''} onChange={handleChange} rows="2" style={{ width: '100%' }} />
+            </div>
           </div>
         </div>
 
@@ -334,6 +347,80 @@ const CMS = () => {
       <style>{`
         .spin { animation: rotate 1s linear infinite; }
         @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .cms-layout-stack {
+          display: flex;
+          flex-direction: column;
+          gap: 35px;
+        }
+
+        .cms-section-title {
+          font-size: 0.85rem;
+          color: var(--cta);
+          margin-bottom: 25px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          text-transform: uppercase;
+        }
+
+        .image-grid-cms {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+          gap: 15px;
+        }
+
+        .cms-img-container {
+          position: relative;
+          height: 130px;
+          border-radius: 8px;
+          overflow: hidden;
+          border: 1px solid var(--glass-border);
+        }
+
+        .cms-img-delete {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          background: rgba(239, 68, 68, 0.9);
+          border: none;
+          color: white;
+          padding: 6px;
+          cursor: pointer;
+          border-radius: 6px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+        }
+
+        .cms-img-delete:hover {
+          background: #ef4444;
+          transform: scale(1.1);
+        }
+
+        @media (max-width: 1024px) {
+          .admin-header {
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center !important;
+            gap: 20px !important;
+          }
+
+          .admin-title-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+          }
+
+          .admin-title {
+            font-size: 1.5rem !important;
+          }
+
+          .cms-section-title {
+            justify-content: center !important;
+          }
+        }
       `}</style>
     </div>
   )

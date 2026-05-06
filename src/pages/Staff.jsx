@@ -13,15 +13,15 @@ const Modal = ({ children, onClose, title }) => {
       background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(15px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999999 
     }}>
-      <div className="glass-card" style={{ 
-        padding: '50px', width: '95%', maxWidth: '800px', maxHeight: '90vh', 
+      <div className="glass-card modal-content-card" style={{ 
+        width: '95%', maxWidth: '800px', maxHeight: '90vh', 
         overflowY: 'auto', background: 'var(--primary)', border: '1px solid var(--cta)',
-        position: 'relative'
+        position: 'relative', padding: '30px'
       }}>
-        <button onClick={onClose} style={{ position: 'absolute', top: '30px', right: '30px', border: 'none', background: 'transparent', cursor: 'pointer', color: 'white' }}>
+        <button onClick={onClose} style={{ position: 'absolute', top: '25px', right: '25px', border: 'none', background: 'transparent', cursor: 'pointer', color: 'white' }}>
           <X size={28} />
         </button>
-        <h3 className="urban-font gold-text" style={{ fontSize: '1.8rem', marginBottom: '30px' }}>{title}</h3>
+        <h3 className="urban-font gold-text" style={{ fontSize: '1.4rem', marginBottom: '25px' }}>{title}</h3>
         {children}
       </div>
     </div>,
@@ -261,12 +261,12 @@ const Staff = () => {
 
   return (
     <div className="fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+      <div className="admin-header">
         <div>
-          <h1 className="urban-font gold-text" style={{ fontSize: '2.5rem', marginBottom: '10px' }}>PERSONAL Y ROLES</h1>
+          <h1 className="urban-font gold-text admin-title">PERSONAL Y ROLES</h1>
           <p style={{ color: 'var(--text-dim)' }}>Gestión de accesos y permisos del equipo</p>
         </div>
-        <div style={{ display: 'flex', gap: '15px' }}>
+        <div className="admin-actions">
           <button onClick={() => handleOpenGroupModal()} className="btn-outline">
             <Shield size={18} /> NUEVO ROL
           </button>
@@ -387,41 +387,49 @@ const Staff = () => {
       {showUserModal && (
         <Modal onClose={() => setShowUserModal(false)} title={editingItem ? 'EDITAR PERSONAL' : 'REGISTRAR PERSONAL'}>
           <form onSubmit={submitUser}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px' }}>
-              <div style={{ gridColumn: 'span 2' }}>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nombre Completo</label>
-                <input type="text" value={userForm.full_name} onChange={e => setUserForm({...userForm, full_name: e.target.value})} required placeholder="Ej: Juan Pérez" style={{ width: '100%' }} />
+            <div className="cms-layout-stack">
+              <div className="pos-form-row">
+                <div className="pos-form-group">
+                  <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nombre Completo</label>
+                  <input type="text" value={userForm.full_name} onChange={e => setUserForm({...userForm, full_name: e.target.value})} required placeholder="Ej: Juan Pérez" style={{ width: '100%' }} />
+                </div>
               </div>
-              <div>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Usuario</label>
-                <input type="text" value={userForm.username} onChange={e => setUserForm({...userForm, username: e.target.value})} required style={{ width: '100%' }} />
+              <div className="pos-form-row">
+                <div className="pos-form-group">
+                  <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Usuario</label>
+                  <input type="text" value={userForm.username} onChange={e => setUserForm({...userForm, username: e.target.value})} required style={{ width: '100%' }} />
+                </div>
+                <div className="pos-form-group">
+                  <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Número de Documento</label>
+                  <input type="text" value={userForm.document_number} onChange={e => setUserForm({...userForm, document_number: e.target.value})} required placeholder="DNI / CC / Pasaporte" style={{ width: '100%' }} />
+                </div>
               </div>
-              <div>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Número de Documento</label>
-                <input type="text" value={userForm.document_number} onChange={e => setUserForm({...userForm, document_number: e.target.value})} required placeholder="DNI / CC / Pasaporte" style={{ width: '100%' }} />
+              <div className="pos-form-row">
+                <div className="pos-form-group">
+                  <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Email</label>
+                  <input type="email" value={userForm.email} onChange={e => setUserForm({...userForm, email: e.target.value})} style={{ width: '100%' }} />
+                </div>
+                <div className="pos-form-group">
+                  <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Teléfono</label>
+                  <input type="text" value={userForm.phone} onChange={e => setUserForm({...userForm, phone: e.target.value})} style={{ width: '100%' }} />
+                </div>
               </div>
-              <div>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Email</label>
-                <input type="email" value={userForm.email} onChange={e => setUserForm({...userForm, email: e.target.value})} style={{ width: '100%' }} />
-              </div>
-              <div>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Teléfono</label>
-                <input type="text" value={userForm.phone} onChange={e => setUserForm({...userForm, phone: e.target.value})} style={{ width: '100%' }} />
-              </div>
-              <div>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Contraseña {editingItem && '(Opcional)'}</label>
-                <input type="password" value={userForm.password} onChange={e => setUserForm({...userForm, password: e.target.value})} required={!editingItem} style={{ width: '100%' }} />
-              </div>
-              <div>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Confirmar Contraseña</label>
-                <input type="password" value={userForm.confirmPassword} onChange={e => setUserForm({...userForm, confirmPassword: e.target.value})} required={!editingItem || userForm.password} style={{ width: '100%' }} />
+              <div className="pos-form-row">
+                <div className="pos-form-group">
+                  <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Contraseña {editingItem && '(Opcional)'}</label>
+                  <input type="password" value={userForm.password} onChange={e => setUserForm({...userForm, password: e.target.value})} required={!editingItem} style={{ width: '100%' }} />
+                </div>
+                <div className="pos-form-group">
+                  <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Confirmar Contraseña</label>
+                  <input type="password" value={userForm.confirmPassword} onChange={e => setUserForm({...userForm, confirmPassword: e.target.value})} required={!editingItem || userForm.password} style={{ width: '100%' }} />
+                </div>
               </div>
               
-              <div style={{ gridColumn: 'span 2' }}>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '15px' }}>Seleccionar Rol de Acceso</label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '15px' }}>
+              <div>
+                <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '15px' }}>Seleccionar Rol de Acceso</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {groups.map(g => (
-                    <label key={g.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', background: userForm.group_ids.includes(g.id) ? 'rgba(184, 158, 72, 0.1)' : 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '12px', border: '1px solid', borderColor: userForm.group_ids.includes(g.id) ? 'var(--cta)' : 'rgba(255,255,255,0.05)', transition: 'all 0.2s ease' }}>
+                    <label key={g.id} style={{ display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', background: userForm.group_ids.includes(g.id) ? 'rgba(184, 158, 72, 0.1)' : 'rgba(255,255,255,0.02)', padding: '12px 20px', borderRadius: '10px', border: '1px solid', borderColor: userForm.group_ids.includes(g.id) ? 'var(--cta)' : 'rgba(255,255,255,0.05)', transition: 'all 0.2s ease' }}>
                       <input 
                         type="radio" 
                         name="userRole"
@@ -435,8 +443,8 @@ const Staff = () => {
                         }}
                       />
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: userForm.group_ids.includes(g.id) ? 'white' : 'var(--text-dim)' }}>{g.name}</span>
-                        <span style={{ fontSize: '0.65rem', color: 'var(--text-dim)' }}>{g.name.toLowerCase().includes('admin') ? 'Acceso Total' : 'Acceso Limitado'}</span>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: userForm.group_ids.includes(g.id) ? 'white' : 'var(--text-dim)' }}>{g.name.toUpperCase()}</span>
+                        <span style={{ fontSize: '0.6rem', color: 'var(--text-dim)' }}>{g.name.toLowerCase().includes('admin') ? 'Acceso Administrativo Total' : 'Acceso de Personal Limitado'}</span>
                       </div>
                     </label>
                   ))}
@@ -453,14 +461,16 @@ const Staff = () => {
       {/* Group Modal */}
       {showGroupModal && (
         <Modal onClose={() => setShowGroupModal(false)} title={editingItem ? 'EDITAR ROL' : 'NUEVO ROL DE ACCESO'}>
-          <form onSubmit={submitGroup} style={{ display: 'flex', flexDirection: 'column', maxHeight: '75vh' }}>
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nombre del Rol</label>
-              <input type="text" value={groupForm.name} onChange={e => setGroupForm({...groupForm, name: e.target.value})} required placeholder="Ej: Cajero, Gestor de Inventario" style={{ width: '100%' }} />
+          <form onSubmit={submitGroup} style={{ display: 'flex', flexDirection: 'column', maxHeight: '80vh' }}>
+            <div className="pos-form-row">
+              <div className="pos-form-group">
+                <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nombre del Rol</label>
+                <input type="text" value={groupForm.name} onChange={e => setGroupForm({...groupForm, name: e.target.value})} required placeholder="Ej: Cajero, Gestor de Inventario" style={{ width: '100%' }} />
+              </div>
             </div>
             
-            <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '15px' }}>Permisos del Rol (Agrupados por Módulo)</label>
-            <div style={{ flex: 1, overflowY: 'auto', padding: '15px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '15px' }}>Permisos del Rol (Agrupados por Módulo)</label>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '20px', background: 'rgba(0,0,0,0.2)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
               {Object.keys(groupedPermissions).sort().map(modelKey => (
                 <div key={modelKey} style={{ marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '15px' }}>
                   <h4 style={{ fontSize: '0.7rem', color: 'var(--cta)', letterSpacing: '1px', marginBottom: '10px' }}>{modelNames[modelKey] || modelKey.toUpperCase()}</h4>
@@ -491,6 +501,30 @@ const Staff = () => {
           </form>
         </Modal>
       )}
+      <style>{`
+        .cms-layout-stack {
+          display: flex;
+          flex-direction: column;
+          gap: 25px;
+        }
+
+        @media (max-width: 1024px) {
+          .admin-header {
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center !important;
+            gap: 20px !important;
+          }
+
+          .modal-content-card {
+            padding: 20px !important;
+          }
+
+          .admin-title {
+            font-size: 1.5rem !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

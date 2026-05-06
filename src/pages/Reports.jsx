@@ -39,67 +39,70 @@ const Reports = () => {
   };
 
   return (
-    <div className="fade-in" style={{ maxWidth: '1400px', margin: '0 auto' }}>
-      <h2 className="urban-font gold-text" style={{ fontSize: '2.5rem', marginBottom: '50px', display: 'flex', alignItems: 'center', gap: '20px' }}>
-        <TrendingUp size={40} /> Reportes
-      </h2>
-
-      {/* Summary Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px', marginBottom: '40px' }}>
-        <div className="glass-card" style={{ padding: '30px', borderLeft: '4px solid var(--cta)' }}>
-          <p style={{ color: 'var(--text-dim)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>Ventas Totales</p>
-          <h3 className="gold-text" style={{ fontSize: '2.2rem' }}>${data.daily_sales.reduce((acc, curr) => acc + parseFloat(curr.total), 0).toFixed(2)}</h3>
-        </div>
-        <div className="glass-card" style={{ padding: '30px', borderLeft: '4px solid white' }}>
-          <p style={{ color: 'var(--text-dim)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>Ingresos Alquiler</p>
-          <h3 style={{ fontSize: '2.2rem', color: 'white' }}>${data.daily_rentals.reduce((acc, curr) => acc + parseFloat(curr.total), 0).toFixed(2)}</h3>
+    <div className="fade-in" style={{ width: '100%', margin: '0' }}>
+      <div className="admin-header">
+        <div className="admin-title-section">
+          <h2 className="urban-font gold-text admin-title" style={{ fontSize: '1.8rem', marginBottom: '5px' }}>
+            <TrendingUp size={30} /> REPORTES
+          </h2>
+          <p style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>Análisis de rendimiento, ventas y alquileres</p>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px' }}>
+      {/* Summary Cards */}
+      <div className="reports-stack">
+        <div className="glass-card" style={{ padding: '20px', borderLeft: '4px solid var(--cta)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <p style={{ color: 'var(--text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Ventas Totales</p>
+          <h3 className="gold-text" style={{ fontSize: '1.6rem' }}>${data.daily_sales.reduce((acc, curr) => acc + parseFloat(curr.total), 0).toFixed(2)}</h3>
+        </div>
+        <div className="glass-card" style={{ padding: '20px', borderLeft: '4px solid white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <p style={{ color: 'var(--text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Ingresos Alquiler</p>
+          <h3 style={{ fontSize: '1.6rem', color: 'white' }}>${data.daily_rentals.reduce((acc, curr) => acc + parseFloat(curr.total), 0).toFixed(2)}</h3>
+        </div>
+      </div>
+
+      <div className="reports-stack" style={{ marginTop: '30px' }}>
         {/* Trend Chart */}
-        <div className="glass-card" style={{ padding: '40px' }}>
-          <h4 className="urban-font" style={{ marginBottom: '30px', fontSize: '1rem', color: 'var(--cta)' }}>Tendencia de Ventas</h4>
-          <div style={{ height: '350px' }}>
+        <div className="glass-card" style={{ padding: '25px' }}>
+          <h4 className="urban-font report-section-title" style={{ color: 'var(--cta)' }}>Tendencia de Ventas</h4>
+          <div style={{ height: '300px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data.daily_sales}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="date" stroke="var(--text-dim)" fontSize={12} />
-                <YAxis stroke="var(--text-dim)" fontSize={12} />
+                <XAxis dataKey="date" stroke="var(--text-dim)" fontSize={10} />
+                <YAxis stroke="var(--text-dim)" fontSize={10} />
                 <Tooltip content={<CustomTooltip />} />
-                <Line type="monotone" dataKey="total" stroke="var(--cta)" strokeWidth={4} dot={{ r: 4, fill: 'var(--cta)' }} activeDot={{ r: 8 }} />
+                <Line type="monotone" dataKey="total" stroke="var(--cta)" strokeWidth={3} dot={{ r: 3, fill: 'var(--cta)' }} activeDot={{ r: 6 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         {/* Rental Chart */}
-        <div className="glass-card" style={{ padding: '40px' }}>
-          <h4 className="urban-font" style={{ marginBottom: '30px', fontSize: '1rem', color: 'white' }}>Tendencia de Alquileres</h4>
-          <div style={{ height: '350px' }}>
+        <div className="glass-card" style={{ padding: '25px' }}>
+          <h4 className="urban-font report-section-title" style={{ color: 'white' }}>Tendencia de Alquileres</h4>
+          <div style={{ height: '300px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data.daily_rentals}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="date" stroke="var(--text-dim)" fontSize={12} />
-                <YAxis stroke="var(--text-dim)" fontSize={12} />
+                <XAxis dataKey="date" stroke="var(--text-dim)" fontSize={10} />
+                <YAxis stroke="var(--text-dim)" fontSize={10} />
                 <Tooltip content={<CustomTooltip />} />
-                <Line type="monotone" dataKey="total" stroke="white" strokeWidth={4} dot={{ r: 4, fill: 'white' }} activeDot={{ r: 8 }} />
+                <Line type="monotone" dataKey="total" stroke="white" strokeWidth={3} dot={{ r: 3, fill: 'white' }} activeDot={{ r: 6 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
-      </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
         {/* Top Sellers */}
-        <div className="glass-card" style={{ padding: '40px' }}>
-          <h4 className="urban-font" style={{ marginBottom: '30px', fontSize: '1rem', color: 'var(--cta)' }}>Top Vendedores</h4>
-          <div style={{ height: '300px' }}>
+        <div className="glass-card" style={{ padding: '25px' }}>
+          <h4 className="urban-font report-section-title" style={{ color: 'var(--cta)' }}>Top Vendedores</h4>
+          <div style={{ height: '250px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.top_sales_staff}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="username" stroke="var(--text-dim)" fontSize={12} />
-                <YAxis stroke="var(--text-dim)" fontSize={12} />
+                <XAxis dataKey="username" stroke="var(--text-dim)" fontSize={10} />
+                <YAxis stroke="var(--text-dim)" fontSize={10} />
                 <Tooltip cursor={{fill: 'rgba(255,255,255,0.05)'}} />
                 <Bar dataKey="sales_count" fill="var(--cta)" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -108,14 +111,14 @@ const Reports = () => {
         </div>
 
         {/* Top Renters */}
-        <div className="glass-card" style={{ padding: '40px' }}>
-          <h4 className="urban-font" style={{ marginBottom: '30px', fontSize: '1rem', color: 'white' }}>Top Alquiladores</h4>
-          <div style={{ height: '300px' }}>
+        <div className="glass-card" style={{ padding: '25px' }}>
+          <h4 className="urban-font report-section-title" style={{ color: 'white' }}>Top Alquiladores</h4>
+          <div style={{ height: '250px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.top_rental_staff}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="username" stroke="var(--text-dim)" fontSize={12} />
-                <YAxis stroke="var(--text-dim)" fontSize={12} />
+                <XAxis dataKey="username" stroke="var(--text-dim)" fontSize={10} />
+                <YAxis stroke="var(--text-dim)" fontSize={10} />
                 <Tooltip cursor={{fill: 'rgba(255,255,255,0.05)'}} />
                 <Bar dataKey="rentals_count" fill="white" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -123,6 +126,39 @@ const Reports = () => {
           </div>
         </div>
       </div>
+      <style>{`
+        .reports-stack {
+          display: flex;
+          flex-direction: column;
+          gap: 30px;
+        }
+
+        .report-section-title {
+          font-size: 0.85rem;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          margin-bottom: 25px;
+        }
+
+        @media (max-width: 1024px) {
+          .admin-header {
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center !important;
+            gap: 15px !important;
+          }
+
+          .admin-title-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+          }
+
+          .admin-title {
+            font-size: 1.5rem !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

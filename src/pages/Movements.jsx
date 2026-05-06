@@ -48,35 +48,41 @@ const Movements = () => {
 
   return (
     <div className="fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
-        <div>
-          <h1 className="urban-font gold-text" style={{ fontSize: '2.5rem', marginBottom: '10px' }}>MOVIMIENTOS</h1>
-          <p style={{ color: 'var(--text-dim)' }}>Registro histórico de transacciones financieras</p>
+      <div className="admin-header">
+        <div className="admin-title-section">
+          <h1 className="urban-font gold-text admin-title" style={{ fontSize: '1.8rem', marginBottom: '5px' }}>MOVIMIENTOS</h1>
+          <p style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>Registro histórico de transacciones financieras</p>
         </div>
-        <div className="glass-card" style={{ padding: '20px 40px', textAlign: 'right' }}>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)', marginBottom: '5px' }}>TOTAL FILTRADO</p>
-          <h2 className="gold-text urban-font" style={{ fontSize: '1.8rem' }}>${totalAmount.toLocaleString()}</h2>
+        <div className="glass-card" style={{ padding: '15px 30px', textAlign: 'right', minWidth: '220px' }}>
+          <p style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginBottom: '5px', textTransform: 'uppercase' }}>Total Filtrado</p>
+          <h2 className="gold-text urban-font" style={{ fontSize: '1.4rem' }}>${totalAmount.toLocaleString()}</h2>
         </div>
       </div>
 
-      <div className="glass-card" style={{ padding: '30px', marginBottom: '30px' }}>
-        <div style={{ display: 'flex', gap: '20px' }}>
-          <div style={{ position: 'relative', flex: 1 }}>
-            <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--cta)' }} />
-            <input 
-              type="text" 
-              placeholder="Buscar por referencia, tipo o responsable..." 
-              value={searchTerm} 
-              onChange={e => setSearchTerm(e.target.value)} 
-              style={{ width: '100%', paddingLeft: '40px' }} 
-            />
+      <div className="glass-card" style={{ padding: '25px', marginBottom: '35px', background: 'rgba(255,255,255,0.02)' }}>
+        <div className="filters-stack">
+          <div className="filter-item" style={{ position: 'relative' }}>
+            <label style={{ fontSize: '0.6rem', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Buscador</label>
+            <div style={{ position: 'relative' }}>
+              <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--cta)' }} />
+              <input 
+                type="text" 
+                placeholder="Referencia, tipo o responsable..." 
+                value={searchTerm} 
+                onChange={e => setSearchTerm(e.target.value)} 
+                style={{ width: '100%', paddingLeft: '40px' }} 
+              />
+            </div>
           </div>
-          <select value={filterMethod} onChange={e => setFilterMethod(e.target.value)} style={{ width: '220px' }}>
-            <option value="all">TODOS LOS MÉTODOS</option>
-            <option value="efectivo">EFECTIVO</option>
-            <option value="transaccion">TRANSFERENCIA</option>
-          </select>
-          <button onClick={fetchMovements} className="btn-outline">Refrescar</button>
+          <div className="filter-item">
+            <label style={{ fontSize: '0.6rem', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Método de Pago</label>
+            <select value={filterMethod} onChange={e => setFilterMethod(e.target.value)} style={{ width: '100%' }}>
+              <option value="all">TODOS LOS MÉTODOS</option>
+              <option value="efectivo">EFECTIVO</option>
+              <option value="transaccion">TRANSFERENCIA</option>
+            </select>
+          </div>
+          <button onClick={fetchMovements} className="btn-outline" style={{ height: '45px', marginTop: '5px' }}>Refrescar Datos</button>
         </div>
       </div>
 
@@ -171,6 +177,37 @@ const Movements = () => {
           </tbody>
         </table>
       </div>
+      <style>{`
+        .filters-stack {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 20px;
+          align-items: flex-end;
+        }
+        
+        @media (max-width: 1024px) {
+          .filters-stack {
+            grid-template-columns: 1fr !important;
+          }
+
+          .admin-header {
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center !important;
+            gap: 25px !important;
+          }
+
+          .admin-title-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+          }
+
+          .admin-title {
+            font-size: 1.5rem !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

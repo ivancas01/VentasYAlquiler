@@ -19,15 +19,10 @@ const Modal = ({ children, onClose, title }) => {
       justifyContent: 'center', 
       zIndex: 99999999 
     }}>
-      <div className="glass-card" style={{ 
-        padding: '50px', 
-        width: '95%', 
-        maxWidth: '800px', 
-        maxHeight: '90vh', 
-        overflowY: 'auto', 
-        background: 'var(--primary)',
-        border: '1px solid var(--cta)',
-        position: 'relative'
+      <div className="glass-card modal-content-card" style={{ 
+        width: '95%', maxWidth: '800px', maxHeight: '90vh', 
+        overflowY: 'auto', background: 'var(--primary)', border: '1px solid var(--cta)',
+        position: 'relative', padding: '30px'
       }}>
         <button 
           onClick={onClose} 
@@ -269,11 +264,11 @@ const Inventory = () => {
 
   return (
     <div className="fade-in" style={{ width: '100%', margin: '0' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '50px' }}>
-        <h2 className="urban-font gold-text" style={{ fontSize: '2.5rem', display: 'flex', alignItems: 'center', gap: '20px' }}>
+      <div className="admin-header">
+        <h2 className="urban-font gold-text admin-title">
           <Package size={40} /> Inventario
         </h2>
-        <div style={{ display: 'flex', gap: '15px' }}>
+        <div className="admin-actions">
           <button onClick={() => handleOpenCategoryModal()} className="btn-outline">
             <Tag size={20} /> NUEVA CATEGORÍA
           </button>
@@ -283,9 +278,9 @@ const Inventory = () => {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '40px', marginBottom: '40px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '10px' }}>
-        <button onClick={() => setActiveTab('products')} className="urban-font" style={{ border: 'none', background: 'transparent', fontSize: '1.2rem', fontWeight: 'bold', color: activeTab === 'products' ? 'var(--cta)' : 'var(--text-dim)', cursor: 'pointer', borderBottom: activeTab === 'products' ? '3px solid var(--cta)' : '3px solid transparent', paddingBottom: '15px', transition: 'all 0.3s' }}>PRODUCTOS</button>
-        <button onClick={() => setActiveTab('categories')} className="urban-font" style={{ border: 'none', background: 'transparent', fontSize: '1.2rem', fontWeight: 'bold', color: activeTab === 'categories' ? 'var(--cta)' : 'var(--text-dim)', cursor: 'pointer', borderBottom: activeTab === 'categories' ? '3px solid var(--cta)' : '3px solid transparent', paddingBottom: '15px', transition: 'all 0.3s' }}>CATEGORÍAS</button>
+      <div className="inventory-tabs" style={{ display: 'flex', gap: '40px', marginBottom: '40px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '10px', overflowX: 'auto' }}>
+        <button onClick={() => setActiveTab('products')} className={`urban-font tab-btn ${activeTab === 'products' ? 'active' : ''}`}>PRODUCTOS</button>
+        <button onClick={() => setActiveTab('categories')} className={`urban-font tab-btn ${activeTab === 'categories' ? 'active' : ''}`}>CATEGORÍAS</button>
       </div>
 
       {activeTab === 'products' ? (
@@ -377,19 +372,19 @@ const Inventory = () => {
       {showProductModal && (
         <Modal onClose={() => setShowProductModal(false)} title={editingItem ? 'EDITAR PRODUCTO' : 'NUEVO PRODUCTO'}>
           <form onSubmit={submitProduct}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px' }}>
+            <div className="inventory-form-container">
               
               {/* Image Preview and Upload Section */}
-              <div style={{ gridColumn: 'span 2', display: 'flex', gap: '30px', background: 'rgba(255,255,255,0.02)', padding: '25px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '10px' }}>
-                <div style={{ width: '150px', height: '150px', background: 'var(--secondary)', borderRadius: '8px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px dashed rgba(255,255,255,0.1)' }}>
+              <div className="image-upload-wrapper" style={{ display: 'flex', gap: '30px', background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '25px', alignItems: 'center' }}>
+                <div className="image-preview-box" style={{ width: '120px', height: '120px', background: 'var(--secondary)', borderRadius: '8px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px dashed rgba(255,255,255,0.1)', flexShrink: 0 }}>
                   {imagePreview ? (
                     <img src={imagePreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
-                    <Upload size={40} color="var(--text-dim)" />
+                    <Upload size={30} color="var(--text-dim)" />
                   )}
                 </div>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                  <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '10px', display: 'block' }}>Imagen del Producto</label>
+                  <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Imagen del Producto</label>
                   <input 
                     type="file" 
                     onChange={e => {
@@ -397,87 +392,98 @@ const Inventory = () => {
                       setImageFile(file)
                       if (file) setImagePreview(URL.createObjectURL(file))
                     }} 
+                    style={{ fontSize: '0.7rem', width: '100%', maxWidth: '180px', color: 'var(--text-dim)' }}
                   />
-                  <p style={{ fontSize: '0.65rem', color: 'var(--text-dim)', marginTop: '10px' }}>Formatos soportados: JPG, PNG. Máximo 5MB.</p>
                 </div>
               </div>
 
-              <div style={{ gridColumn: 'span 2' }}>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nombre del Producto</label>
-                <input type="text" value={productForm.name} onChange={e => setProductForm({...productForm, name: e.target.value})} required style={{ width: '100%' }} />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Color</label>
-                <input type="text" value={productForm.color} onChange={e => setProductForm({...productForm, color: e.target.value})} placeholder="Ej: Azul Rey" style={{ width: '100%' }} />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Tamaño / Talla</label>
-                <input type="text" value={productForm.size} onChange={e => setProductForm({...productForm, size: e.target.value})} placeholder="Ej: L, M o 1.5m" style={{ width: '100%' }} />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Número de Piezas</label>
-                <input type="number" value={productForm.pieces_count} onChange={e => setProductForm({...productForm, pieces_count: e.target.value})} style={{ width: '100%' }} />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Categoría</label>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <select value={productForm.category} onChange={e => setProductForm({...productForm, category: e.target.value})} style={{ flex: 1 }}>
-                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
-                  <button 
-                    type="button" 
-                    onClick={() => {
-                      const name = prompt("Nombre de la nueva categoría:")
-                      if (name) {
-                        const slug = name.toLowerCase().trim().replace(/\s+/g, '-')
-                        const token = localStorage.getItem('token')
-                        axios.post('http://127.0.0.1:8000/api/categories/', { name, slug }, {
-                          headers: { Authorization: `Bearer ${token}` }
-                        }).then(res => {
-                          setCategories([...categories, res.data])
-                          setProductForm({...productForm, category: res.data.id})
-                        }).catch(err => alert("Error al crear categoría rápida"))
-                      }
-                    }} 
-                    className="btn-icon" 
-                    style={{ background: 'var(--secondary)', border: '1px solid rgba(255,255,255,0.1)' }}
-                  >
-                    <Plus size={20} />
-                  </button>
+              <div className="pos-form-row">
+                <div className="pos-form-group">
+                  <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nombre del Producto</label>
+                  <input type="text" value={productForm.name} onChange={e => setProductForm({...productForm, name: e.target.value})} required style={{ width: '100%' }} />
                 </div>
               </div>
 
-              <div style={{ gridColumn: 'span 2' }}>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Descripción</label>
-                <textarea value={productForm.description} onChange={e => setProductForm({...productForm, description: e.target.value})} rows="3" style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '15px', borderRadius: '8px' }} />
+              <div className="pos-form-row">
+                <div className="pos-form-group">
+                  <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Color</label>
+                  <input type="text" value={productForm.color} onChange={e => setProductForm({...productForm, color: e.target.value})} placeholder="Ej: Azul Rey" style={{ width: '100%' }} />
+                </div>
+                <div className="pos-form-group">
+                  <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Tamaño / Talla</label>
+                  <input type="text" value={productForm.size} onChange={e => setProductForm({...productForm, size: e.target.value})} placeholder="Ej: L, M o 1.5m" style={{ width: '100%' }} />
+                </div>
               </div>
 
-              <div style={{ gridColumn: 'span 2', padding: '20px', background: 'rgba(184, 158, 72, 0.05)', border: '1px solid rgba(184, 158, 72, 0.2)', borderRadius: '8px' }}>
-                <label style={{ fontSize: '0.75rem', color: 'var(--cta)', textTransform: 'uppercase', display: 'block', marginBottom: '15px', fontWeight: 'bold' }}>Modalidad de Negocio</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
-                  <select value={productForm.product_type} onChange={e => setProductForm({...productForm, product_type: e.target.value})} style={{ width: '100%', background: 'var(--secondary)' }}>
-                    <option value="sale">SOLO VENTA</option>
-                    <option value="rental">SOLO ALQUILER</option>
-                    <option value="both">AMBOS</option>
-                  </select>
-                  
-                  <div>
-                    <input type="number" step="0.01" placeholder="Precio Venta $" value={productForm.price_sale} onChange={e => setProductForm({...productForm, price_sale: e.target.value})} disabled={productForm.product_type === 'rental'} style={{ width: '100%', opacity: productForm.product_type === 'rental' ? 0.3 : 1 }} />
-                  </div>
-                  
-                  <div>
-                    <input type="number" step="0.01" placeholder="Precio Alquiler $" value={productForm.price_rental} onChange={e => setProductForm({...productForm, price_rental: e.target.value})} disabled={productForm.product_type === 'sale'} style={{ width: '100%', opacity: productForm.product_type === 'sale' ? 0.3 : 1 }} />
+              <div className="pos-form-row">
+                <div className="pos-form-group">
+                  <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Piezas</label>
+                  <input type="number" value={productForm.pieces_count} onChange={e => setProductForm({...productForm, pieces_count: e.target.value})} style={{ width: '100%' }} />
+                </div>
+                <div className="pos-form-group">
+                  <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Categoría</label>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <select value={productForm.category} onChange={e => setProductForm({...productForm, category: e.target.value})} style={{ flex: 1 }}>
+                      {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        const name = prompt("Nombre de la nueva categoría:")
+                        if (name) {
+                          const slug = name.toLowerCase().trim().replace(/\s+/g, '-')
+                          const token = localStorage.getItem('token')
+                          axios.post('http://127.0.0.1:8000/api/categories/', { name, slug }, {
+                            headers: { Authorization: `Bearer ${token}` }
+                          }).then(res => {
+                            setCategories([...categories, res.data])
+                            setProductForm({...productForm, category: res.data.id})
+                          }).catch(err => alert("Error al crear categoría rápida"))
+                        }
+                      }} 
+                      className="btn-icon" 
+                      style={{ background: 'var(--secondary)', border: '1px solid rgba(255,255,255,0.1)' }}
+                    >
+                      <Plus size={20} />
+                    </button>
                   </div>
                 </div>
               </div>
 
-              <div style={{ gridColumn: 'span 2' }}>
-                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Stock Disponible</label>
-                <input type="number" value={productForm.stock} onChange={e => setProductForm({...productForm, stock: e.target.value})} style={{ width: '100%', fontSize: '1.2rem', fontWeight: 'bold', color: 'white' }} />
+              <div className="pos-form-row">
+                <div className="pos-form-group">
+                  <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Descripción</label>
+                  <textarea value={productForm.description} onChange={e => setProductForm({...productForm, description: e.target.value})} rows="2" style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '12px', borderRadius: '8px' }} />
+                </div>
+              </div>
+
+              <div style={{ padding: '20px', background: 'rgba(184, 158, 72, 0.05)', border: '1px solid rgba(184, 158, 72, 0.2)', borderRadius: '12px', marginBottom: '25px' }}>
+                <label style={{ fontSize: '0.7rem', color: 'var(--cta)', textTransform: 'uppercase', display: 'block', marginBottom: '15px', fontWeight: 'bold' }}>Modalidad de Negocio</label>
+                <div className="pos-form-row">
+                  <div className="pos-form-group">
+                    <label style={{ fontSize: '0.6rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Tipo</label>
+                    <select value={productForm.product_type} onChange={e => setProductForm({...productForm, product_type: e.target.value})} style={{ width: '100%', background: 'var(--secondary)' }}>
+                      <option value="sale">SOLO VENTA</option>
+                      <option value="rental">SOLO ALQUILER</option>
+                      <option value="both">AMBOS</option>
+                    </select>
+                  </div>
+                  <div className="pos-form-group">
+                    <label style={{ fontSize: '0.6rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Venta $</label>
+                    <input type="number" step="0.01" value={productForm.price_sale} onChange={e => setProductForm({...productForm, price_sale: e.target.value})} disabled={productForm.product_type === 'rental'} style={{ width: '100%', opacity: productForm.product_type === 'rental' ? 0.3 : 1 }} />
+                  </div>
+                  <div className="pos-form-group">
+                    <label style={{ fontSize: '0.6rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Alquiler $</label>
+                    <input type="number" step="0.01" value={productForm.price_rental} onChange={e => setProductForm({...productForm, price_rental: e.target.value})} disabled={productForm.product_type === 'sale'} style={{ width: '100%', opacity: productForm.product_type === 'sale' ? 0.3 : 1 }} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pos-form-row">
+                <div className="pos-form-group">
+                  <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Stock Disponible</label>
+                  <input type="number" value={productForm.stock} onChange={e => setProductForm({...productForm, stock: e.target.value})} style={{ width: '100%', fontSize: '1.2rem', fontWeight: 'bold', color: 'white' }} />
+                </div>
               </div>
             </div>
             <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', marginTop: '40px' }}>
@@ -504,6 +510,50 @@ const Inventory = () => {
           </form>
         </Modal>
       )}
+
+      <style>{`
+        .tab-btn {
+          border: none;
+          background: transparent;
+          font-size: 1.2rem;
+          font-weight: bold;
+          color: var(--text-dim);
+          cursor: pointer;
+          border-bottom: 3px solid transparent;
+          padding-bottom: 15px;
+          transition: all 0.3s;
+          white-space: nowrap;
+        }
+        .tab-btn.active {
+          color: var(--cta);
+          border-bottom: 3px solid var(--cta);
+        }
+        
+        @media (max-width: 1024px) {
+          .inventory-tabs {
+            gap: 20px !important;
+          }
+          .tab-btn {
+            font-size: 0.9rem !important;
+            padding-bottom: 10px !important;
+          }
+          .admin-actions button {
+            padding: 10px 15px !important;
+            font-size: 0.7rem !important;
+          }
+
+          .image-upload-wrapper {
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center !important;
+            gap: 20px !important;
+          }
+
+          .modal-content-card {
+            padding: 20px !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

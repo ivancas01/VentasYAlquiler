@@ -14,15 +14,15 @@ const Modal = ({ children, onClose, title }) => {
       background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(15px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999999 
     }}>
-      <div className="glass-card" style={{ 
-        padding: '50px', width: '95%', maxWidth: '800px', maxHeight: '90vh', 
+      <div className="glass-card modal-content-card" style={{ 
+        width: '95%', maxWidth: '800px', maxHeight: '90vh', 
         overflowY: 'auto', background: 'var(--primary)', border: '1px solid var(--cta)',
-        position: 'relative'
+        position: 'relative', padding: '30px'
       }}>
-        <button onClick={onClose} style={{ position: 'absolute', top: '30px', right: '30px', border: 'none', background: 'transparent', cursor: 'pointer', color: 'white' }}>
+        <button onClick={onClose} style={{ position: 'absolute', top: '25px', right: '25px', border: 'none', background: 'transparent', cursor: 'pointer', color: 'white' }}>
           <X size={28} />
         </button>
-        <h3 className="urban-font gold-text" style={{ fontSize: '1.8rem', marginBottom: '30px' }}>{title}</h3>
+        <h3 className="urban-font gold-text" style={{ fontSize: '1.4rem', marginBottom: '25px' }}>{title}</h3>
         {children}
       </div>
     </div>,
@@ -132,31 +132,39 @@ const Customers = () => {
 
   return (
     <div className="fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
-        <div>
-          <h1 className="urban-font gold-text" style={{ fontSize: '2.5rem', marginBottom: '10px' }}>CLIENTES</h1>
-          <p style={{ color: 'var(--text-dim)' }}>Directorio de clientes registrados en Urban Luxury</p>
+      <div className="admin-header">
+        <div className="admin-title-section">
+          <h1 className="urban-font gold-text admin-title" style={{ marginBottom: '5px' }}>CLIENTES</h1>
+          <p style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>Directorio de clientes registrados en Urban Luxury</p>
         </div>
-        <button onClick={() => handleOpenModal()} className="btn-primary">
-          <UserPlus size={20} /> REGISTRAR CLIENTE
-        </button>
+        <div className="admin-actions">
+          <button onClick={() => handleOpenModal()} className="btn-primary main-action-btn">
+            <UserPlus size={20} /> REGISTRAR CLIENTE
+          </button>
+        </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '20px', marginBottom: '30px' }}>
-        <div className="glass-card" style={{ flex: 1, padding: '5px 20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <Search size={20} color="var(--cta)" />
-          <input 
-            type="text" 
-            placeholder="Buscar por nombre o documento..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ background: 'transparent', border: 'none', width: '100%', padding: '15px 0' }}
-          />
+      {/* Filters Section (Matching Transactions Style) */}
+      <div className="glass-card" style={{ padding: '25px', marginBottom: '40px', background: 'rgba(255,255,255,0.02)' }}>
+        <div className="filters-grid">
+          <div className="filter-item">
+            <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Buscar Cliente o Documento</label>
+            <div style={{ position: 'relative' }}>
+              <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--cta)' }} />
+              <input 
+                type="text" 
+                value={searchTerm} 
+                onChange={e => setSearchTerm(e.target.value)} 
+                placeholder="Ej: Juan o 1032..." 
+                style={{ width: '100%', paddingLeft: '40px' }} 
+              />
+            </div>
+          </div>
         </div>
       </div>
 
       <div className="table-container" style={{ background: 'var(--primary)', border: '1px solid var(--glass-border)' }}>
-        <table className="urban-table" style={{ width: '100%' }}>
+        <table className="urban-table" style={{ width: '100%', minWidth: '800px' }}>
           <thead>
             <tr>
               <th>Cliente</th>
@@ -173,29 +181,38 @@ const Customers = () => {
                 key={c.id} 
               >
                 <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--secondary)', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--cta)', fontWeight: 'bold' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    <div className="customer-avatar">
                       {c.full_name[0].toUpperCase()}
                     </div>
-                    <span style={{ fontWeight: 'bold', fontSize: '1rem' }}>{c.full_name}</span>
+                    <div>
+                      <div style={{ fontWeight: 'bold', fontSize: '1rem', color: 'white' }}>{c.full_name}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--cta)', textTransform: 'uppercase', letterSpacing: '1px' }}>ID: #{c.id}</div>
+                    </div>
                   </div>
                 </td>
-                <td style={{ color: 'var(--text-dim)', fontSize: '0.9rem' }}>
-                  {c.doc_type} {c.doc_id}
+                <td>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ color: 'white', fontSize: '0.9rem', fontWeight: '500' }}>{c.doc_id}</span>
+                    <span style={{ color: 'var(--text-dim)', fontSize: '0.7rem', textTransform: 'uppercase' }}>{c.doc_type}</span>
+                  </div>
                 </td>
                 <td>
                   <div style={{ fontSize: '0.85rem' }}>
-                    <div style={{ fontWeight: '500' }}>{c.city}</div>
-                    <div style={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>{c.address}</div>
+                    <div style={{ fontWeight: '600', color: 'var(--text)' }}>{c.city}</div>
+                    <div style={{ color: 'var(--text-dim)', fontSize: '0.75rem', marginTop: '2px' }}>{c.address}</div>
                   </div>
                 </td>
                 <td style={{ fontSize: '0.85rem' }}>
-                  {c.phone}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text)' }}>
+                    <Phone size={14} className="gold-text-icon" />
+                    {c.phone}
+                  </div>
                 </td>
                 <td style={{ textAlign: 'right' }}>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                    <button onClick={() => handleOpenModal(c)} className="btn-icon"><Edit size={18} /></button>
-                  </div>
+                  <button onClick={() => handleOpenModal(c)} className="btn-icon" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <Edit size={16} />
+                  </button>
                 </td>
               </tr>
             ))}
@@ -207,12 +224,15 @@ const Customers = () => {
       {showModal && (
         <Modal onClose={() => setShowModal(false)} title={editingCustomer ? 'EDITAR CLIENTE' : 'NUEVO CLIENTE'}>
           <form onSubmit={handleSubmit}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px' }}>
-              <div style={{ gridColumn: 'span 2' }}>
+            <div className="pos-form-row">
+              <div className="pos-form-group">
                 <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nombre Completo</label>
                 <input type="text" value={formData.full_name || ''} onChange={e => setFormData({...formData, full_name: e.target.value})} required style={{ width: '100%' }} />
               </div>
-              <div>
+            </div>
+
+            <div className="pos-form-row">
+              <div className="pos-form-group">
                 <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Tipo Doc</label>
                 <select value={formData.doc_type || 'CC'} onChange={e => setFormData({...formData, doc_type: e.target.value})} style={{ width: '100%' }}>
                   <option value="CC">Cédula Ciudadanía</option>
@@ -221,37 +241,118 @@ const Customers = () => {
                   <option value="PP">Pasaporte</option>
                 </select>
               </div>
-              <div>
+              <div className="pos-form-group">
                 <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Número Documento</label>
                 <input type="text" value={formData.doc_id || ''} onChange={e => setFormData({...formData, doc_id: e.target.value})} required style={{ width: '100%' }} />
               </div>
-              <div>
+            </div>
+
+            <div className="pos-form-row">
+              <div className="pos-form-group">
                 <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Ciudad</label>
                 <input type="text" value={formData.city || ''} onChange={e => setFormData({...formData, city: e.target.value})} style={{ width: '100%' }} />
               </div>
-              <div>
+              <div className="pos-form-group">
                 <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Dirección</label>
                 <input type="text" value={formData.address || ''} onChange={e => setFormData({...formData, address: e.target.value})} style={{ width: '100%' }} />
               </div>
-              <div>
+            </div>
+
+            <div className="pos-form-row">
+              <div className="pos-form-group">
                 <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Teléfono Personal</label>
                 <input type="text" value={formData.phone || ''} onChange={e => setFormData({...formData, phone: e.target.value})} required style={{ width: '100%' }} />
               </div>
-              <div>
+              <div className="pos-form-group">
                 <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nombre Referencia</label>
                 <input type="text" value={formData.name_ref || ''} onChange={e => setFormData({...formData, name_ref: e.target.value})} style={{ width: '100%' }} />
               </div>
-              <div style={{ gridColumn: 'span 2' }}>
+            </div>
+
+            <div className="pos-form-row">
+              <div className="pos-form-group">
                 <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Teléfono Referencia</label>
                 <input type="text" value={formData.phone_ref || ''} onChange={e => setFormData({...formData, phone_ref: e.target.value})} style={{ width: '100%' }} />
               </div>
             </div>
+
             <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '40px' }}>
               {editingCustomer ? 'GUARDAR CAMBIOS' : 'REGISTRAR CLIENTE'}
             </button>
           </form>
         </Modal>
       )}
+
+      <style>{`
+        .filters-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 20px;
+          align-items: flex-end;
+        }
+
+        .filter-item {
+          width: 100%;
+        }
+
+        .customer-avatar {
+          width: 45px;
+          height: 45px;
+          border-radius: 12px;
+          background: var(--secondary);
+          border: 1px solid rgba(255,255,255,0.08);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--cta);
+          font-weight: bold;
+          font-size: 1.1rem;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .gold-text-icon {
+          color: var(--cta);
+        }
+
+        @media (max-width: 1024px) {
+          .filters-grid {
+            grid-template-columns: 1fr !important;
+          }
+          
+          .admin-header {
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center !important;
+            gap: 25px !important;
+          }
+
+          .admin-title-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+          }
+
+          .admin-actions {
+             width: 100% !important;
+          }
+          
+          .main-action-btn {
+            width: 100% !important;
+          }
+
+          .admin-title {
+            font-size: 1.8rem !important;
+          }
+
+          .admin-header p {
+            font-size: 0.75rem !important;
+          }
+
+          .modal-content-card {
+            padding: 20px !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

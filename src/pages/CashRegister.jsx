@@ -10,9 +10,9 @@ const Modal = ({ children, onClose }) => {
       background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '40px'
     }}>
-      <div className="glass-card fade-in" style={{
+      <div className="glass-card fade-in modal-content-card" style={{
         width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto',
-        position: 'relative', padding: '50px', border: '1px solid rgba(255,255,255,0.1)'
+        position: 'relative', padding: '30px', border: '1px solid rgba(255,255,255,0.1)'
       }}>
         <button onClick={onClose} style={{ position: 'absolute', top: '25px', right: '25px', border: 'none', background: 'transparent', color: 'white', cursor: 'pointer' }}><X size={28} /></button>
         {children}
@@ -132,24 +132,24 @@ const CashRegister = () => {
 
   return (
     <div className="fade-in" style={{ width: '100%', margin: '0' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '50px' }}>
-        <div>
-          <h2 className="urban-font gold-text" style={{ fontSize: '2.5rem', marginBottom: '10px' }}>CONTROL DE CAJA</h2>
-          <p style={{ color: 'var(--text-dim)' }}>Seguimiento financiero y movimientos en tiempo real</p>
+      <div className="admin-header">
+        <div className="admin-title-section">
+          <h2 className="urban-font gold-text admin-title" style={{ marginBottom: '5px' }}>CONTROL DE CAJA</h2>
+          <p style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>Seguimiento financiero y movimientos en tiempo real</p>
         </div>
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'stretch' }}>
-          <button onClick={() => setShowMoveModal(true)} className="btn-primary" style={{ padding: '0 40px', fontSize: '0.9rem', height: '70px', borderRadius: '12px' }}>
-            <Plus size={24} /> NUEVO MOVIMIENTO
+        <div className="admin-actions cash-actions">
+          <button onClick={() => setShowMoveModal(true)} className="btn-primary main-action-btn">
+            <Plus size={20} /> NUEVO MOVIMIENTO
           </button>
-          <div style={{ display: 'flex', gap: '50px', background: 'rgba(255,255,255,0.03)', padding: '0 45px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', alignItems: 'center', height: '70px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-              <label style={{ fontSize: '0.7rem', color: 'var(--cta)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>Desde</label>
-              <input type="date" value={dates.start} onChange={e => setDates({ ...dates, start: e.target.value })} style={{ background: 'transparent', border: 'none', color: 'white', outline: 'none', fontSize: '1.1rem', cursor: 'pointer', fontWeight: '500' }} />
+          <div className="date-filter-box">
+            <div className="date-input-group">
+              <label>Desde</label>
+              <input type="date" value={dates.start} onChange={e => setDates({ ...dates, start: e.target.value })} />
             </div>
-            <div style={{ width: '1px', alignSelf: 'stretch', background: 'rgba(255,255,255,0.1)', margin: '18px 0' }}></div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-              <label style={{ fontSize: '0.7rem', color: 'var(--cta)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>Hasta</label>
-              <input type="date" value={dates.end} onChange={e => setDates({ ...dates, end: e.target.value })} style={{ background: 'transparent', border: 'none', color: 'white', outline: 'none', fontSize: '1.1rem', cursor: 'pointer', fontWeight: '500' }} />
+            <div className="date-separator"></div>
+            <div className="date-input-group">
+              <label>Hasta</label>
+              <input type="date" value={dates.end} onChange={e => setDates({ ...dates, end: e.target.value })} />
             </div>
           </div>
         </div>
@@ -159,7 +159,7 @@ const CashRegister = () => {
         <div style={{ textAlign: 'center', padding: '100px', color: 'var(--cta)' }}>PROCESANDO DATOS FINANCIEROS...</div>
       ) : (
         <>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '30px', marginBottom: '50px' }}>
+          <div className="cash-summary-grid">
             <div className="glass-card" style={{ padding: '35px', background: 'rgba(255,255,255,0.02)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
                 <div style={{ width: '45px', height: '45px', borderRadius: '10px', background: 'var(--cta)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
@@ -200,42 +200,39 @@ const CashRegister = () => {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '40px' }}>
+          <div className="cash-content-grid">
             {/* Movements List with Infinite Scroll */}
             <div>
-              <h3 className="urban-font" style={{ fontSize: '1.2rem', marginBottom: '30px', color: 'white', display: 'flex', alignItems: 'center', gap: '15px' }}>
+              <h3 className="urban-font" style={{ fontSize: '1.2rem', marginBottom: '30px', marginTop: '40px', color: 'white', display: 'flex', alignItems: 'center', gap: '15px' }}>
                 <History size={20} /> Movimientos
               </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <div className="movements-list" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                 {movements.map((move, index) => (
                   <div
                     ref={index === movements.length - 1 ? lastMoveRef : null}
                     key={move.id}
-                    className="glass-card"
+                    className="glass-card movement-card"
                     style={{
                       padding: '20px',
                       background: 'rgba(255,255,255,0.02)',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
                       borderLeft: `4px solid ${(move.movement_type === 'IN' || move.type === 'IN') ? '#10b981' : '#ef4444'}`
                     }}
                   >
-                    <div>
-                      <div style={{ fontWeight: 'bold', fontSize: '0.9rem', color: 'white' }}>
+                    <div className="movement-info">
+                      <div className="movement-desc">
                         {(move.description || 'Movimiento').toUpperCase()}
                       </div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginTop: '4px', display: 'flex', gap: '10px' }}>
+                      <div className="movement-meta">
                         <span>{new Date(move.created_at).toLocaleDateString()} {new Date(move.created_at).toLocaleTimeString()}</span>
-                        <span>•</span>
+                        <span className="meta-sep">•</span>
                         <span>{move.staff_name || 'Sistema'}</span>
                       </div>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontWeight: 'bold', color: (move.movement_type === 'IN' || move.type === 'IN') ? '#10b981' : '#ef4444', fontSize: '1.1rem' }}>
+                    <div className="movement-amount-section">
+                      <div className="movement-value" style={{ color: (move.movement_type === 'IN' || move.type === 'IN') ? '#10b981' : '#ef4444' }}>
                         {(move.movement_type === 'IN' || move.type === 'IN') ? '+' : '-'}{formatCurrency(move.amount)}
                       </div>
-                      <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', marginTop: '4px' }}>
+                      <div className="movement-method">
                         {(move.payment_method || move.method || 'Efectivo')} {move.bank ? `(${move.bank})` : ''}
                       </div>
                     </div>
@@ -247,29 +244,29 @@ const CashRegister = () => {
 
             {/* Channels & Methods */}
             <div>
-              <h3 className="urban-font" style={{ fontSize: '1.2rem', marginBottom: '30px', color: 'white', display: 'flex', alignItems: 'center', gap: '15px' }}>
+              <h3 className="urban-font" style={{ fontSize: '1.2rem', marginBottom: '30px', marginTop: '40px', color: 'white', display: 'flex', alignItems: 'center', gap: '15px' }}>
                 <BankIcon size={20} /> Disponibilidad de Fondos
               </h3>
-              <div className="table-container">
+              <div className="table-container" style={{ background: 'var(--primary)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}>
                 <table className="urban-table" style={{ width: '100%' }}>
                   <thead>
                     <tr>
-                      <th>Canal / Entidad</th>
-                      <th>Conceptos</th>
-                      <th style={{ textAlign: 'right' }}>Total Disponible</th>
+                      <th style={{ whiteSpace: 'nowrap' }}>Canal / Entidad</th>
+                      <th style={{ whiteSpace: 'nowrap' }}>Conceptos</th>
+                      <th style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>Total Disponible</th>
                     </tr>
                   </thead>
                   <tbody>
                     {summary?.channels_detailed?.map(item => (
                       <tr key={item.channel}>
-                        <td style={{ fontWeight: 'bold', textTransform: 'uppercase', color: item.channel === 'Efectivo' ? '#10b981' : 'var(--cta)' }}>
+                        <td style={{ fontWeight: 'bold', textTransform: 'uppercase', color: item.channel === 'Efectivo' ? '#10b981' : 'var(--cta)', whiteSpace: 'nowrap' }}>
                           {item.channel.replace('_', ' ')}
                         </td>
-                        <td>
+                        <td style={{ whiteSpace: 'nowrap' }}>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>Disponibilidad: {formatCurrency(item.income)}</div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--cta)' }}>Garantías: {formatCurrency(item.guarantees)}</div>
                         </td>
-                        <td style={{ textAlign: 'right', fontWeight: 'bold', fontSize: '1rem' }}>
+                        <td style={{ textAlign: 'right', fontWeight: 'bold', fontSize: '1rem', whiteSpace: 'nowrap' }}>
                           {formatCurrency(item.total)}
                         </td>
                       </tr>
@@ -295,49 +292,49 @@ const CashRegister = () => {
         <Modal onClose={() => setShowMoveModal(false)}>
           <h3 className="urban-font gold-text" style={{ fontSize: '1.5rem', marginBottom: '30px' }}>NUEVO MOVIMIENTO</h3>
           <form onSubmit={handleCreateMove}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-              <div>
+            <div className="pos-form-row">
+              <div className="pos-form-group">
                 <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Tipo</label>
                 <select
                   value={newMove.movement_type}
                   onChange={e => setNewMove({ ...newMove, movement_type: e.target.value })}
-                  style={{ width: '100%', marginTop: '8px' }}
+                  style={{ width: '100%' }}
                 >
                   <option value="IN">ENTRADA (INGRESO)</option>
                   <option value="OUT">SALIDA (GASTO / RETIRO)</option>
                 </select>
               </div>
-              <div>
+              <div className="pos-form-group">
                 <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Monto</label>
                 <input
                   type="number"
                   value={newMove.amount}
                   onChange={e => setNewMove({ ...newMove, amount: e.target.value })}
-                  style={{ width: '100%', marginTop: '8px' }}
+                  style={{ width: '100%' }}
                   required
                 />
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-              <div>
+            <div className="pos-form-row">
+              <div className="pos-form-group">
                 <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Método</label>
                 <select
                   value={newMove.payment_method}
                   onChange={e => setNewMove({ ...newMove, payment_method: e.target.value })}
-                  style={{ width: '100%', marginTop: '8px' }}
+                  style={{ width: '100%' }}
                 >
                   <option value="efectivo">EFECTIVO</option>
                   <option value="transaccion">TRANSACCIÓN</option>
                 </select>
               </div>
               {newMove.payment_method === 'transaccion' && (
-                <div>
+                <div className="pos-form-group">
                   <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Banco</label>
                   <select
                     value={newMove.bank}
                     onChange={e => setNewMove({ ...newMove, bank: e.target.value })}
-                    style={{ width: '100%', marginTop: '8px' }}
+                    style={{ width: '100%' }}
                   >
                     <option value="nequi">NEQUI</option>
                     <option value="bancolombia">BANCOLOMBIA</option>
@@ -365,6 +362,187 @@ const CashRegister = () => {
           </form>
         </Modal>
       )}
+
+      <style>{`
+        .cash-summary-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 30px;
+          marginBottom: 50px;
+        }
+        
+        .cash-content-grid {
+          display: grid;
+          grid-template-columns: 1.2fr 1fr;
+          gap: 40px;
+        }
+
+        .date-filter-box {
+          display: flex;
+          gap: 40px;
+          background: transparent;
+          padding: 0;
+          align-items: center;
+          height: 60px;
+        }
+
+        .date-input-group {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        .date-input-group label {
+          font-size: 0.6rem;
+          color: var(--cta);
+          font-weight: bold;
+          text-transform: uppercase;
+        }
+
+        .date-input-group input {
+          background: transparent;
+          border: none;
+          color: white;
+          outline: none;
+          font-size: 0.9rem;
+          cursor: pointer;
+          padding: 8px 15px;
+        }
+
+        .date-separator {
+          width: 1px;
+          align-self: stretch;
+          background: rgba(255,255,255,0.1);
+          margin: 12px 0;
+        }
+
+        .main-action-btn {
+          height: 45px !important;
+          padding: 0 20px !important;
+          font-size: 0.75rem !important;
+        }
+
+        .cash-actions {
+          gap: 60px !important;
+          align-items: flex-end !important;
+        }
+
+        .movement-card {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .movement-desc {
+          font-weight: bold;
+          font-size: 0.9rem;
+          color: white;
+        }
+
+        .movement-meta {
+          font-size: 0.7rem;
+          color: var(--text-dim);
+          margin-top: 4px;
+          display: flex;
+          gap: 10px;
+        }
+
+        .movement-value {
+          font-weight: bold;
+          font-size: 1.1rem;
+        }
+
+        .movement-method {
+          font-size: 0.65rem;
+          color: var(--text-dim);
+          text-transform: uppercase;
+          margin-top: 4px;
+        }
+
+        @media (max-width: 1024px) {
+          .cash-summary-grid {
+            grid-template-columns: 1fr !important;
+            width: 100% !important;
+          }
+          
+          .cash-content-grid {
+            grid-template-columns: 1.2fr 1fr !important;
+            width: 100% !important;
+            gap: 25px !important;
+          }
+          
+          .cash-content-grid > div {
+            width: 100% !important;
+            max-width: 100% !important;
+            display: block !important;
+            min-width: 0 !important;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .cash-content-grid {
+            grid-template-columns: 1fr !important;
+          }
+          
+          .date-filter-box {
+            width: 100% !important;
+            height: auto !important;
+            flex-direction: column !important;
+            padding: 10px 0 !important;
+            gap: 15px !important;
+            align-items: stretch !important;
+          }
+          
+          .date-input-group input {
+            width: 100% !important;
+            padding: 8px 15px !important;
+            border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+          }
+          
+          .date-separator {
+            display: none !important;
+          }
+          
+          .cash-actions {
+            flex-direction: column !important;
+            width: 100% !important;
+            gap: 15px !important;
+            align-items: stretch !important;
+          }
+          
+          .main-action-btn {
+            width: 100% !important;
+          }
+
+          .movements-list {
+            align-items: center !important;
+            display: flex !important;
+            flex-direction: column !important;
+          }
+
+          .movement-card {
+            display: flex !important;
+            width: 100% !important;
+            flex-direction: column !important;
+            text-align: center !important;
+            gap: 15px !important;
+          }
+
+          .movement-meta {
+            justify-content: center !important;
+          }
+
+          .movement-amount-section {
+            width: 100% !important;
+            border-top: 1px solid rgba(255,255,255,0.05) !important;
+            padding-top: 10px !important;
+          }
+
+          .modal-content-card {
+            padding: 20px !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }
