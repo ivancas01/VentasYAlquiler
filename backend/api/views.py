@@ -43,6 +43,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [permissions.AllowAny]
+    pagination_class = None
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
@@ -57,6 +58,8 @@ class ProductViewSet(viewsets.ModelViewSet):
         queryset = Product.objects.all()
         p_type = self.request.query_params.get('type')
         category = self.request.query_params.get('category')
+        search = self.request.query_params.get('search')
+        
         if p_type:
             if p_type == 'both':
                 queryset = queryset.filter(product_type='both')
@@ -64,46 +67,42 @@ class ProductViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(product_type__in=[p_type, 'both'])
         if category and category != 'all':
             queryset = queryset.filter(category_id=category)
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) | 
+                Q(reference__icontains=search)
+            )
         return queryset
 
     @action(detail=False, methods=['get'])
     def availability(self, request):
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
+        product_ids = request.query_params.get('ids', None)
         
         if not start_date or not end_date:
             return Response({"error": "start_date and end_date are required"}, status=400)
             
-        products = Product.objects.all()
-        results = []
+        # Get booked counts using aggregation (Single query for all products)
+        q_overlap = Q(rental__start_date__lte=end_date, rental__end_date__gte=start_date)
+        booked_counts = RentalItem.objects.filter(q_overlap).exclude(rental__status='received')\
+            .values('product_id').annotate(total_booked=Count('id'))
         
-        for product in products:
-            # Find overlapping rentals
-            # Overlap: (StartA <= EndB) and (EndA >= StartB)
-            overlapping_rentals = Rental.objects.filter(
-                items__product=product,
-                start_date__lte=end_date,
-                end_date__gte=start_date
-            ).exclude(status='received') # Don't count returned items
+        booked_map = {item['product_id']: item['total_booked'] for item in booked_counts}
+        
+        # Filter products if IDs are provided
+        queryset = Product.objects.all()
+        if product_ids:
+            ids = [int(x) for x in product_ids.split(',')]
+            queryset = queryset.filter(id__in=ids)
             
-            # Sum pieces of this product in overlapping rentals
-            # We need to filter the items inside the rentals too
-            booked_count = 0
-            conflicts = []
-            for rental in overlapping_rentals:
-                # Count how many times this product appears in this rental
-                count = rental.items.filter(product=product).count()
-                booked_count += count
-                conflicts.append({
-                    "start": rental.start_date,
-                    "end": rental.end_date,
-                    "customer": rental.customer.full_name if rental.customer else "N/A"
-                })
-                
+        results = []
+        for product in queryset:
+            booked = booked_map.get(product.id, 0)
             results.append({
                 "id": product.id,
-                "available_stock": max(0, product.stock - booked_count),
-                "conflicts": conflicts
+                "available_stock": max(0, product.stock - booked),
+                "conflicts": [] # Simplified for list view performance
             })
             
         return Response(results)
@@ -228,6 +227,11 @@ class NotificationViewSet(viewsets.ModelViewSet):
     def read_all(self, request):
         Notification.objects.filter(is_read=False).update(is_read=True)
         return Response({"status": "all marked as read"})
+
+    @action(detail=False, methods=['get'])
+    def unread_count(self, request):
+        count = Notification.objects.filter(is_read=False, is_hidden=False).count()
+        return Response({"unread_count": count})
 
 class MovementViewSet(viewsets.ModelViewSet):
     queryset = Movement.objects.all().order_by('-created_at')

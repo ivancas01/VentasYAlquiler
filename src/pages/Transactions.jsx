@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import axios from 'axios'
+import api from '../api/axios'
 import { useLocation } from 'react-router-dom'
-import { History, ShoppingBag, Calendar, User, DollarSign, ChevronRight, Eye, Edit3, CheckCircle, Package, Truck, RotateCcw, X, Plus, Trash2, ArrowRight, Search, Filter, Shield, AlertCircle, Info } from 'lucide-react'
+import { History, ShoppingBag, Calendar, User, DollarSign, ChevronRight, Eye, Edit3, CheckCircle, Package, Truck, RotateCcw, X, Plus, Trash2, ArrowRight, Search, Filter, Shield, AlertCircle, Info, Printer } from 'lucide-react'
 import { useCallback, useRef } from 'react'
 import FeedbackModal from '../components/FeedbackModal'
 import { formatCurrency, formatDate } from '../utils/format'
+import Pagination from '../components/shared/Pagination'
+import POSReceipt from '../components/POSReceipt'
+import { useSite } from '../context/SiteContext'
+import { useAuth } from '../context/AuthContext'
 
 const Modal = ({ children, onClose }) => {
   return createPortal(
@@ -44,7 +48,7 @@ const getImageUrl = (path) => {
   if (!path) return null;
   if (path.startsWith('http')) return path;
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  return `http://192.168.1.17:8000${cleanPath}`;
+  return `${api.defaults.baseURL.replace('/api', '')}${cleanPath}`;
 }
 
 const Transactions = () => {
@@ -61,6 +65,12 @@ const Transactions = () => {
   const [paymentMethod, setPaymentMethod] = useState('efectivo')
   const [bank, setBank] = useState('nequi')
   const [feedback, setFeedback] = useState({ isOpen: false, title: '', message: '', type: 'info', onConfirm: null, showCancel: false })
+  const { config } = useSite()
+  const { user: currentUser } = useAuth()
+  
+  // Receipt State
+  const [showReceipt, setShowReceipt] = useState(false)
+  const [receiptData, setReceiptData] = useState(null)
 
   // Inner Rental Management
   const [innerSearch, setInnerSearch] = useState('')
@@ -73,58 +83,34 @@ const Transactions = () => {
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [dateFilter, setDateFilter] = useState({ start: '', end: '' })
 
-  // Pagination States
   const [pageSales, setPageSales] = useState(1)
-  const [hasMoreSales, setHasMoreSales] = useState(true)
-  const [loadingMoreSales, setLoadingMoreSales] = useState(false)
+  const [totalSalesPages, setTotalSalesPages] = useState(1)
   
   const [pageRentals, setPageRentals] = useState(1)
-  const [hasMoreRentals, setHasMoreRentals] = useState(true)
-  const [loadingMoreRentals, setLoadingMoreRentals] = useState(false)
-
-  const observerSales = useRef()
-  const observerRentals = useRef()
+  const [totalRentalsPages, setTotalRentalsPages] = useState(1)
 
   const location = useLocation()
 
   useEffect(() => {
     const init = async () => {
       setLoading(true)
-      await Promise.all([fetchTransactions(1), fetchProducts(), fetchCategories()])
+      await fetchTransactions(1)
       setLoading(false)
     }
     init()
   }, [])
 
-  const lastSaleRef = useCallback(node => {
-    if (loadingMoreSales) return
-    if (observerSales.current) observerSales.current.disconnect()
-    observerSales.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMoreSales) {
-        setPageSales(prev => prev + 1)
-      }
-    })
-    if (node) observerSales.current.observe(node)
-  }, [loadingMoreSales, hasMoreSales])
-
-  const lastRentalRef = useCallback(node => {
-    if (loadingMoreRentals) return
-    if (observerRentals.current) observerRentals.current.disconnect()
-    observerRentals.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMoreRentals) {
-        setPageRentals(prev => prev + 1)
-      }
-    })
-    if (node) observerRentals.current.observe(node)
-  }, [loadingMoreRentals, hasMoreRentals])
+  useEffect(() => {
+    fetchCategories()
+  }, [])
 
   useEffect(() => {
-    if (pageSales > 1) fetchMoreSales()
-  }, [pageSales])
+    if (selectedRental) {
+      fetchProducts()
+    }
+  }, [selectedRental])
 
-  useEffect(() => {
-    if (pageRentals > 1) fetchMoreRentals()
-  }, [pageRentals])
+  // Removed Infinite Scroll effects
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
@@ -153,66 +139,32 @@ const Transactions = () => {
   }, [loading, searchTerm, rentals, sales])
 
   const fetchTransactions = async (p = 1) => {
-    const token = localStorage.getItem('token')
+    setLoading(true)
     try {
-      const [salesRes, rentalsRes] = await Promise.all([
-        axios.get(`http://192.168.1.17:8000/api/sales/`, { 
-          params: { page: p, search: searchTerm, start_date: dateFilter.start, end_date: dateFilter.end },
-          headers: { Authorization: `Bearer ${token}` } 
-        }),
-        axios.get(`http://192.168.1.17:8000/api/rentals/`, { 
-          params: { page: p, search: searchTerm, status: statusFilter, start_date: dateFilter.start, end_date: dateFilter.end },
-          headers: { Authorization: `Bearer ${token}` } 
+      if (activeTab === 'sales') {
+        const res = await api.get('/sales/', { 
+          params: { page: p, search: searchTerm, start_date: dateFilter.start, end_date: dateFilter.end }
         })
-      ])
-      
-      const newSales = salesRes.data.results || salesRes.data
-      const newRentals = rentalsRes.data.results || rentalsRes.data
-
-      if (p === 1) {
+        const newSales = res.data.results || res.data
         setSales(newSales)
-        setRentals(newRentals)
-        setPageSales(1)
-        setPageRentals(1)
+        if (res.data.count) setTotalSalesPages(Math.ceil(res.data.count / 10))
+        setPageSales(p)
       } else {
-        // This is handled by fetchMoreSales/fetchMoreRentals
+        const res = await api.get('/rentals/', { 
+          params: { page: p, search: searchTerm, status: statusFilter, start_date: dateFilter.start, end_date: dateFilter.end }
+        })
+        const newRentals = res.data.results || res.data
+        setRentals(newRentals)
+        if (res.data.count) setTotalRentalsPages(Math.ceil(res.data.count / 10))
+        setPageRentals(p)
       }
-      
-      setHasMoreSales(!!salesRes.data.next)
-      setHasMoreRentals(!!rentalsRes.data.next)
     } catch (err) {
       console.error("Error fetching transactions", err)
     }
     setLoading(false)
   }
 
-  const fetchMoreSales = async () => {
-    const token = localStorage.getItem('token')
-    setLoadingMoreSales(true)
-    try {
-      const res = await axios.get(`http://192.168.1.17:8000/api/sales/`, { 
-        params: { page: pageSales, search: searchTerm, start_date: dateFilter.start, end_date: dateFilter.end },
-        headers: { Authorization: `Bearer ${token}` } 
-      })
-      setSales(prev => [...prev, ...(res.data.results || [])])
-      setHasMoreSales(!!res.data.next)
-    } catch (err) {}
-    setLoadingMoreSales(false)
-  }
-
-  const fetchMoreRentals = async () => {
-    const token = localStorage.getItem('token')
-    setLoadingMoreRentals(true)
-    try {
-      const res = await axios.get(`http://192.168.1.17:8000/api/rentals/`, { 
-        params: { page: pageRentals, search: searchTerm, status: statusFilter, start_date: dateFilter.start, end_date: dateFilter.end },
-        headers: { Authorization: `Bearer ${token}` } 
-      })
-      setRentals(prev => [...prev, ...(res.data.results || [])])
-      setHasMoreRentals(!!res.data.next)
-    } catch (err) {}
-    setLoadingMoreRentals(false)
-  }
+  // Removed fetchMoreSales/Rentals in favor of Pagination
 
   // Refetch on filter change
   useEffect(() => {
@@ -220,11 +172,11 @@ const Transactions = () => {
       fetchTransactions(1)
     }, 500)
     return () => clearTimeout(timer)
-  }, [searchTerm, statusFilter, dateFilter])
+  }, [searchTerm, statusFilter, dateFilter, activeTab])
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get('http://192.168.1.17:8000/api/products/?page_size=1000')
+      const res = await api.get('/products/?page_size=1000')
       setProducts(res.data.results || res.data)
     } catch (err) {
       console.error("Error fetching products", err)
@@ -233,7 +185,7 @@ const Transactions = () => {
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get('http://192.168.1.17:8000/api/categories/?page_size=100')
+      const res = await api.get('/categories/?page_size=100')
       setCategories(res.data.results || res.data)
     } catch (err) {
       console.error("Error fetching categories", err)
@@ -255,9 +207,7 @@ const Transactions = () => {
 
     const token = localStorage.getItem('token')
     try {
-      await axios.patch(`http://192.168.1.17:8000/api/rentals/${id}/`, { status: newStatus }, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      await api.patch(`/rentals/${id}/`, { status: newStatus })
       
       if (newStatus === 'received') {
         setFeedback({
@@ -278,10 +228,10 @@ const Transactions = () => {
   const updateGuarantee = async () => {
     const token = localStorage.getItem('token')
     try {
-      await axios.patch(`http://192.168.1.17:8000/api/rentals/${selectedRental.id}/`, { 
+      await api.patch(`/rentals/${selectedRental.id}/`, { 
         guarantee_type: selectedRental.guarantee_type,
         guarantee_info: selectedRental.guarantee_info 
-      }, { headers: { Authorization: `Bearer ${token}` } })
+      })
       fetchTransactions()
       setFeedback({
         isOpen: true,
@@ -299,19 +249,17 @@ const Transactions = () => {
     if (!paymentAmount) return
     const token = localStorage.getItem('token')
     try {
-      await axios.post('http://192.168.1.17:8000/api/payments/', {
+      await api.post('/payments/', {
         rental: selectedRental.id,
         amount: paymentAmount,
         payment_method: paymentMethod,
         bank: paymentMethod === 'transferencia' ? bank : null,
         label: paymentLabel
-      }, { headers: { Authorization: `Bearer ${token}` } })
+      })
       setPaymentAmount('')
       setPaymentLabel('Abono')
       fetchTransactions()
-      const res = await axios.get(`http://192.168.1.17:8000/api/rentals/${selectedRental.id}/`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      const res = await api.get(`/rentals/${selectedRental.id}/`)
       setSelectedRental(res.data)
     } catch (err) {
       console.error("Error adding payment", err)
@@ -333,10 +281,10 @@ const Transactions = () => {
     const newTotal = newItems.reduce((acc, i) => acc + (parseFloat(i.price_at_rental)), 0)
 
     try {
-      const res = await axios.patch(`http://192.168.1.17:8000/api/rentals/${selectedRental.id}/`, {
+      const res = await api.patch(`/rentals/${selectedRental.id}/`, {
         items: newItems.map(i => ({ product: i.product, price_at_rental: i.price_at_rental })),
         total: newTotal
-      }, { headers: { Authorization: `Bearer ${token}` } })
+      })
       setSelectedRental(res.data)
       fetchTransactions()
     } catch (err) {
@@ -360,10 +308,10 @@ const Transactions = () => {
     const newTotal = newItems.reduce((acc, i) => acc + (parseFloat(i.price_at_rental)), 0)
 
     try {
-      const res = await axios.patch(`http://192.168.1.17:8000/api/rentals/${selectedRental.id}/`, {
+      const res = await api.patch(`/rentals/${selectedRental.id}/`, {
         items: newItems.map(i => ({ product: i.product, price_at_rental: i.price_at_rental })),
         total: newTotal
-      }, { headers: { Authorization: `Bearer ${token}` } })
+      })
       setSelectedRental(res.data)
       fetchTransactions()
     } catch (err) {
@@ -382,6 +330,23 @@ const Transactions = () => {
     }
     return true
   })
+
+  const handleReprint = async (transaction) => {
+    try {
+      const endpoint = activeTab === 'sales' ? `/sales/${transaction.id}/` : `/rentals/${transaction.id}/`
+      const res = await api.get(endpoint)
+      setReceiptData({
+        ...res.data,
+        customer_name: res.data.customer_data?.full_name || res.data.customer_name || 'CONSUMIDOR FINAL',
+        customer_doc: res.data.customer_data?.doc_id || 'N/A',
+        payment_method: res.data.payment_method || (res.data.payments?.length > 0 ? res.data.payments[0].payment_method : 'N/A'),
+        bank: res.data.bank || (res.data.payments?.length > 0 ? res.data.payments[0].bank : null)
+      })
+      setShowReceipt(true)
+    } catch (err) {
+      setFeedback({ isOpen: true, title: 'Error', message: 'No se pudo cargar la información de la factura', type: 'error' })
+    }
+  }
 
   if (loading) return <div style={{ padding: '200px', textAlign: 'center', color: 'var(--cta)' }}>CARGANDO HISTORIAL...</div>
 
@@ -460,14 +425,8 @@ const Transactions = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredData.map((t, index) => (
-              <tr 
-                ref={activeTab === 'sales' 
-                  ? (index === sales.length - 1 ? lastSaleRef : null) 
-                  : (index === rentals.length - 1 ? lastRentalRef : null)
-                }
-                key={t.id} 
-              >
+            {filteredData.map((t) => (
+              <tr key={t.id}>
                 <td style={{ color: 'var(--cta)', fontWeight: 'bold' }}>#{t.id}</td>
                 <td style={{ fontWeight: '600' }}>{t.customer_data?.full_name || t.customer_name || 'CONSUMIDOR FINAL'}</td>
                 <td style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>
@@ -498,18 +457,32 @@ const Transactions = () => {
                   }}>{t.status || t.staff_name}</span>
                 </td>
                 <td>
-                  <button 
-                    onClick={() => activeTab === 'rentals' ? setSelectedRental(t) : setSelectedSale(t)} 
-                    className="btn-icon btn-sm"
-                  >
-                    <Eye size={18} />
-                  </button>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button 
+                      onClick={() => activeTab === 'rentals' ? setSelectedRental(t) : setSelectedSale(t)} 
+                      className="btn-icon btn-sm"
+                      title="Ver Detalle"
+                    >
+                      <Eye size={18} />
+                    </button>
+                    <button 
+                      onClick={() => handleReprint(t)} 
+                      className="btn-icon btn-sm"
+                      title="Imprimir Factura"
+                    >
+                      <Printer size={18} color="var(--cta)" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-        {(loadingMoreSales || loadingMoreRentals) && <div style={{ padding: '20px', textAlign: 'center', color: 'var(--cta)', fontSize: '0.8rem' }}>CARGANDO MÁS TRANSACCIONES...</div>}
+        <Pagination 
+          current={activeTab === 'sales' ? pageSales : pageRentals} 
+          total={activeTab === 'sales' ? totalSalesPages : totalRentalsPages} 
+          onPageChange={(p) => fetchTransactions(p)} 
+        />
         {filteredData.length === 0 && (
           <div style={{ padding: '50px', textAlign: 'center', color: 'var(--text-dim)' }}>No se encontraron transacciones con los filtros aplicados.</div>
         )}
@@ -527,6 +500,11 @@ const Transactions = () => {
               <p className="modal-meta-text" style={{ marginTop: '5px' }}>
                 Cliente: {selectedRental.customer_data?.full_name || selectedRental.customer_name}
               </p>
+              {selectedRental.description && (
+                <p className="modal-meta-text" style={{ marginTop: '10px', color: 'white', background: 'rgba(212, 175, 55, 0.1)', padding: '10px', borderRadius: '4px', borderLeft: '3px solid var(--cta)' }}>
+                  <strong>Nota:</strong> {selectedRental.description}
+                </p>
+              )}
             </div>
 
             <div className="transaction-modal-grid">
@@ -799,6 +777,11 @@ const Transactions = () => {
               <p className="modal-meta-text" style={{ marginTop: '5px' }}>
                 Cliente: {selectedSale.customer_data?.full_name || selectedSale.customer_name || 'CONSUMIDOR FINAL'}
               </p>
+              {selectedSale.description && (
+                <p className="modal-meta-text" style={{ marginTop: '10px', color: 'white', background: 'rgba(212, 175, 55, 0.1)', padding: '10px', borderRadius: '4px', borderLeft: '3px solid var(--cta)' }}>
+                  <strong>Nota:</strong> {selectedSale.description}
+                </p>
+              )}
             </div>
 
             <div className="cms-layout-stack" style={{ gap: '20px' }}>
@@ -976,6 +959,13 @@ const Transactions = () => {
           }
         }
       `}</style>
+      <POSReceipt 
+        isOpen={showReceipt} 
+        onClose={() => setShowReceipt(false)} 
+        data={receiptData}
+        config={config}
+        staffName={currentUser?.username}
+      />
     </div>
   )
 }

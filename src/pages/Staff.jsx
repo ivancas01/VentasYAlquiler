@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../api/axios'
 import { 
   Users, ShieldCheck, Plus, Edit, Trash2, 
   Lock, UserPlus, Shield, X, Check, Search, Key
 } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import FeedbackModal from '../components/FeedbackModal'
+import Pagination from '../components/shared/Pagination'
 
 const Modal = ({ children, onClose, title }) => {
   return createPortal(
@@ -45,8 +46,7 @@ const Staff = () => {
   const [groupForm, setGroupForm] = useState({ name: '', permission_ids: [] })
 
   const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(true)
-  const [loadingMore, setLoadingMore] = useState(false)
+  const [totalPages, setTotalPages] = useState(1)
 
   const [feedback, setFeedback] = useState({ isOpen: false, title: '', message: '', type: 'info', onConfirm: null, showCancel: false })
 
@@ -59,15 +59,15 @@ const Staff = () => {
     setLoading(true)
     try {
       const [uRes, gRes, pRes] = await Promise.all([
-        axios.get(`http://192.168.1.17:8000/api/users/?page=${p}`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('http://192.168.1.17:8000/api/groups/', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('http://192.168.1.17:8000/api/permissions/', { headers: { Authorization: `Bearer ${token}` } })
+        api.get(`/users/?page=${p}`),
+        api.get('/groups/'),
+        api.get('/permissions/')
       ])
       
       const usersData = uRes.data.results || uRes.data
       setUsers(usersData)
-      setHasMore(!!uRes.data.next)
-      setPage(1)
+      if (uRes.data.count) setTotalPages(Math.ceil(uRes.data.count / 10))
+      setPage(p)
 
       const groupsData = gRes.data.results || gRes.data
       const permsData = pRes.data.results || pRes.data
@@ -87,17 +87,7 @@ const Staff = () => {
     setLoading(false)
   }
 
-  const fetchMoreUsers = async () => {
-    setLoadingMore(true)
-    const token = localStorage.getItem('token')
-    try {
-      const res = await axios.get(`http://192.168.1.17:8000/api/users/?page=${page + 1}`, { headers: { Authorization: `Bearer ${token}` } })
-      setUsers(prev => [...prev, ...(res.data.results || [])])
-      setHasMore(!!res.data.next)
-      setPage(prev => prev + 1)
-    } catch (err) {}
-    setLoadingMore(false)
-  }
+  // Removed fetchMoreUsers in favor of Pagination
 
   const handleOpenUserModal = (user = null) => {
     if (user) {
@@ -137,12 +127,11 @@ const Staff = () => {
   const submitUser = async (e) => {
     e.preventDefault()
     if (userForm.password !== userForm.confirmPassword) {
-      setFeedback({
-        isOpen: true,
-        title: 'Error de validación',
-        message: 'Las contraseñas no coinciden.',
-        type: 'error'
-      })
+      setFeedback({ isOpen: true, title: 'Error de validación', message: 'Las contraseñas no coinciden.', type: 'error' })
+      return
+    }
+    if (!userForm.username || !userForm.email || (!editingItem && !userForm.password)) {
+      setFeedback({ isOpen: true, title: 'Campos Obligatorios', message: 'Usuario, email y contraseña son requeridos.', type: 'warning' })
       return
     }
     setLoading(true)
@@ -153,13 +142,9 @@ const Staff = () => {
       
       if (editingItem) {
         if (!payload.password) delete payload.password
-        await axios.patch(`http://192.168.1.17:8000/api/users/${editingItem.id}/`, payload, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        await api.patch(`/users/${editingItem.id}/`, payload)
       } else {
-        await axios.post('http://192.168.1.17:8000/api/users/', payload, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        await api.post('/users/', payload)
       }
       setShowUserModal(false)
       fetchData()
@@ -182,17 +167,17 @@ const Staff = () => {
 
   const submitGroup = async (e) => {
     e.preventDefault()
+    if (!groupForm.name) {
+      setFeedback({ isOpen: true, title: 'Campos Obligatorios', message: 'El nombre del rol es requerido.', type: 'warning' })
+      return
+    }
     setLoading(true)
     const token = localStorage.getItem('token')
     try {
       if (editingItem) {
-        await axios.patch(`http://192.168.1.17:8000/api/groups/${editingItem.id}/`, groupForm, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        await api.patch(`/groups/${editingItem.id}/`, groupForm)
       } else {
-        await axios.post('http://192.168.1.17:8000/api/groups/', groupForm, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        await api.post('/groups/', groupForm)
       }
       setShowGroupModal(false)
       fetchData()
@@ -223,9 +208,7 @@ const Staff = () => {
       onConfirm: async () => {
         const token = localStorage.getItem('token')
         try {
-          await axios.delete(`http://192.168.1.17:8000/api/users/${id}/`, {
-            headers: { Authorization: `Bearer ${token}` }
-          })
+          await api.delete(`/users/${id}/`)
           fetchData()
           setFeedback({ isOpen: true, title: 'Eliminado', message: 'El usuario ha sido eliminado.', type: 'success' })
         } catch (err) { 
@@ -245,9 +228,7 @@ const Staff = () => {
       onConfirm: async () => {
         const token = localStorage.getItem('token')
         try {
-          await axios.delete(`http://192.168.1.17:8000/api/groups/${id}/`, {
-            headers: { Authorization: `Bearer ${token}` }
-          })
+          await api.delete(`/groups/${id}/`)
           fetchData()
           setFeedback({ isOpen: true, title: 'Eliminado', message: 'El rol ha sido eliminado con éxito.', type: 'success' })
         } catch (err) { 
@@ -388,13 +369,11 @@ const Staff = () => {
               ))}
             </tbody>
           </table>
-          {hasMore && (
-            <div style={{ textAlign: 'center', padding: '30px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-              <button onClick={fetchMoreUsers} className="btn-outline" disabled={loadingMore}>
-                {loadingMore ? 'CARGANDO...' : 'CARGAR MÁS PERSONAL'}
-              </button>
-            </div>
-          )}
+          <Pagination 
+            current={page} 
+            total={totalPages} 
+            onPageChange={(p) => fetchData(p)} 
+          />
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '25px' }}>

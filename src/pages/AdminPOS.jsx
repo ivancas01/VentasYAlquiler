@@ -1,9 +1,20 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
-import { Plus, Trash2, ShoppingCart, Calendar, User, DollarSign, Package, Eye, AlertCircle, CheckCircle, Info, Landmark, X, Search, Upload } from 'lucide-react'
+import api from '../api/axios'
+import { Plus, Trash2, ShoppingCart, Calendar, User, DollarSign, Package, Eye, AlertCircle, CheckCircle, Info, Landmark, X, Search, Upload, Printer } from 'lucide-react'
 import FeedbackModal from '../components/FeedbackModal'
 import { createPortal } from 'react-dom'
 import { formatCurrency } from '../utils/format'
+import Pagination from '../components/shared/Pagination'
+import POSReceipt from '../components/POSReceipt'
+import { useSite } from '../context/SiteContext'
+import { useAuth } from '../context/AuthContext'
+
+const getImageUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith('http')) return path;
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${api.defaults.baseURL.replace('/api', '')}${cleanPath}`;
+}
 
 const Modal = ({ children, onClose, title }) => {
   return createPortal(
@@ -40,7 +51,7 @@ const AdminPOS = () => {
   const [productForm, setProductForm] = useState({
     name: '', description: '', color: '', pieces_count: 1, size: '',
     category: '', product_type: 'both', price_sale: '', price_rental: '',
-    stock: 1, is_active: true
+    stock: 1, reference: '', is_active: true
   })
   
   const [customer, setCustomer] = useState({
@@ -62,9 +73,17 @@ const AdminPOS = () => {
   const [endDate, setEndDate] = useState('')
   const [guarantee, setGuarantee] = useState('')
   const [guaranteeType, setGuaranteeType] = useState('documento')
+  const [description, setDescription] = useState('')
 
-  const [loading, setLoading] = useState(false)
   const [feedback, setFeedback] = useState({ isOpen: false, title: '', message: '', type: 'info', onConfirm: null, showCancel: false })
+  
+  // Receipt State
+  const [showReceipt, setShowReceipt] = useState(false)
+  const [receiptData, setReceiptData] = useState(null)
+  const { config } = useSite()
+  const { user: currentUser } = useAuth()
+  
+  const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(true)
   const [success, setSuccess] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -72,26 +91,40 @@ const AdminPOS = () => {
   const [availability, setAvailability] = useState({})
   const [conflicts, setConflicts] = useState({})
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+
   useEffect(() => {
-    if (type === 'rental' && startDate && endDate) {
+    if (type === 'rental' && startDate && endDate && products.length > 0) {
       fetchAvailability()
     } else {
       setAvailability({})
     }
-  }, [type, startDate, endDate])
+  }, [type, startDate, endDate, products])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchProducts(1)
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [searchTerm, selectedCategory])
 
   useEffect(() => {
     const initData = async () => {
       setFetching(true)
-      await Promise.all([fetchProducts(), fetchCategories()])
+      await fetchCategories()
+      // fetchProducts(1) removed here as it's triggered by the other useEffect [searchTerm, selectedCategory]
       setFetching(false)
     }
     initData()
   }, [])
 
   const fetchAvailability = async () => {
+    if (!startDate || !endDate || products.length === 0) return
     try {
-      const res = await axios.get(`http://192.168.1.17:8000/api/products/availability/?start_date=${startDate}&end_date=${endDate}`)
+      const ids = products.map(p => p.id).join(',')
+      const res = await api.get(`/products/availability/?start_date=${startDate}&end_date=${endDate}&ids=${ids}`)
       const availMap = {}
       const conflictMap = {}
       res.data.forEach(item => {
@@ -105,14 +138,22 @@ const AdminPOS = () => {
     }
   }
 
-  const fetchProducts = async () => {
-    const token = localStorage.getItem('token')
+  const fetchProducts = async (page = 1) => {
     try {
-      const res = await axios.get('http://192.168.1.17:8000/api/products/?page_size=100', {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      const res = await api.get(`/products/`, {
+        params: { 
+          page, 
+          search: searchTerm, 
+          category: selectedCategory !== 'all' ? selectedCategory : undefined 
+        }
       })
       const data = res.data.results || res.data
       setProducts(Array.isArray(data) ? data : [])
+      
+      if (res.data.count) {
+        setTotalPages(Math.ceil(res.data.count / 10))
+      }
+      setCurrentPage(page)
     } catch (err) { 
       console.error("Error fetching products", err)
       setProducts([])
@@ -120,11 +161,8 @@ const AdminPOS = () => {
   }
 
   const fetchCategories = async () => {
-    const token = localStorage.getItem('token')
     try {
-      const res = await axios.get('http://192.168.1.17:8000/api/categories/', {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      })
+      const res = await api.get('/categories/')
       const data = res.data.results || res.data
       setCategories(Array.isArray(data) ? data : [])
     } catch (err) {
@@ -137,11 +175,8 @@ const AdminPOS = () => {
       setCustomer(prev => ({ ...prev, id: null }))
       return
     }
-    const token = localStorage.getItem('token')
     try {
-      const res = await axios.get(`http://192.168.1.17:8000/api/customers/?doc_id=${val}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      const res = await api.get(`/customers/?doc_id=${val}`)
       const data = res.data.results || res.data
       const results = Array.isArray(data) ? data : []
       
@@ -183,8 +218,8 @@ const AdminPOS = () => {
     if (imageFile) data.append('image', imageFile)
 
     try {
-      const res = await axios.post('http://192.168.1.17:8000/api/products/', data, {
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+      const res = await api.post('/products/', data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       })
       fetchProducts()
       addToCart(res.data)
@@ -192,7 +227,7 @@ const AdminPOS = () => {
       setProductForm({
         name: '', description: '', color: '', pieces_count: 1, size: '',
         category: categories[0]?.id || '', product_type: 'both', price_sale: '', price_rental: '',
-        stock: 1, is_active: true
+        stock: 1, reference: '', is_active: true
       })
       setImageFile(null)
       setImagePreview(null)
@@ -255,44 +290,42 @@ const AdminPOS = () => {
       let customerId = customer.id
       const customerPayload = { ...customer }
       if (customerId) {
-        await axios.patch(`http://192.168.1.17:8000/api/customers/${customerId}/`, customerPayload, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        await api.patch(`/customers/${customerId}/`, customerPayload)
       } else {
-        const cRes = await axios.post('http://192.168.1.17:8000/api/customers/', customerPayload, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        const cRes = await api.post('/customers/', customerPayload)
         customerId = cRes.data.id
       }
 
       let res;
       if (type === 'sale') {
-        res = await axios.post('http://192.168.1.17:8000/api/sales/', {
+        res = await api.post('/sales/', {
           customer: customerId,
           total: total,
+          description: description,
           items: cart.map(item => ({ product: item.id, quantity: 1, price_at_sale: item.custom_price }))
-        }, { headers: { Authorization: `Bearer ${token}` } })
+        })
       } else {
-        res = await axios.post('http://192.168.1.17:8000/api/rentals/', {
+        res = await api.post('/rentals/', {
           customer: customerId,
           start_date: startDate || new Date().toISOString().split('T')[0],
           end_date: endDate || new Date().toISOString().split('T')[0],
           total: total,
           guarantee_type: guaranteeType,
           guarantee_info: guarantee,
+          description: description,
           items: cart.map(item => ({ product: item.id, price_at_rental: item.custom_price }))
-        }, { headers: { Authorization: `Bearer ${token}` } })
+        })
       }
 
       if (parseFloat(initialPayment) > 0) {
-        await axios.post('http://192.168.1.17:8000/api/payments/', {
+        await api.post('/payments/', {
           rental: type === 'rental' ? res.data.id : null,
           sale: type === 'sale' ? res.data.id : null,
           amount: initialPayment,
           payment_method: paymentMethod,
-          bank: paymentMethod === 'transaccion' ? bank : null,
+          bank: paymentMethod === 'transferencia' ? bank : null,
           label: type === 'sale' ? 'Venta' : 'Abono Inicial'
-        }, { headers: { Authorization: `Bearer ${token}` } })
+        })
       }
 
       setFeedback({ 
@@ -301,12 +334,27 @@ const AdminPOS = () => {
         message: type === 'sale' ? 'La venta se ha procesado con éxito.' : 'El alquiler se ha registrado correctamente.',
         type: 'success' 
       })
+      // Refetch to get updated totals and payments
+      const finalRes = await api.get(type === 'sale' ? `/sales/${res.data.id}/` : `/rentals/${res.data.id}/`)
+
+      setReceiptData({
+        ...finalRes.data,
+        customer_name: name,
+        customer_doc: doc,
+        staff_name: currentUser?.username || 'Admin',
+        payment_method: paymentMethod,
+        bank: paymentMethod === 'transferencia' ? bank : null,
+        description: description
+      })
+      setShowReceipt(true)
+
       setCart([])
       setCustomer({ full_name: '', doc_type: 'CC', doc_id: '', city: '', address: '', phone: '', phone_ref: '', name_ref: '' })
       setInitialPayment('0')
       setStartDate('')
       setEndDate('')
       setGuarantee('')
+      setDescription('')
       fetchProducts()
       if (type === 'rental') fetchAvailability()
     } catch (err) {
@@ -315,26 +363,27 @@ const AdminPOS = () => {
     setLoading(false)
   }
 
-  const filteredProducts = Array.isArray(products) ? products.filter(p => {
+  const filteredProducts = products.filter(p => {
     const matchesType = type === 'sale' ? p.product_type !== 'rental' : p.product_type !== 'sale'
-    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory = selectedCategory === 'all' || String(p.category) === selectedCategory
-    return matchesType && matchesSearch && matchesCategory
-  }) : []
+    return matchesType
+  })
 
   return (
     <div className="fade-in pos-main-container" style={{ width: '100%', margin: '0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '40px' }}>
       
       <div className="glass-card" style={{ padding: '40px', display: 'flex', flexDirection: 'column' }}>
-      <div className="admin-header">
-        <h2 className="urban-font gold-text admin-title">Punto de Venta</h2>
+      <div className="admin-header" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '20px', marginBottom: '30px' }}>
+        <h2 className="urban-font gold-text admin-title" style={{ marginBottom: '10px' }}>Punto de Venta</h2>
         <div className="admin-actions">
-          <button onClick={() => setShowProductModal(true)} className="btn-outline">
-            <Plus size={18} /> NUEVO
+          <button onClick={() => {
+            setShowProductModal(true)
+            setProductForm({ ...productForm, reference: 'REF-' + Math.random().toString(36).substr(2, 6).toUpperCase() })
+          }} className="btn-outline btn-sm">
+            <Plus size={16} /> NUEVO
           </button>
-          <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
-            <button onClick={() => { setType('sale'); setCart([]); }} className={type === 'sale' ? 'btn-primary' : 'btn-outline'} style={{ flex: 1 }}>Venta</button>
-            <button onClick={() => { setType('rental'); setCart([]); }} className={type === 'rental' ? 'btn-primary' : 'btn-outline'} style={{ flex: 1 }}>Alquiler</button>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={() => { setType('sale'); setCart([]); }} className={`${type === 'sale' ? 'btn-primary' : 'btn-outline'} btn-sm`}>Venta</button>
+            <button onClick={() => { setType('rental'); setCart([]); }} className={`${type === 'rental' ? 'btn-primary' : 'btn-outline'} btn-sm`}>Alquiler</button>
           </div>
         </div>
       </div>
@@ -372,7 +421,7 @@ const AdminPOS = () => {
         {fetching ? (
           <div style={{ textAlign: 'center', padding: '100px', color: 'var(--cta)' }}>CARGANDO ARTÍCULOS...</div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '25px' }}>
+          <div className="pos-products-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '25px' }}>
             {filteredProducts.map(product => {
               const avail = availability[product.id] ?? product.stock
               const hasDates = type === 'rental' && startDate && endDate
@@ -382,14 +431,17 @@ const AdminPOS = () => {
               return (
                 <div key={product.id} className="glass-card" style={{ padding: '20px', textAlign: 'center', opacity: isAvailable ? 1 : 0.6 }}>
                   <div style={{ height: '120px', background: 'var(--secondary)', borderRadius: '4px', marginBottom: '15px', overflow: 'hidden', position: 'relative' }}>
-                    {product.image && <img src={product.image} alt="" style={{width: '100%', height: '100%', objectFit: 'cover'}} />}
+                    {product.image && <img src={getImageUrl(product.image)} alt="" style={{width: '100%', height: '100%', objectFit: 'cover'}} />}
                     {!isAvailable && (
                       <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '0.8rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
                         {type === 'sale' ? 'AGOTADO' : 'ALQUILADO'}
                       </div>
                     )}
                   </div>
-                  <h4 style={{ fontSize: '0.9rem', color: 'white', marginBottom: '8px' }}>{product.name}</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <h4 style={{ fontSize: '0.9rem', color: 'white', marginBottom: '4px' }}>{product.name}</h4>
+                    <span style={{ fontSize: '0.65rem', color: 'var(--cta)', fontWeight: 'bold' }}>{product.reference || `#${product.id}`}</span>
+                  </div>
                   <p style={{ color: 'var(--cta)', fontWeight: 'bold', fontSize: '0.9rem' }}>{formatCurrency(type === 'sale' ? (product.price_sale || 0) : (product.price_rental || 0))}</p>
                   
                   <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
@@ -428,14 +480,25 @@ const AdminPOS = () => {
             )}
           </div>
         )}
+        <Pagination 
+          current={currentPage} 
+          total={totalPages} 
+          onPageChange={(p) => {
+            setCurrentPage(p);
+            fetchProducts(p);
+          }} 
+        />
       </div>
 
       <div className="glass-card" style={{ padding: '40px', height: 'fit-content', border: '1px solid var(--cta)', position: 'sticky', top: '20px' }}>
         {cart.length > 0 && (
           <div style={{ marginBottom: '40px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '30px' }}>
-            <h3 className="urban-font" style={{ marginBottom: '25px', color: 'white', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <ShoppingCart size={22} /> Items en Carrito
-            </h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+              <h3 className="urban-font" style={{ margin: 0, color: 'white', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <ShoppingCart size={22} /> Items en Carrito
+              </h3>
+              <button onClick={() => setCart([])} className="btn-outline btn-sm" style={{ color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)' }}>LIMPIAR</button>
+            </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', maxHeight: '400px', overflowY: 'auto', paddingRight: '10px' }}>
               {cart.map(item => (
                 <div key={item.id} className="glass-card pos-cart-item" style={{ padding: '15px', background: 'rgba(255,255,255,0.03)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -588,6 +651,16 @@ const AdminPOS = () => {
           <input type="number" value={initialPayment || '0'} onChange={e => setInitialPayment(e.target.value)} style={{ width: '100%', fontSize: '1.1rem', color: 'var(--cta)', fontWeight: 'bold' }} />
         </div>
 
+        <div style={{ marginBottom: '25px' }}>
+          <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Descripción / Notas de la Factura</label>
+          <textarea 
+            value={description || ''} 
+            onChange={e => setDescription(e.target.value)} 
+            placeholder="Ej: Vestido para grado, incluye accesorios..."
+            style={{ width: '100%', minHeight: '80px', padding: '12px', background: 'transparent', border: '1px solid var(--cta)', color: 'white', borderRadius: '4px' }}
+          />
+        </div>
+
         {cart.length > 0 && (
           <div style={{ background: 'var(--secondary)', padding: '20px', borderRadius: '8px', marginBottom: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '1.4rem', color: 'white', marginBottom: '8px' }}>
@@ -632,9 +705,15 @@ const AdminPOS = () => {
               </div>
             </div>
 
-            <div className="pos-form-group" style={{ marginBottom: '20px' }}>
-              <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Nombre del Producto</label>
-              <input type="text" value={productForm.name} onChange={e => setProductForm({...productForm, name: e.target.value})} required style={{ width: '100%' }} />
+            <div className="pos-form-row">
+              <div className="pos-form-group" style={{ flex: 2 }}>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Nombre del Producto</label>
+                <input type="text" value={productForm.name} onChange={e => setProductForm({...productForm, name: e.target.value})} required style={{ width: '100%' }} />
+              </div>
+              <div className="pos-form-group" style={{ flex: 1 }}>
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>ID / Ref</label>
+                <input type="text" value={productForm.reference} onChange={e => setProductForm({...productForm, reference: e.target.value})} style={{ width: '100%', color: 'var(--cta)', fontWeight: 'bold' }} />
+              </div>
             </div>
 
             <div className="pos-form-row">
@@ -702,8 +781,8 @@ const AdminPOS = () => {
           }
           
           /* Force all nested grids and form rows to be single column */
-          .pos-main-container div[style*="display: grid"],
-          .pos-main-container div[style*="display:grid"],
+          .pos-main-container div[style*="display: grid"]:not(.pos-products-grid),
+          .pos-main-container div[style*="display:grid"]:not(.pos-products-grid),
           .pos-modal-grid div[style*="display: grid"],
           .pos-modal-grid,
           .pos-customer-form-grid,
@@ -711,6 +790,11 @@ const AdminPOS = () => {
           .pos-business-mode-grid {
             grid-template-columns: 1fr !important;
             display: grid !important;
+            gap: 15px !important;
+          }
+
+          .pos-products-grid {
+            grid-template-columns: repeat(3, 1fr) !important;
             gap: 15px !important;
           }
 
@@ -751,7 +835,26 @@ const AdminPOS = () => {
             font-size: 16px !important; 
           }
         }
+
+        @media (max-width: 768px) {
+          .pos-products-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .pos-products-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
       `}</style>
+      <POSReceipt 
+        isOpen={showReceipt} 
+        onClose={() => setShowReceipt(false)} 
+        data={receiptData}
+        config={config}
+        staffName={currentUser?.username}
+      />
     </div>
   )
 }

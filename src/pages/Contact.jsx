@@ -39,26 +39,46 @@ const Contact = () => {
         </div>
 
         {/* Form */}
-        <form className="glass-card" style={{ padding: '40px' }}>
+        <form 
+          className="glass-card" 
+          style={{ padding: '40px' }}
+          onSubmit={(e) => {
+            e.preventDefault()
+            const name = e.target.name.value
+            const email = e.target.email.value
+            const subject = e.target.subject.value
+            const message = e.target.message.value
+            
+            const text = `Hola! Mi nombre es ${name}.
+Email: ${email}
+Asunto: ${subject}
+
+Mensaje: ${message}`
+            
+            // Default to a common number or handle logic
+            const whatsappUrl = `https://wa.me/573000000000?text=${encodeURIComponent(text)}`
+            window.open(whatsappUrl, '_blank')
+          }}
+        >
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
             <div>
               <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem' }}>Nombre</label>
-              <input type="text" style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }} />
+              <input name="name" type="text" required style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }} />
             </div>
             <div>
               <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem' }}>Email</label>
-              <input type="email" style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }} />
+              <input name="email" type="email" required style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }} />
             </div>
           </div>
           <div style={{ marginBottom: '20px' }}>
             <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem' }}>Asunto</label>
-            <input type="text" style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }} />
+            <input name="subject" type="text" required style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }} />
           </div>
           <div style={{ marginBottom: '30px' }}>
             <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem' }}>Mensaje</label>
-            <textarea rows="5" style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}></textarea>
+            <textarea name="message" rows="5" required style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}></textarea>
           </div>
-          <button type="button" className="btn-primary" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+          <button type="submit" className="btn-primary" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
             <Send size={20} /> Enviar Mensaje
           </button>
         </form>

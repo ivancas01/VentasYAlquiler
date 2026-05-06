@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../api/axios'
 import { 
   Users, Search, UserPlus, Edit, Trash2, 
-  MapPin, Phone, FileText, X, Filter, UserCheck
+  MapPin, Phone, FileText, X, Filter, UserCheck 
 } from 'lucide-react'
+import FeedbackModal from '../components/FeedbackModal'
 import { createPortal } from 'react-dom'
-import { useCallback, useRef } from 'react'
+import Pagination from '../components/shared/Pagination'
 
 const Modal = ({ children, onClose, title }) => {
   return createPortal(
@@ -39,62 +40,31 @@ const Customers = () => {
   const [formData, setFormData] = useState({
     full_name: '', doc_type: 'CC', doc_id: '', city: '', address: '', phone: '', phone_ref: '', name_ref: ''
   })
+  const [feedback, setFeedback] = useState({ isOpen: false, title: '', message: '', type: 'info' })
 
   // Pagination & Search
   const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(true)
-  const [loadingMore, setLoadingMore] = useState(false)
-  const observer = useRef()
+  const [totalPages, setTotalPages] = useState(1)
 
   useEffect(() => {
     fetchCustomers(1)
   }, [searchTerm])
 
-  const lastCustomerRef = useCallback(node => {
-    if (loadingMore) return
-    if (observer.current) observer.current.disconnect()
-    observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore) {
-        setPage(prev => prev + 1)
-      }
-    })
-    if (node) observer.current.observe(node)
-  }, [loadingMore, hasMore])
-
-  useEffect(() => {
-    if (page > 1) fetchMoreCustomers()
-  }, [page])
-
   const fetchCustomers = async (p = 1) => {
     setLoading(true)
     const token = localStorage.getItem('token')
     try {
-      const res = await axios.get(`http://192.168.1.17:8000/api/customers/`, {
-        params: { page: p, search: searchTerm },
-        headers: { Authorization: `Bearer ${token}` }
+      const res = await api.get('/customers/', {
+        params: { page: p, search: searchTerm }
       })
       const results = res.data.results || res.data
       setCustomers(results)
-      setHasMore(!!res.data.next)
-      setPage(1)
+      if (res.data.count) setTotalPages(Math.ceil(res.data.count / 10))
+      setPage(p)
     } catch (err) {
       console.error(err)
     }
     setLoading(false)
-  }
-
-  const fetchMoreCustomers = async () => {
-    setLoadingMore(true)
-    const token = localStorage.getItem('token')
-    try {
-      const res = await axios.get(`http://192.168.1.17:8000/api/customers/`, {
-        params: { page: page, search: searchTerm },
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      setCustomers(prev => [...prev, ...(res.data.results || [])])
-      setHasMore(!!res.data.next)
-    } catch (err) {}
-    setLoadingMore(false)
   }
 
   const handleOpenModal = (customer = null) => {
@@ -110,21 +80,22 @@ const Customers = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (!formData.full_name || !formData.doc_id) {
+      setFeedback({ isOpen: true, title: 'Campos Obligatorios', message: 'El nombre y el documento son requeridos.', type: 'warning' })
+      return
+    }
     const token = localStorage.getItem('token')
     try {
       if (editingCustomer) {
-        await axios.patch(`http://192.168.1.17:8000/api/customers/${editingCustomer.id}/`, formData, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        await api.patch(`/customers/${editingCustomer.id}/`, formData)
       } else {
-        await axios.post('http://192.168.1.17:8000/api/customers/', formData, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        await api.post('/customers/', formData)
       }
       setShowModal(false)
       fetchCustomers()
+      setFeedback({ isOpen: true, title: 'Éxito', message: 'Cliente guardado correctamente.', type: 'success' })
     } catch (err) {
-      alert("Error al guardar cliente")
+      setFeedback({ isOpen: true, title: 'Error', message: 'No se pudo guardar el cliente.', type: 'error' })
     }
   }
 
@@ -175,11 +146,8 @@ const Customers = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredCustomers.map((c, index) => (
-              <tr 
-                ref={index === filteredCustomers.length - 1 ? lastCustomerRef : null}
-                key={c.id} 
-              >
+            {filteredCustomers.map((c) => (
+              <tr key={c.id}>
                 <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                     <div className="customer-avatar">
@@ -218,7 +186,11 @@ const Customers = () => {
             ))}
           </tbody>
         </table>
-        {loadingMore && <div style={{ textAlign: 'center', padding: '20px', color: 'var(--cta)', fontSize: '0.8rem' }}>CARGANDO MÁS CLIENTES...</div>}
+        <Pagination 
+          current={page} 
+          total={totalPages} 
+          onPageChange={(p) => fetchCustomers(p)} 
+        />
       </div>
 
       {showModal && (
@@ -353,6 +325,13 @@ const Customers = () => {
           }
         }
       `}</style>
+      <FeedbackModal 
+        isOpen={feedback.isOpen} 
+        title={feedback.title} 
+        message={feedback.message} 
+        type={feedback.type} 
+        onClose={() => setFeedback({ ...feedback, isOpen: false })} 
+      />
     </div>
   )
 }

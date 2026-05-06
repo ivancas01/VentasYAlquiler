@@ -1,6 +1,6 @@
 import React from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom'
+import api from '../../api/axios'
 import { 
   LayoutDashboard, 
   ShoppingCart, 
@@ -33,14 +33,9 @@ const AdminLayout = ({ children }) => {
   }, [])
 
   const fetchNotifCount = async () => {
-    const token = localStorage.getItem('token')
     try {
-      const res = await axios.get('http://192.168.1.17:8000/api/notifications/', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const data = Array.isArray(res.data) ? res.data : (res.data.results || [])
-      const unread = data.filter(n => !n.is_read).length
-      setNotifCount(unread)
+      const res = await api.get('/notifications/unread_count/')
+      setNotifCount(res.data.unread_count)
     } catch (err) {}
   }
 
@@ -297,6 +292,7 @@ const AdminLayout = ({ children }) => {
         background: 'radial-gradient(circle at top right, var(--secondary) 0%, var(--bg) 100%)',
         overflowX: 'hidden'
       }}>
+        <Outlet />
         {children}
       </main>
 

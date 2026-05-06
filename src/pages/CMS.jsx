@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../api/axios'
 import { 
   Globe, Layout, Info, Phone, Share2, 
   Save, RefreshCw, Trash2, Plus, Image as ImageIcon
@@ -28,8 +28,8 @@ const CMS = () => {
   const fetchImages = async () => {
     try {
       const [hRes, aRes] = await Promise.all([
-        axios.get('http://192.168.1.17:8000/api/hero-images/'),
-        axios.get('http://192.168.1.17:8000/api/about-images/')
+        api.get('/hero-images/'),
+        api.get('/about-images/')
       ])
       setHeroImages(hRes.data)
       setAboutImages(aRes.data)
@@ -49,11 +49,8 @@ const CMS = () => {
     const token = localStorage.getItem('token')
     const endpoint = type === 'hero' ? 'hero-images' : 'about-images'
     try {
-      await axios.post(`http://192.168.1.17:8000/api/${endpoint}/`, formData, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
-        }
+      await api.post(`/${endpoint}/`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       })
       fetchImages()
     } catch (err) {
@@ -73,9 +70,7 @@ const CMS = () => {
       onConfirm: async () => {
         const token = localStorage.getItem('token')
         try {
-          await axios.delete(`http://192.168.1.17:8000/api/${endpoint}/${id}/`, {
-            headers: { Authorization: `Bearer ${token}` }
-          })
+          await api.delete(`/${endpoint}/${id}/`)
           fetchImages()
           setFeedback({ ...feedback, isOpen: false })
         } catch (err) {
@@ -92,9 +87,7 @@ const CMS = () => {
     setLoading(true)
     const token = localStorage.getItem('token')
     try {
-      const res = await axios.patch(`http://192.168.1.17:8000/api/config/${config.id}/`, config, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      const res = await api.patch(`/config/${config.id}/`, config)
       updateConfig(res.data)
       setFeedback({ isOpen: true, title: 'Éxito', message: 'Configuración actualizada correctamente.', type: 'success' })
     } catch (err) {
@@ -124,11 +117,15 @@ const CMS = () => {
         </button>
       </div>
 
-      {success && (
-        <div style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', padding: '15px', borderRadius: '8px', marginBottom: '30px', border: '1px solid #10b981', textAlign: 'center', fontWeight: 'bold' }}>
-          ¡CONFIGURACIÓN ACTUALIZADA EXITOSAMENTE!
-        </div>
-      )}
+      <FeedbackModal 
+        isOpen={feedback.isOpen}
+        title={feedback.title}
+        message={feedback.message}
+        type={feedback.type}
+        onClose={() => setFeedback({ ...feedback, isOpen: false })}
+        onConfirm={feedback.onConfirm}
+        showCancel={feedback.showCancel}
+      />
 
       <div className="cms-layout-stack">
         

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../api/axios'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts'
 import { TrendingUp, Users, ShoppingCart, Calendar } from 'lucide-react'
 
@@ -9,11 +9,8 @@ const Reports = () => {
 
   useEffect(() => {
     const fetchAnalytics = async () => {
-      const token = localStorage.getItem('token')
       try {
-        const res = await axios.get('http://192.168.1.17:8000/api/analytics/', {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        const res = await api.get('/analytics/')
         setData(res.data)
       } catch (err) {
         console.error("Error fetching analytics", err)
@@ -65,7 +62,7 @@ const Reports = () => {
         {/* Trend Chart */}
         <div className="glass-card" style={{ padding: '25px' }}>
           <h4 className="urban-font report-section-title" style={{ color: 'var(--cta)' }}>Tendencia de Ventas</h4>
-          <div style={{ height: '300px' }}>
+          <div style={{ height: '300px', minWidth: 0 }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data.daily_sales}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -81,7 +78,7 @@ const Reports = () => {
         {/* Rental Chart */}
         <div className="glass-card" style={{ padding: '25px' }}>
           <h4 className="urban-font report-section-title" style={{ color: 'white' }}>Tendencia de Alquileres</h4>
-          <div style={{ height: '300px' }}>
+          <div style={{ height: '300px', minWidth: 0 }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data.daily_rentals}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -97,7 +94,7 @@ const Reports = () => {
         {/* Top Sellers */}
         <div className="glass-card" style={{ padding: '25px' }}>
           <h4 className="urban-font report-section-title" style={{ color: 'var(--cta)' }}>Top Vendedores</h4>
-          <div style={{ height: '250px' }}>
+          <div style={{ height: '250px', minWidth: 0 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.top_sales_staff}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -113,7 +110,7 @@ const Reports = () => {
         {/* Top Renters */}
         <div className="glass-card" style={{ padding: '25px' }}>
           <h4 className="urban-font report-section-title" style={{ color: 'white' }}>Top Alquiladores</h4>
-          <div style={{ height: '250px' }}>
+          <div style={{ height: '250px', minWidth: 0 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.top_rental_staff}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />

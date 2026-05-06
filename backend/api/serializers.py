@@ -75,10 +75,11 @@ class CustomerSerializer(serializers.ModelSerializer):
 
 class SaleItemSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')
+    product_reference = serializers.ReadOnlyField(source='product.reference')
 
     class Meta:
         model = SaleItem
-        fields = ('id', 'product', 'product_name', 'quantity', 'price_at_sale')
+        fields = ('id', 'product', 'product_name', 'product_reference', 'quantity', 'price_at_sale')
 
 class SaleSerializer(serializers.ModelSerializer):
     items = SaleItemSerializer(many=True)
@@ -87,7 +88,7 @@ class SaleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Sale
-        fields = ('id', 'staff', 'staff_name', 'customer', 'customer_data', 'total', 'created_at', 'items')
+        fields = ('id', 'staff', 'staff_name', 'customer', 'customer_data', 'total', 'description', 'created_at', 'items')
 
     def create(self, validated_data):
         items_data = validated_data.pop('items')
@@ -104,11 +105,12 @@ class SaleSerializer(serializers.ModelSerializer):
 
 class RentalItemSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')
+    product_reference = serializers.ReadOnlyField(source='product.reference')
     product_image = serializers.SerializerMethodField()
 
     class Meta:
         model = RentalItem
-        fields = ('id', 'product', 'product_name', 'product_image', 'price_at_rental')
+        fields = ('id', 'product', 'product_name', 'product_reference', 'product_image', 'price_at_rental')
 
     def get_product_image(self, obj):
         if obj.product.image:
@@ -142,7 +144,7 @@ class RentalSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Rental
-        fields = ('id', 'staff', 'staff_name', 'last_updated_by', 'last_updated_by_name', 'customer', 'customer_data', 'start_date', 'end_date', 'total', 'total_paid', 'guarantee_type', 'guarantee_info', 'status', 'created_at', 'items', 'payments')
+        fields = ('id', 'staff', 'staff_name', 'last_updated_by', 'last_updated_by_name', 'customer', 'customer_data', 'start_date', 'end_date', 'total', 'total_paid', 'guarantee_type', 'guarantee_info', 'description', 'status', 'created_at', 'items', 'payments')
 
     def validate(self, data):
         # Only validate stock if items or dates are actually in the request data (PATCH support)

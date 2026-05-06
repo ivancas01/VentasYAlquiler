@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ShoppingBag, Info, Phone, LayoutDashboard, User, LogOut, Bell, Shield, Menu, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-import axios from 'axios'
+import api from '../../api/axios'
 import LoginModal from './LoginModal'
 
 const Navbar = () => {
@@ -14,9 +14,11 @@ const Navbar = () => {
   const [config, setConfig] = useState(null)
 
   useEffect(() => {
-    axios.get('http://192.168.1.17:8000/api/config/')
-      .then(res => setConfig(res.data))
-      .catch(err => console.error(err))
+    api.get('/config/')
+      .then(res => {
+        const data = Array.isArray(res.data) ? res.data[0] : res.data
+        if (data) setConfig(data)
+      })
     
     if (user) {
       fetchNotifications()
@@ -28,14 +30,9 @@ const Navbar = () => {
   const [activeSection, setActiveSection] = useState('inicio')
 
   const fetchNotifications = async () => {
-    const token = localStorage.getItem('token')
     try {
-      await axios.post('http://192.168.1.17:8000/api/notifications/refresh/', {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const res = await axios.get('http://192.168.1.17:8000/api/notifications/', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      await api.post('/notifications/refresh/', {})
+      const res = await api.get('/notifications/')
       setNotifications(res.data.filter(n => !n.is_read))
     } catch (err) {
       if (err.response?.status === 401) {
@@ -69,11 +66,8 @@ const Navbar = () => {
   }, [window.location.pathname])
 
   const markAsRead = async (id) => {
-    const token = localStorage.getItem('token')
     try {
-      await axios.patch(`http://192.168.1.17:8000/api/notifications/${id}/`, { is_read: true }, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      await api.patch(`/notifications/${id}/`, { is_read: true })
       setNotifications(notifications.filter(n => n.id !== id))
     } catch (err) {}
   }

@@ -59,6 +59,7 @@ class Product(models.Model):
     price_sale = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     price_rental = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     stock = models.IntegerField(default=0)
+    reference = models.CharField(max_length=50, null=True, blank=True, unique=True)
     image = models.ImageField(upload_to='products/', null=True, blank=True)
     
     # Technical details
@@ -96,6 +97,7 @@ class Sale(models.Model):
     staff = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, blank=True)
     total = models.DecimalField(max_digits=12, decimal_places=2)
+    description = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
 class SaleItem(models.Model):
@@ -126,6 +128,7 @@ class Rental(models.Model):
     # Guarantee info
     guarantee_type = models.CharField(max_length=50, default='ninguna') # 'monto', 'documento', 'otro'
     guarantee_info = models.TextField(null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
 

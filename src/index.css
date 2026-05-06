@@ -168,6 +168,12 @@ input, select, textarea {
   min-height: 48px; /* Standardize height for touch targets and iOS */
 }
 
+@media (max-width: 1024px) {
+  input, select, textarea {
+    font-size: 16px !important; /* Prevents auto-zoom on iOS/Mobile focus */
+  }
+}
+
 input[type="date"] {
   display: flex;
   align-items: center;

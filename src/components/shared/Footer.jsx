@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../../api/axios'
 import { Link } from 'react-router-dom'
 import { Mail, Phone, MapPin, ExternalLink, MessageCircle } from 'lucide-react'
 
@@ -7,8 +7,11 @@ const Footer = () => {
   const [config, setConfig] = useState(null)
 
   useEffect(() => {
-    axios.get('http://192.168.1.17:8000/api/config/')
-      .then(res => setConfig(res.data))
+    api.get('/config/')
+      .then(res => {
+        const data = Array.isArray(res.data) ? res.data[0] : res.data
+        if (data) setConfig(data)
+      })
       .catch(err => console.error(err))
   }, [])
 

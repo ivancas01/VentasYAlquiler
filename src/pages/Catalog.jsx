@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../api/axios'
 import { createPortal } from 'react-dom'
 import { Search, Filter, ShoppingBag, ArrowRight } from 'lucide-react'
 import { formatCurrency } from '../utils/format'
@@ -13,6 +13,13 @@ const Catalog = () => {
   const [loading, setLoading] = useState(true)
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [config, setConfig] = useState(null)
+
+  const getImageUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    return `${api.defaults.baseURL.replace('/api', '')}${cleanPath}`;
+  }
 
   useEffect(() => {
     fetchInitialData()
@@ -35,7 +42,7 @@ const Catalog = () => {
   const fetchInitialData = async () => {
     // Fetch categories
     try {
-      const res = await axios.get('http://192.168.1.17:8000/api/categories/')
+      const res = await api.get('/categories/')
       setCategories(res.data.results || res.data)
     } catch (err) {
       console.error("Error fetching categories", err)
@@ -43,8 +50,9 @@ const Catalog = () => {
 
     // Fetch config
     try {
-      const res = await axios.get('http://192.168.1.17:8000/api/config/')
-      if (res.data) setConfig(res.data)
+      const res = await api.get('/config/')
+      const data = Array.isArray(res.data) ? res.data[0] : res.data
+      if (data) setConfig(data)
     } catch (err) {
       console.error("Error fetching config", err)
     }
@@ -56,11 +64,11 @@ const Catalog = () => {
       setPage(1)
     }
     try {
-      let url = `http://192.168.1.17:8000/api/products/?page=${reset ? 1 : page + 1}&`
+      let url = `/products/?page=${reset ? 1 : page + 1}&`
       if (filterType !== 'all') url += `type=${filterType}&`
       if (filterCategory !== 'all') url += `category=${filterCategory}`
       
-      const res = await axios.get(url)
+      const res = await api.get(url)
       const newProducts = res.data.results || []
       setProducts(reset ? newProducts : [...products, ...newProducts])
       setHasMore(!!res.data.next)
@@ -148,7 +156,7 @@ const Catalog = () => {
                 onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
               >
                 <div style={{ height: '350px', background: 'var(--secondary)', marginBottom: '20px', overflow: 'hidden', position: 'relative' }}>
-                  {product.image && <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                  {product.image && <img src={getImageUrl(product.image)} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                   {product.stock === 0 && (
                     <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '1.2rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '2px', zIndex: 10 }}>
                       {product.product_type === 'sale' ? 'AGOTADO' : 'ALQUILADO'}
@@ -229,7 +237,7 @@ const Catalog = () => {
             </button>
             
             <div className="modal-image-container" style={{ height: '600px', background: 'var(--secondary)', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
-              {selectedProduct.image && <img src={selectedProduct.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+              {selectedProduct.image && <img src={getImageUrl(selectedProduct.image)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
             </div>
 
             <div className="modal-details" style={{ display: 'flex', flexDirection: 'column' }}>

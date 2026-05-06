@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react'
-import axios from 'axios'
+import api from '../api/axios'
 
 const AuthContext = createContext()
 
@@ -12,9 +12,7 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token')
       if (token) {
         try {
-          const res = await axios.get('http://192.168.1.17:8000/api/users/me/', {
-            headers: { Authorization: `Bearer ${token}` }
-          })
+          const res = await api.get('/users/me/')
           setUser(res.data)
         } catch (err) {
           console.error("Token invalid or server error", err)
@@ -30,14 +28,12 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      const res = await axios.post('http://192.168.1.17:8000/api/token/', { username, password })
+      const res = await api.post('/token/', { username, password })
       localStorage.setItem('token', res.data.access)
       localStorage.setItem('refresh', res.data.refresh)
       
       // Fetch user profile after login
-      const userRes = await axios.get('http://192.168.1.17:8000/api/users/me/', {
-        headers: { Authorization: `Bearer ${res.data.access}` }
-      })
+      const userRes = await api.get('/users/me/')
       setUser(userRes.data)
       return true
     } catch (err) {

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api/axios';
 
 const SiteContext = createContext();
 
@@ -9,7 +9,7 @@ export const SiteProvider = ({ children }) => {
 
   const fetchConfig = async () => {
     try {
-      const res = await axios.get('http://192.168.1.17:8000/api/config/');
+      const res = await api.get('/config/');
       const data = Array.isArray(res.data) ? res.data[0] : res.data;
       if (data && data.id) {
         setConfig(data);

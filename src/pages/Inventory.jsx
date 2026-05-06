@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import axios from 'axios'
-import { Plus, Edit, Trash2, X, Upload, Check, Package, ArrowRight, Tag, History } from 'lucide-react'
+import api from '../api/axios'
+import { Plus, Edit, Trash2, X, Upload, Check, Package, ArrowRight, Tag, History, Search } from 'lucide-react'
 import FeedbackModal from '../components/FeedbackModal'
+import Pagination from '../components/shared/Pagination'
 
 const Modal = ({ children, onClose, title }) => {
   return createPortal(
@@ -57,10 +58,13 @@ const Inventory = () => {
   const [loading, setLoading] = useState(false)
   
   // Pagination State
-  const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(true)
-  const [loadingMore, setLoadingMore] = useState(false)
-  const observer = useRef()
+  const [prodPage, setProdPage] = useState(1)
+  const [prodTotalPages, setProdTotalPages] = useState(1)
+  const [catPage, setCatPage] = useState(1)
+  const [catTotalPages, setCatTotalPages] = useState(1)
+
+  const [selectedCategory, setSelectedCategory] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
   const [showQuickCategory, setShowQuickCategory] = useState(false)
   const [quickCatName, setQuickCatName] = useState('')
   const [feedback, setFeedback] = useState({ isOpen: false, title: '', message: '', type: 'info', onConfirm: null, showCancel: false })
@@ -77,6 +81,7 @@ const Inventory = () => {
     price_sale: '',
     price_rental: '',
     stock: 0,
+    reference: '',
     is_active: true
   })
   const [imageFile, setImageFile] = useState(null)
@@ -85,57 +90,44 @@ const Inventory = () => {
   // Form State for Category
   const [categoryForm, setCategoryForm] = useState({ name: '', slug: '' })
 
-  useEffect(() => {
-    fetchData(1)
-  }, [])
-
-  const lastProductRef = useCallback(node => {
-    if (loadingMore) return
-    if (observer.current) observer.current.disconnect()
-    observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore) {
-        setPage(prev => prev + 1)
-      }
-    })
-    if (node) observer.current.observe(node)
-  }, [loadingMore, hasMore])
-
-  useEffect(() => {
-    if (page > 1) {
-      fetchMoreProducts()
-    }
-  }, [page])
-
-  const fetchData = async (p = 1) => {
+  const fetchProducts = useCallback(async (p = 1, catId = selectedCategory, search = searchTerm) => {
     setLoading(true)
     try {
-      const [prodRes, catRes] = await Promise.all([
-        axios.get(`http://192.168.1.17:8000/api/products/?page=${p}`),
-        axios.get('http://192.168.1.17:8000/api/categories/')
-      ])
-      setProducts(prodRes.data.results || prodRes.data)
-      setHasMore(!!prodRes.data.next)
-      setCategories(catRes.data.results || catRes.data)
+      let url = `/products/?page=${p}`
+      if (catId) url += `&category=${catId}`
+      if (search) url += `&search=${search}`
+      const res = await api.get(url)
+      setProducts(res.data.results || res.data)
+      if (res.data.count) setProdTotalPages(Math.ceil(res.data.count / 10))
+      setProdPage(p)
     } catch (err) {
-      console.error("Error fetching data", err)
+      console.error("Error fetching products", err)
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedCategory])
 
-  const fetchMoreProducts = async () => {
-    setLoadingMore(true)
+  const fetchCategories = useCallback(async (p = 1) => {
+    setLoading(true)
     try {
-      const res = await axios.get(`http://192.168.1.17:8000/api/products/?page=${page}`)
-      const newProducts = res.data.results || []
-      setProducts(prev => [...prev, ...newProducts])
-      setHasMore(!!res.data.next)
+      const res = await api.get(`/categories/?page=${p}`)
+      setCategories(res.data.results || res.data)
+      if (res.data.count) setCatTotalPages(Math.ceil(res.data.count / 10))
+      setCatPage(p)
     } catch (err) {
-      console.error("Error fetching more products", err)
+      console.error("Error fetching categories", err)
     } finally {
-      setLoadingMore(false)
+      setLoading(false)
     }
-  }
+  }, [])
+
+  const fetchData = useCallback(async () => {
+    await Promise.all([fetchProducts(1, selectedCategory, searchTerm), fetchCategories(1)])
+  }, [fetchProducts, fetchCategories, selectedCategory, searchTerm])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   const handleOpenProductModal = (product = null) => {
     if (product) {
@@ -151,22 +143,26 @@ const Inventory = () => {
         price_sale: product.price_sale || '',
         price_rental: product.price_rental || '',
         stock: product.stock || 0,
+        reference: product.reference || '',
         is_active: product.is_active
       })
       setImagePreview(product.image)
     } else {
       setEditingItem(null)
+      // Use the first category if available
+      const initialCategory = categories.length > 0 ? categories[0].id : ''
       setProductForm({
         name: '',
         description: '',
         color: '',
         pieces_count: 1,
         size: '',
-        category: categories[0]?.id || '',
+        category: initialCategory,
         product_type: 'sale',
         price_sale: '',
         price_rental: '',
         stock: 0,
+        reference: 'REF-' + Math.random().toString(36).substr(2, 6).toUpperCase(),
         is_active: true
       })
       setImagePreview(null)
@@ -197,21 +193,39 @@ const Inventory = () => {
     if (cleanedForm.price_rental === '') delete cleanedForm.price_rental
     if (!cleanedForm.stock) cleanedForm.stock = 0
 
+    if (!productForm.name?.trim() || !productForm.category) {
+      setFeedback({ isOpen: true, title: 'Campos Obligatorios', message: 'El nombre y la categoría son requeridos.', type: 'warning' })
+      setLoading(false)
+      return
+    }
+
+    if ((productForm.product_type === 'sale' || productForm.product_type === 'both') && (productForm.price_sale === '' || productForm.price_sale === undefined)) {
+      setFeedback({ isOpen: true, title: 'Precio Requerido', message: 'Por favor ingresa el precio de venta.', type: 'warning' })
+      setLoading(false)
+      return
+    }
+
+    if ((productForm.product_type === 'rental' || productForm.product_type === 'both') && (productForm.price_rental === '' || productForm.price_rental === undefined)) {
+      setFeedback({ isOpen: true, title: 'Precio Requerido', message: 'Por favor ingresa el precio de alquiler.', type: 'warning' })
+      setLoading(false)
+      return
+    }
+
     Object.keys(cleanedForm).forEach(key => data.append(key, cleanedForm[key]))
     if (imageFile) data.append('image', imageFile)
 
     try {
       if (editingItem) {
-        await axios.patch(`http://192.168.1.17:8000/api/products/${editingItem.id}/`, data, {
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+        await api.patch(`/products/${editingItem.id}/`, data, {
+          headers: { 'Content-Type': 'multipart/form-data' }
         })
       } else {
-        await axios.post('http://192.168.1.17:8000/api/products/', data, {
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+        await api.post('/products/', data, {
+          headers: { 'Content-Type': 'multipart/form-data' }
         })
       }
       setShowProductModal(false)
-      fetchData()
+      fetchProducts(prodPage)
       setFeedback({
         isOpen: true,
         title: 'Éxito',
@@ -233,19 +247,20 @@ const Inventory = () => {
     e.preventDefault()
     setLoading(true)
     const token = localStorage.getItem('token')
+    if (!categoryForm.name) {
+      setFeedback({ isOpen: true, title: 'Campos Obligatorios', message: 'El nombre de la categoría es requerido.', type: 'warning' })
+      setLoading(false)
+      return
+    }
     const slug = categoryForm.slug || categoryForm.name.toLowerCase().trim().replace(/\s+/g, '-')
     try {
       if (editingItem) {
-        await axios.patch(`http://192.168.1.17:8000/api/categories/${editingItem.id}/`, { ...categoryForm, slug }, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        await api.patch(`/categories/${editingItem.id}/`, { ...categoryForm, slug })
       } else {
-        await axios.post('http://192.168.1.17:8000/api/categories/', { ...categoryForm, slug }, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        await api.post('/categories/', { ...categoryForm, slug })
       }
       setShowCategoryModal(false)
-      fetchData()
+      fetchCategories(catPage)
       setFeedback({
         isOpen: true,
         title: 'Éxito',
@@ -272,11 +287,11 @@ const Inventory = () => {
       showCancel: true,
       onConfirm: async () => {
         const token = localStorage.getItem('token')
-        try {
-          await axios.delete(`http://192.168.1.17:8000/api/products/${id}/`, { headers: { Authorization: `Bearer ${token}` } })
-          fetchData()
-          setFeedback({ isOpen: true, title: 'Eliminado', message: 'Producto eliminado con éxito.', type: 'success' })
-        } catch (err) {}
+          try {
+            await api.delete(`/products/${id}/`)
+            fetchProducts(prodPage)
+            setFeedback({ isOpen: true, title: 'Eliminado', message: 'Producto eliminado con éxito.', type: 'success' })
+          } catch (err) {}
       }
     })
   }
@@ -290,11 +305,11 @@ const Inventory = () => {
       showCancel: true,
       onConfirm: async () => {
         const token = localStorage.getItem('token')
-        try {
-          await axios.delete(`http://192.168.1.17:8000/api/categories/${id}/`, { headers: { Authorization: `Bearer ${token}` } })
-          fetchData()
-          setFeedback({ isOpen: true, title: 'Eliminado', message: 'Categoría eliminada con éxito.', type: 'success' })
-        } catch (err) {}
+          try {
+            await api.delete(`/categories/${id}/`)
+            fetchCategories(catPage)
+            setFeedback({ isOpen: true, title: 'Eliminado', message: 'Categoría eliminada con éxito.', type: 'success' })
+          } catch (err) {}
       }
     })
   }
@@ -322,6 +337,61 @@ const Inventory = () => {
       </div>
 
       {activeTab === 'products' ? (
+        <div className="products-container">
+          <div className="inventory-filters" style={{ 
+            marginBottom: '25px', 
+            display: 'flex', 
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '15px',
+            flexWrap: 'wrap'
+          }}>
+            <div style={{ position: 'relative', flex: 1, minWidth: '250px' }}>
+              <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--cta)' }} />
+              <input 
+                type="text" 
+                placeholder="Buscar por nombre o ID/Ref..." 
+                value={searchTerm} 
+                onChange={(e) => {
+                  setSearchTerm(e.target.value)
+                  // Optionally add a debounce here, but for now simple search
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') fetchProducts(1, selectedCategory, searchTerm)
+                }}
+                style={{ width: '100%', paddingLeft: '40px' }} 
+              />
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Categoría:</span>
+              <select 
+                value={selectedCategory} 
+                onChange={(e) => {
+                  const catId = e.target.value
+                  setSelectedCategory(catId)
+                  fetchProducts(1, catId, searchTerm)
+                }}
+                style={{ 
+                  background: 'var(--secondary)', 
+                  color: 'white', 
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  padding: '10px 20px',
+                  borderRadius: '8px',
+                  outline: 'none',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                  minWidth: '200px'
+                }}
+              >
+              <option value="">Todas las Categorías</option>
+              {categories.map(cat => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+          
         <div className="table-container" style={{ background: 'var(--primary)', border: '1px solid var(--glass-border)' }}>
           <table className="urban-table" style={{ width: '100%' }}>
             <thead>
@@ -336,18 +406,15 @@ const Inventory = () => {
               </tr>
             </thead>
             <tbody>
-              {products.map((p, index) => (
-                <tr 
-                  ref={index === products.length - 1 ? lastProductRef : null}
-                  key={p.id} 
-                >
+              {products.map((p) => (
+                <tr key={p.id}>
                   <td style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                     <div style={{ width: '55px', height: '55px', background: 'var(--secondary)', borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
                       {p.image && <img src={p.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                       <span style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>{p.name}</span>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>ID: #{p.id}</span>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--cta)', fontWeight: 'bold' }}>REF: {p.reference || p.id}</span>
                     </div>
                   </td>
                   <td style={{ color: 'var(--text-dim)' }}>{p.category_name}</td>
@@ -377,7 +444,12 @@ const Inventory = () => {
               ))}
             </tbody>
           </table>
-          {loadingMore && <div style={{ textAlign: 'center', padding: '20px', color: 'var(--cta)', fontSize: '0.8rem' }}>CARGANDO MÁS PRODUCTOS...</div>}
+          <Pagination 
+            current={prodPage} 
+            total={prodTotalPages} 
+            onPageChange={(p) => fetchProducts(p)} 
+          />
+          </div>
         </div>
       ) : (
         <div className="table-container" style={{ background: 'var(--primary)', border: '1px solid var(--glass-border)' }}>
@@ -404,6 +476,11 @@ const Inventory = () => {
               ))}
             </tbody>
           </table>
+          <Pagination 
+            current={catPage} 
+            total={catTotalPages} 
+            onPageChange={(p) => fetchCategories(p)} 
+          />
         </div>
       )}
 
@@ -436,9 +513,13 @@ const Inventory = () => {
               </div>
 
               <div className="pos-form-row">
-                <div className="pos-form-group">
+                <div className="pos-form-group" style={{ flex: 2 }}>
                   <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Nombre del Producto</label>
                   <input type="text" value={productForm.name} onChange={e => setProductForm({...productForm, name: e.target.value})} required style={{ width: '100%' }} />
+                </div>
+                <div className="pos-form-group" style={{ flex: 1 }}>
+                  <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>ID / Referencia</label>
+                  <input type="text" value={productForm.reference} onChange={e => setProductForm({...productForm, reference: e.target.value})} style={{ width: '100%', color: 'var(--cta)', fontWeight: 'bold' }} />
                 </div>
               </div>
 
@@ -555,9 +636,7 @@ const Inventory = () => {
                 const slug = quickCatName.toLowerCase().trim().replace(/\s+/g, '-')
                 const token = localStorage.getItem('token')
                 try {
-                  const res = await axios.post('http://192.168.1.17:8000/api/categories/', { name: quickCatName, slug }, {
-                    headers: { Authorization: `Bearer ${token}` }
-                  })
+                  const res = await api.post('/categories/', { name: quickCatName, slug })
                   setCategories([...categories, res.data])
                   setProductForm({...productForm, category: res.data.id})
                   setShowQuickCategory(false)

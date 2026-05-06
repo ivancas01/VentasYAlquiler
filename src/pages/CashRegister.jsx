@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import axios from 'axios'
+import api from '../api/axios'
 import { Landmark, Calendar, DollarSign, ArrowUpRight, ArrowDownRight, Filter, Plus, CreditCard, Wallet, Landmark as BankIcon, Shield, History, X, Search } from 'lucide-react'
 import { createPortal } from 'react-dom'
+import FeedbackModal from '../components/FeedbackModal'
+import Pagination from '../components/shared/Pagination'
 
 const Modal = ({ children, onClose }) => {
   return createPortal(
@@ -28,8 +30,9 @@ const CashRegister = () => {
   const [loading, setLoading] = useState(true)
   const [loadingMovements, setLoadingMovements] = useState(false)
   const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(true)
+  const [totalPages, setTotalPages] = useState(1)
   const [showMoveModal, setShowMoveModal] = useState(false)
+  const [feedback, setFeedback] = useState({ isOpen: false, title: '', message: '', type: 'info' })
 
   const [dates, setDates] = useState({
     start: new Date().toISOString().split('T')[0],
@@ -44,35 +47,17 @@ const CashRegister = () => {
     description: ''
   })
 
-  const observer = useRef()
-  const lastMoveRef = useCallback(node => {
-    if (loadingMovements) return
-    if (observer.current) observer.current.disconnect()
-    observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore) {
-        setPage(prevPage => prevPage + 1)
-      }
-    })
-    if (node) observer.current.observe(node)
-  }, [loadingMovements, hasMore])
-
   useEffect(() => {
-    setMovements([])
-    setPage(1)
-    setHasMore(true)
     fetchSummary()
+    fetchMovements(1)
   }, [dates])
-
-  useEffect(() => {
-    fetchMovements()
-  }, [page, dates])
 
   const fetchSummary = async () => {
     setLoading(true)
     const token = localStorage.getItem('token')
     try {
-      const res = await axios.get(`http://192.168.1.17:8000/api/cash/summary/?start_date=${dates.start}&end_date=${dates.end}`, {
-        headers: { Authorization: `Bearer ${token}` }
+      const res = await api.get(`/cash/summary/`, {
+        params: { start_date: dates.start, end_date: dates.end }
       })
       setSummary(res.data)
     } catch (err) {
@@ -81,19 +66,17 @@ const CashRegister = () => {
     setLoading(false)
   }
 
-  const fetchMovements = async () => {
+  const fetchMovements = async (p = 1) => {
     setLoadingMovements(true)
     const token = localStorage.getItem('token')
     try {
-      const res = await axios.get(`http://192.168.1.17:8000/api/cash/movements/?start_date=${dates.start}&end_date=${dates.end}&page=${page}`, {
-        headers: { Authorization: `Bearer ${token}` }
+      const res = await api.get('/cash/movements/', {
+        params: { start_date: dates.start, end_date: dates.end, page: p }
       })
-      if (page === 1) {
-        setMovements(res.data.results)
-      } else {
-        setMovements(prev => [...prev, ...res.data.results])
-      }
-      setHasMore(res.data.has_more)
+      const results = res.data.results || res.data
+      setMovements(Array.isArray(results) ? results : [])
+      if (res.data.count) setTotalPages(Math.ceil(res.data.count / 10))
+      setPage(p)
     } catch (err) {
       console.error("Error fetching movements", err)
     }
@@ -103,18 +86,21 @@ const CashRegister = () => {
   const handleCreateMove = async (e) => {
     e.preventDefault()
     const token = localStorage.getItem('token')
+    if (!newMove.amount || parseFloat(newMove.amount) <= 0 || !newMove.description) {
+      setFeedback({ isOpen: true, title: 'Campos Obligatorios', message: 'Por favor ingresa un monto válido y una descripción.', type: 'warning' })
+      return
+    }
     try {
-      await axios.post('http://192.168.1.17:8000/api/movements/', newMove, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      await api.post('/movements/', newMove)
       setShowMoveModal(false)
       setNewMove({ amount: '', movement_type: 'OUT', payment_method: 'efectivo', bank: '', description: '' })
       setPage(1)
       setMovements([])
       fetchSummary()
       fetchMovements()
+      setFeedback({ isOpen: true, title: 'Éxito', message: 'Movimiento registrado correctamente.', type: 'success' })
     } catch (err) {
-      alert("Error al registrar movimiento")
+      setFeedback({ isOpen: true, title: 'Error', message: 'No se pudo registrar el movimiento.', type: 'error' })
     }
   }
 
@@ -207,9 +193,8 @@ const CashRegister = () => {
                 <History size={20} /> Movimientos
               </h3>
               <div className="movements-list" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                {movements.map((move, index) => (
+                {movements.map((move) => (
                   <div
-                    ref={index === movements.length - 1 ? lastMoveRef : null}
                     key={move.id}
                     className="glass-card movement-card"
                     style={{
@@ -238,8 +223,12 @@ const CashRegister = () => {
                     </div>
                   </div>
                 ))}
-                {loadingMovements && <div style={{ textAlign: 'center', padding: '20px', color: 'var(--cta)', fontSize: '0.8rem' }}>CARGANDO MÁS...</div>}
               </div>
+              <Pagination 
+                current={page} 
+                total={totalPages} 
+                onPageChange={(p) => fetchMovements(p)} 
+              />
             </div>
 
             {/* Channels & Methods */}
@@ -543,6 +532,13 @@ const CashRegister = () => {
           }
         }
       `}</style>
+      <FeedbackModal 
+        isOpen={feedback.isOpen} 
+        title={feedback.title} 
+        message={feedback.message} 
+        type={feedback.type} 
+        onClose={() => setFeedback({ ...feedback, isOpen: false })} 
+      />
     </div>
   )
 }

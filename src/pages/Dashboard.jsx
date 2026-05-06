@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../api/axios'
 import { 
   TrendingUp, Calendar, Package, AlertTriangle, 
   ArrowUpRight, ArrowDownRight, Clock, User, 
@@ -30,9 +30,7 @@ const Dashboard = () => {
     setLoading(true)
     const token = localStorage.getItem('token')
     try {
-      const res = await axios.get('http://192.168.1.17:8000/api/dashboard-stats/', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      const res = await api.get('/dashboard-stats/')
       setStats(res.data)
     } catch (err) {
       console.error(err)

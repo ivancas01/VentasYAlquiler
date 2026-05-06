@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../api/axios'
 import { Bell, Calendar, Clock, CheckCircle, Trash2, RefreshCw, ExternalLink } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
@@ -16,17 +16,11 @@ const Notifications = () => {
     const token = localStorage.getItem('token')
     try {
       // First refresh notifications on backend
-      await axios.post('http://192.168.1.17:8000/api/notifications/refresh/', {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      await api.post('/notifications/refresh/', {})
       // Mark all as read so the sidebar icon clears
-      await axios.post('http://192.168.1.17:8000/api/notifications/read_all/', {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      await api.post('/notifications/read_all/', {})
       // Then fetch them
-      const res = await axios.get('http://192.168.1.17:8000/api/notifications/', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      const res = await api.get('/notifications/')
       const data = Array.isArray(res.data) ? res.data : (res.data.results || [])
       setNotifications(data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)))
     } catch (err) {
@@ -38,9 +32,7 @@ const Notifications = () => {
   const markAsRead = async (id) => {
     const token = localStorage.getItem('token')
     try {
-      await axios.patch(`http://192.168.1.17:8000/api/notifications/${id}/`, { is_read: true }, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      await api.patch(`/notifications/${id}/`, { is_read: true })
       setNotifications(notifications.map(n => n.id === id ? { ...n, is_read: true } : n))
     } catch (err) {}
   }
@@ -48,9 +40,7 @@ const Notifications = () => {
   const deleteNotification = async (id) => {
     const token = localStorage.getItem('token')
     try {
-      await axios.delete(`http://192.168.1.17:8000/api/notifications/${id}/`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      await api.delete(`/notifications/${id}/`)
       setNotifications(notifications.filter(n => n.id !== id))
     } catch (err) {}
   }

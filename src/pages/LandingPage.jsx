@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react'
-import axios from 'axios'
+import api from '../api/axios'
 import { Link, useLocation } from 'react-router-dom'
 import { ArrowRight, Mail, Phone, MapPin, Send, ChevronDown } from 'lucide-react'
 import { formatCurrency } from '../utils/format'
+import FeedbackModal from '../components/FeedbackModal'
 
 const LandingPage = () => {
   const { hash } = useLocation()
@@ -11,24 +12,39 @@ const LandingPage = () => {
   const [aboutImages, setAboutImages] = React.useState([])
   const [config, setConfig] = React.useState(null)
   const [currentAboutImage, setCurrentAboutImage] = React.useState(0)
+  const [loading, setLoading] = React.useState(false)
+  const [feedback, setFeedback] = React.useState({ isOpen: false, title: '', message: '', type: 'info' })
+  const [contactForm, setContactForm] = React.useState({
+    name: '', email: '', doc_id: '', phone: '', motive: '', message: ''
+  })
+
+  const getImageUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    return `${api.defaults.baseURL.replace('/api', '')}${cleanPath}`;
+  }
 
   useEffect(() => {
-    axios.get('http://192.168.1.17:8000/api/config/')
-      .then(res => setConfig(res.data))
+    api.get('/config/')
+      .then(res => {
+        const data = Array.isArray(res.data) ? res.data[0] : res.data
+        setConfig(data)
+      })
       .catch(err => console.error(err))
 
-    axios.get('http://192.168.1.17:8000/api/products/')
+    api.get('/products/')
       .then(res => {
         const data = res.data.results || res.data
         if (Array.isArray(data)) setProducts(data.slice(0, 10))
       })
       .catch(err => console.error(err))
 
-    axios.get('http://192.168.1.17:8000/api/hero-images/')
+    api.get('/hero-images/')
       .then(res => setHeroImages(res.data))
       .catch(err => console.error(err))
 
-    axios.get('http://192.168.1.17:8000/api/about-images/')
+    api.get('/about-images/')
       .then(res => setAboutImages(res.data))
       .catch(err => console.error(err))
   }, [])
@@ -58,7 +74,42 @@ const LandingPage = () => {
     'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1200'
   ]
 
-  const displayAboutImages = aboutImages.length > 0 ? aboutImages.map(img => img.image) : aboutFallbacks
+  const displayAboutImages = aboutImages.length > 0 ? aboutImages.map(img => getImageUrl(img.image)) : aboutFallbacks
+
+  const handleContactSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      const phoneNumber = config?.contact_phone ? config.contact_phone.replace(/\D/g, '') : '573000000000'
+      const message = `Hola! Mi nombre es ${contactForm.name}. 
+Email: ${contactForm.email}
+Doc: ${contactForm.doc_id}
+Tel: ${contactForm.phone}
+Motivo: ${contactForm.motive}
+
+Mensaje: ${contactForm.message}`
+      
+      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`
+      window.open(whatsappUrl, '_blank')
+
+      setFeedback({
+        isOpen: true,
+        title: 'MENSAJE PREPARADO',
+        message: 'Se ha abierto WhatsApp para que envíes tu mensaje directamente al asesor.',
+        type: 'success'
+      })
+      setContactForm({ name: '', email: '', doc_id: '', phone: '', motive: '', message: '' })
+    } catch (err) {
+      setFeedback({
+        isOpen: true,
+        title: 'ERROR',
+        message: 'No pudimos procesar tu solicitud. Por favor intenta más tarde.',
+        type: 'error'
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="fade-in">
@@ -100,7 +151,7 @@ const LandingPage = () => {
             
             const fallbackImage = fallbackImages[i % fallbackImages.length] + '?q=80&w=800&auto=format&fit=crop';
             const imageUrl = p.image 
-              ? (typeof p.image === 'string' && p.image.startsWith('http') ? p.image : `http://192.168.1.17:8000${p.image}`)
+              ? getImageUrl(p.image)
               : fallbackImage;
             
             return (
@@ -172,7 +223,7 @@ const LandingPage = () => {
                 >
                   <div style={{ height: '400px', background: 'var(--secondary)', marginBottom: '25px', overflow: 'hidden', position: 'relative' }}>
                     <img 
-                      src={p.image ? (typeof p.image === 'string' && p.image.startsWith('http') ? p.image : `http://192.168.1.17:8000${p.image}`) : 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=800'} 
+                      src={p.image ? getImageUrl(p.image) : 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=800'} 
                       alt={p.name} 
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
@@ -327,30 +378,30 @@ const LandingPage = () => {
               </div>
             </div>
 
-            <form className="glass-card contact-form" style={{ padding: '50px' }}>
+            <form className="glass-card contact-form" style={{ padding: '50px' }} onSubmit={handleContactSubmit}>
               <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px', marginBottom: '25px' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Nombre Completo *</label>
-                  <input type="text" required style={{ width: '100%', padding: '15px' }} />
+                  <input type="text" required value={contactForm.name} onChange={e => setContactForm({...contactForm, name: e.target.value})} style={{ width: '100%', padding: '15px' }} />
                 </div>
                 <div>
                   <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Email *</label>
-                  <input type="email" required style={{ width: '100%', padding: '15px' }} />
+                  <input type="email" required value={contactForm.email} onChange={e => setContactForm({...contactForm, email: e.target.value})} style={{ width: '100%', padding: '15px' }} />
                 </div>
               </div>
               <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px', marginBottom: '25px' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Número de Documento *</label>
-                  <input type="text" required style={{ width: '100%', padding: '15px' }} />
+                  <input type="text" required value={contactForm.doc_id} onChange={e => setContactForm({...contactForm, doc_id: e.target.value})} style={{ width: '100%', padding: '15px' }} />
                 </div>
                 <div>
                   <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Teléfono *</label>
-                  <input type="tel" required style={{ width: '100%', padding: '15px' }} />
+                  <input type="tel" required value={contactForm.phone} onChange={e => setContactForm({...contactForm, phone: e.target.value})} style={{ width: '100%', padding: '15px' }} />
                 </div>
               </div>
               <div style={{ marginBottom: '25px' }}>
                 <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Motivo de Contacto *</label>
-                <select required style={{ width: '100%', padding: '15px', background: 'var(--bg)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}>
+                <select required value={contactForm.motive} onChange={e => setContactForm({...contactForm, motive: e.target.value})} style={{ width: '100%', padding: '15px', background: 'var(--bg)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}>
                   <option value="">Seleccione un motivo...</option>
                   <option value="alquiler">Información sobre Alquiler</option>
                   <option value="venta">Información sobre Venta</option>
@@ -360,14 +411,21 @@ const LandingPage = () => {
               </div>
               <div style={{ marginBottom: '25px' }}>
                 <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Mensaje *</label>
-                <textarea rows="4" required style={{ width: '100%', padding: '15px' }}></textarea>
+                <textarea rows="4" required value={contactForm.message} onChange={e => setContactForm({...contactForm, message: e.target.value})} style={{ width: '100%', padding: '15px' }}></textarea>
               </div>
-              <button type="submit" className="btn-primary" style={{ width: '100%', gap: '15px' }}>
-                ENVIAR MENSAJE <Send size={20} />
+              <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', gap: '15px' }}>
+                {loading ? 'ENVIANDO...' : 'ENVIAR MENSAJE'} <Send size={20} />
               </button>
             </form>
           </div>
         </div>
+        <FeedbackModal 
+          isOpen={feedback.isOpen} 
+          title={feedback.title} 
+          message={feedback.message} 
+          type={feedback.type} 
+          onClose={() => setFeedback({ ...feedback, isOpen: false })} 
+        />
       </section>
 
       <style>{`

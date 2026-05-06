@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
-import axios from 'axios'
+import api from './api/axios'
 import { AuthProvider } from './context/AuthContext'
 import { SiteProvider } from './context/SiteContext'
 import Navbar from './components/shared/Navbar'
@@ -34,22 +34,24 @@ const AppContent = () => {
     <>
       {!isAdmin && <Navbar />}
       <Routes>
+        {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/catalog" element={<Catalog />} />
 
-        
-        {/* Admin Routes wrapped in AdminLayout and ProtectedRoute */}
-        <Route path="/admin" element={<ProtectedRoute><AdminLayout><Dashboard /></AdminLayout></ProtectedRoute>} />
-        <Route path="/admin/pos" element={<ProtectedRoute><AdminLayout><AdminPOS /></AdminLayout></ProtectedRoute>} />
-        <Route path="/admin/staff" element={<ProtectedRoute><AdminLayout><Staff /></AdminLayout></ProtectedRoute>} />
-        <Route path="/admin/reports" element={<ProtectedRoute><AdminLayout><Reports /></AdminLayout></ProtectedRoute>} />
-        <Route path="/admin/inventory" element={<ProtectedRoute><AdminLayout><Inventory /></AdminLayout></ProtectedRoute>} />
-        <Route path="/admin/cms" element={<ProtectedRoute><AdminLayout><CMS /></AdminLayout></ProtectedRoute>} />
-        <Route path="/admin/customers" element={<ProtectedRoute><AdminLayout><Customers /></AdminLayout></ProtectedRoute>} />
-        <Route path="/admin/transactions" element={<ProtectedRoute><AdminLayout><Transactions /></AdminLayout></ProtectedRoute>} />
-        <Route path="/admin/movements" element={<ProtectedRoute><AdminLayout><Movements /></AdminLayout></ProtectedRoute>} />
-        <Route path="/admin/cash" element={<ProtectedRoute><AdminLayout><CashRegister /></AdminLayout></ProtectedRoute>} />
-        <Route path="/admin/notifications" element={<ProtectedRoute><AdminLayout><Notifications /></AdminLayout></ProtectedRoute>} />
+        {/* Admin Routes with nested layout and protection */}
+        <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+          <Route index element={<Dashboard />} />
+          <Route path="pos" element={<AdminPOS />} />
+          <Route path="staff" element={<Staff />} />
+          <Route path="reports" element={<Reports />} />
+          <Route path="inventory" element={<Inventory />} />
+          <Route path="cms" element={<CMS />} />
+          <Route path="customers" element={<Customers />} />
+          <Route path="transactions" element={<Transactions />} />
+          <Route path="movements" element={<Movements />} />
+          <Route path="cash" element={<CashRegister />} />
+          <Route path="notifications" element={<Notifications />} />
+        </Route>
       </Routes>
       {!isAdmin && <Footer />}
     </>

@@ -1,28 +1,33 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../api/axios'
 import { Landmark, ArrowUpRight, ArrowDownLeft, Calendar, User, Search, Filter, CreditCard, ExternalLink } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import Pagination from '../components/shared/Pagination'
 
 const Movements = () => {
   const [movements, setMovements] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterMethod, setFilterMethod] = useState('all')
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
   const navigate = useNavigate()
 
   useEffect(() => {
-    fetchMovements()
-  }, [])
+    fetchMovements(1)
+  }, [filterMethod]) // searchTerm refetch is handled by an effect or button, but let's keep it simple for now
 
-  const fetchMovements = async () => {
+  const fetchMovements = async (p = 1) => {
     setLoading(true)
     const token = localStorage.getItem('token')
     try {
-      const res = await axios.get('http://192.168.1.17:8000/api/payments/?page_size=500', {
-        headers: { Authorization: `Bearer ${token}` }
+      const res = await api.get('/payments/', {
+        params: { page: p, search: searchTerm, payment_method: filterMethod !== 'all' ? filterMethod : undefined }
       })
       const results = res.data.results || res.data
       setMovements(Array.isArray(results) ? results : [])
+      if (res.data.count) setTotalPages(Math.ceil(res.data.count / 10))
+      setPage(p)
     } catch (err) {
       console.error(err)
       setMovements([])
@@ -176,6 +181,11 @@ const Movements = () => {
             )}
           </tbody>
         </table>
+        <Pagination 
+          current={page} 
+          total={totalPages} 
+          onPageChange={(p) => fetchMovements(p)} 
+        />
       </div>
       <style>{`
         .filters-stack {
