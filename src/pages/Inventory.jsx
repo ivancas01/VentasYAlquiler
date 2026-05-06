@@ -107,8 +107,8 @@ const Inventory = () => {
     setLoading(true)
     try {
       const [prodRes, catRes] = await Promise.all([
-        axios.get(`http://127.0.0.1:8000/api/products/?page=${p}`),
-        axios.get('http://127.0.0.1:8000/api/categories/')
+        axios.get(`http://192.168.1.17:8000/api/products/?page=${p}`),
+        axios.get('http://192.168.1.17:8000/api/categories/')
       ])
       // Handle paginated responses
       setProducts(prodRes.data.results || prodRes.data)
@@ -124,7 +124,7 @@ const Inventory = () => {
   const fetchMoreProducts = async () => {
     setLoadingMore(true)
     try {
-      const res = await axios.get(`http://127.0.0.1:8000/api/products/?page=${page}`)
+      const res = await axios.get(`http://192.168.1.17:8000/api/products/?page=${page}`)
       const newProducts = res.data.results || []
       setProducts(prev => [...prev, ...newProducts])
       setHasMore(!!res.data.next)
@@ -201,11 +201,11 @@ const Inventory = () => {
 
     try {
       if (editingItem) {
-        await axios.patch(`http://127.0.0.1:8000/api/products/${editingItem.id}/`, data, {
+        await axios.patch(`http://192.168.1.17:8000/api/products/${editingItem.id}/`, data, {
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
         })
       } else {
-        await axios.post('http://127.0.0.1:8000/api/products/', data, {
+        await axios.post('http://192.168.1.17:8000/api/products/', data, {
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
         })
       }
@@ -226,11 +226,11 @@ const Inventory = () => {
     const slug = categoryForm.slug || categoryForm.name.toLowerCase().trim().replace(/\s+/g, '-')
     try {
       if (editingItem) {
-        await axios.patch(`http://127.0.0.1:8000/api/categories/${editingItem.id}/`, { ...categoryForm, slug }, {
+        await axios.patch(`http://192.168.1.17:8000/api/categories/${editingItem.id}/`, { ...categoryForm, slug }, {
           headers: { Authorization: `Bearer ${token}` }
         })
       } else {
-        await axios.post('http://127.0.0.1:8000/api/categories/', { ...categoryForm, slug }, {
+        await axios.post('http://192.168.1.17:8000/api/categories/', { ...categoryForm, slug }, {
           headers: { Authorization: `Bearer ${token}` }
         })
       }
@@ -248,7 +248,7 @@ const Inventory = () => {
     if (!window.confirm("¿Eliminar producto?")) return
     const token = localStorage.getItem('token')
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/products/${id}/`, { headers: { Authorization: `Bearer ${token}` } })
+      await axios.delete(`http://192.168.1.17:8000/api/products/${id}/`, { headers: { Authorization: `Bearer ${token}` } })
       fetchData()
     } catch (err) {}
   }
@@ -257,7 +257,7 @@ const Inventory = () => {
     if (!window.confirm("¿Eliminar categoría? Esto afectará a los productos relacionados.")) return
     const token = localStorage.getItem('token')
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/categories/${id}/`, { headers: { Authorization: `Bearer ${token}` } })
+      await axios.delete(`http://192.168.1.17:8000/api/categories/${id}/`, { headers: { Authorization: `Bearer ${token}` } })
       fetchData()
     } catch (err) {}
   }
@@ -433,7 +433,7 @@ const Inventory = () => {
                         if (name) {
                           const slug = name.toLowerCase().trim().replace(/\s+/g, '-')
                           const token = localStorage.getItem('token')
-                          axios.post('http://127.0.0.1:8000/api/categories/', { name, slug }, {
+                          axios.post('http://192.168.1.17:8000/api/categories/', { name, slug }, {
                             headers: { Authorization: `Bearer ${token}` }
                           }).then(res => {
                             setCategories([...categories, res.data])

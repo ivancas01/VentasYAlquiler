@@ -43,7 +43,7 @@ const getImageUrl = (path) => {
   if (!path) return null;
   if (path.startsWith('http')) return path;
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  return `http://127.0.0.1:8000${cleanPath}`;
+  return `http://192.168.1.17:8000${cleanPath}`;
 }
 
 const Transactions = () => {
@@ -153,11 +153,11 @@ const Transactions = () => {
     const token = localStorage.getItem('token')
     try {
       const [salesRes, rentalsRes] = await Promise.all([
-        axios.get(`http://127.0.0.1:8000/api/sales/`, { 
+        axios.get(`http://192.168.1.17:8000/api/sales/`, { 
           params: { page: p, search: searchTerm, start_date: dateFilter.start, end_date: dateFilter.end },
           headers: { Authorization: `Bearer ${token}` } 
         }),
-        axios.get(`http://127.0.0.1:8000/api/rentals/`, { 
+        axios.get(`http://192.168.1.17:8000/api/rentals/`, { 
           params: { page: p, search: searchTerm, status: statusFilter, start_date: dateFilter.start, end_date: dateFilter.end },
           headers: { Authorization: `Bearer ${token}` } 
         })
@@ -187,7 +187,7 @@ const Transactions = () => {
     const token = localStorage.getItem('token')
     setLoadingMoreSales(true)
     try {
-      const res = await axios.get(`http://127.0.0.1:8000/api/sales/`, { 
+      const res = await axios.get(`http://192.168.1.17:8000/api/sales/`, { 
         params: { page: pageSales, search: searchTerm, start_date: dateFilter.start, end_date: dateFilter.end },
         headers: { Authorization: `Bearer ${token}` } 
       })
@@ -201,7 +201,7 @@ const Transactions = () => {
     const token = localStorage.getItem('token')
     setLoadingMoreRentals(true)
     try {
-      const res = await axios.get(`http://127.0.0.1:8000/api/rentals/`, { 
+      const res = await axios.get(`http://192.168.1.17:8000/api/rentals/`, { 
         params: { page: pageRentals, search: searchTerm, status: statusFilter, start_date: dateFilter.start, end_date: dateFilter.end },
         headers: { Authorization: `Bearer ${token}` } 
       })
@@ -221,7 +221,7 @@ const Transactions = () => {
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get('http://127.0.0.1:8000/api/products/?page_size=1000')
+      const res = await axios.get('http://192.168.1.17:8000/api/products/?page_size=1000')
       setProducts(res.data.results || res.data)
     } catch (err) {
       console.error("Error fetching products", err)
@@ -230,7 +230,7 @@ const Transactions = () => {
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get('http://127.0.0.1:8000/api/categories/?page_size=100')
+      const res = await axios.get('http://192.168.1.17:8000/api/categories/?page_size=100')
       setCategories(res.data.results || res.data)
     } catch (err) {
       console.error("Error fetching categories", err)
@@ -247,7 +247,7 @@ const Transactions = () => {
 
     const token = localStorage.getItem('token')
     try {
-      await axios.patch(`http://127.0.0.1:8000/api/rentals/${id}/`, { status: newStatus }, {
+      await axios.patch(`http://192.168.1.17:8000/api/rentals/${id}/`, { status: newStatus }, {
         headers: { Authorization: `Bearer ${token}` }
       })
       
@@ -265,7 +265,7 @@ const Transactions = () => {
   const updateGuarantee = async () => {
     const token = localStorage.getItem('token')
     try {
-      await axios.patch(`http://127.0.0.1:8000/api/rentals/${selectedRental.id}/`, { 
+      await axios.patch(`http://192.168.1.17:8000/api/rentals/${selectedRental.id}/`, { 
         guarantee_type: selectedRental.guarantee_type,
         guarantee_info: selectedRental.guarantee_info 
       }, { headers: { Authorization: `Bearer ${token}` } })
@@ -281,7 +281,7 @@ const Transactions = () => {
     if (!paymentAmount) return
     const token = localStorage.getItem('token')
     try {
-      await axios.post('http://127.0.0.1:8000/api/payments/', {
+      await axios.post('http://192.168.1.17:8000/api/payments/', {
         rental: selectedRental.id,
         amount: paymentAmount,
         payment_method: paymentMethod,
@@ -291,7 +291,7 @@ const Transactions = () => {
       setPaymentAmount('')
       setPaymentLabel('Abono')
       fetchTransactions()
-      const res = await axios.get(`http://127.0.0.1:8000/api/rentals/${selectedRental.id}/`, {
+      const res = await axios.get(`http://192.168.1.17:8000/api/rentals/${selectedRental.id}/`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setSelectedRental(res.data)
@@ -309,7 +309,7 @@ const Transactions = () => {
     const newTotal = newItems.reduce((acc, i) => acc + (parseFloat(i.price_at_rental)), 0)
 
     try {
-      const res = await axios.patch(`http://127.0.0.1:8000/api/rentals/${selectedRental.id}/`, {
+      const res = await axios.patch(`http://192.168.1.17:8000/api/rentals/${selectedRental.id}/`, {
         items: newItems.map(i => ({ product: i.product, price_at_rental: i.price_at_rental })),
         total: newTotal
       }, { headers: { Authorization: `Bearer ${token}` } })
@@ -330,7 +330,7 @@ const Transactions = () => {
     const newTotal = newItems.reduce((acc, i) => acc + (parseFloat(i.price_at_rental)), 0)
 
     try {
-      const res = await axios.patch(`http://127.0.0.1:8000/api/rentals/${selectedRental.id}/`, {
+      const res = await axios.patch(`http://192.168.1.17:8000/api/rentals/${selectedRental.id}/`, {
         items: newItems.map(i => ({ product: i.product, price_at_rental: i.price_at_rental })),
         total: newTotal
       }, { headers: { Authorization: `Bearer ${token}` } })

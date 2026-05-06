@@ -16,15 +16,15 @@ const Notifications = () => {
     const token = localStorage.getItem('token')
     try {
       // First refresh notifications on backend
-      await axios.post('http://127.0.0.1:8000/api/notifications/refresh/', {}, {
+      await axios.post('http://192.168.1.17:8000/api/notifications/refresh/', {}, {
         headers: { Authorization: `Bearer ${token}` }
       })
       // Mark all as read so the sidebar icon clears
-      await axios.post('http://127.0.0.1:8000/api/notifications/read_all/', {}, {
+      await axios.post('http://192.168.1.17:8000/api/notifications/read_all/', {}, {
         headers: { Authorization: `Bearer ${token}` }
       })
       // Then fetch them
-      const res = await axios.get('http://127.0.0.1:8000/api/notifications/', {
+      const res = await axios.get('http://192.168.1.17:8000/api/notifications/', {
         headers: { Authorization: `Bearer ${token}` }
       })
       const data = Array.isArray(res.data) ? res.data : (res.data.results || [])
@@ -38,7 +38,7 @@ const Notifications = () => {
   const markAsRead = async (id) => {
     const token = localStorage.getItem('token')
     try {
-      await axios.patch(`http://127.0.0.1:8000/api/notifications/${id}/`, { is_read: true }, {
+      await axios.patch(`http://192.168.1.17:8000/api/notifications/${id}/`, { is_read: true }, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setNotifications(notifications.map(n => n.id === id ? { ...n, is_read: true } : n))
@@ -48,7 +48,7 @@ const Notifications = () => {
   const deleteNotification = async (id) => {
     const token = localStorage.getItem('token')
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/notifications/${id}/`, {
+      await axios.delete(`http://192.168.1.17:8000/api/notifications/${id}/`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setNotifications(notifications.filter(n => n.id !== id))

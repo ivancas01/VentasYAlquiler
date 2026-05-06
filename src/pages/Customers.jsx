@@ -69,7 +69,7 @@ const Customers = () => {
     setLoading(true)
     const token = localStorage.getItem('token')
     try {
-      const res = await axios.get(`http://127.0.0.1:8000/api/customers/`, {
+      const res = await axios.get(`http://192.168.1.17:8000/api/customers/`, {
         params: { page: p, search: searchTerm },
         headers: { Authorization: `Bearer ${token}` }
       })
@@ -87,7 +87,7 @@ const Customers = () => {
     setLoadingMore(true)
     const token = localStorage.getItem('token')
     try {
-      const res = await axios.get(`http://127.0.0.1:8000/api/customers/`, {
+      const res = await axios.get(`http://192.168.1.17:8000/api/customers/`, {
         params: { page: page, search: searchTerm },
         headers: { Authorization: `Bearer ${token}` }
       })
@@ -113,11 +113,11 @@ const Customers = () => {
     const token = localStorage.getItem('token')
     try {
       if (editingCustomer) {
-        await axios.patch(`http://127.0.0.1:8000/api/customers/${editingCustomer.id}/`, formData, {
+        await axios.patch(`http://192.168.1.17:8000/api/customers/${editingCustomer.id}/`, formData, {
           headers: { Authorization: `Bearer ${token}` }
         })
       } else {
-        await axios.post('http://127.0.0.1:8000/api/customers/', formData, {
+        await axios.post('http://192.168.1.17:8000/api/customers/', formData, {
           headers: { Authorization: `Bearer ${token}` }
         })
       }

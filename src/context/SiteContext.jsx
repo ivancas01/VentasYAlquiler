@@ -9,7 +9,7 @@ export const SiteProvider = ({ children }) => {
 
   const fetchConfig = async () => {
     try {
-      const res = await axios.get('http://127.0.0.1:8000/api/config/');
+      const res = await axios.get('http://192.168.1.17:8000/api/config/');
       const data = Array.isArray(res.data) ? res.data[0] : res.data;
       if (data && data.id) {
         setConfig(data);

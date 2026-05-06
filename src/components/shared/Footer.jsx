@@ -7,7 +7,7 @@ const Footer = () => {
   const [config, setConfig] = useState(null)
 
   useEffect(() => {
-    axios.get('http://127.0.0.1:8000/api/config/')
+    axios.get('http://192.168.1.17:8000/api/config/')
       .then(res => setConfig(res.data))
       .catch(err => console.error(err))
   }, [])

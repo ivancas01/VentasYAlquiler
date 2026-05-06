@@ -13,22 +13,22 @@ const LandingPage = () => {
   const [currentAboutImage, setCurrentAboutImage] = React.useState(0)
 
   useEffect(() => {
-    axios.get('http://127.0.0.1:8000/api/config/')
+    axios.get('http://192.168.1.17:8000/api/config/')
       .then(res => setConfig(res.data))
       .catch(err => console.error(err))
 
-    axios.get('http://127.0.0.1:8000/api/products/')
+    axios.get('http://192.168.1.17:8000/api/products/')
       .then(res => {
         const data = res.data.results || res.data
         if (Array.isArray(data)) setProducts(data.slice(0, 10))
       })
       .catch(err => console.error(err))
 
-    axios.get('http://127.0.0.1:8000/api/hero-images/')
+    axios.get('http://192.168.1.17:8000/api/hero-images/')
       .then(res => setHeroImages(res.data))
       .catch(err => console.error(err))
 
-    axios.get('http://127.0.0.1:8000/api/about-images/')
+    axios.get('http://192.168.1.17:8000/api/about-images/')
       .then(res => setAboutImages(res.data))
       .catch(err => console.error(err))
   }, [])
@@ -100,7 +100,7 @@ const LandingPage = () => {
             
             const fallbackImage = fallbackImages[i % fallbackImages.length] + '?q=80&w=800&auto=format&fit=crop';
             const imageUrl = p.image 
-              ? (typeof p.image === 'string' && p.image.startsWith('http') ? p.image : `http://127.0.0.1:8000${p.image}`)
+              ? (typeof p.image === 'string' && p.image.startsWith('http') ? p.image : `http://192.168.1.17:8000${p.image}`)
               : fallbackImage;
             
             return (
@@ -172,7 +172,7 @@ const LandingPage = () => {
                 >
                   <div style={{ height: '400px', background: 'var(--secondary)', marginBottom: '25px', overflow: 'hidden', position: 'relative' }}>
                     <img 
-                      src={p.image ? (typeof p.image === 'string' && p.image.startsWith('http') ? p.image : `http://127.0.0.1:8000${p.image}`) : 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=800'} 
+                      src={p.image ? (typeof p.image === 'string' && p.image.startsWith('http') ? p.image : `http://192.168.1.17:8000${p.image}`) : 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=800'} 
                       alt={p.name} 
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />

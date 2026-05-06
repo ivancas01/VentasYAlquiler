@@ -35,7 +35,7 @@ const Catalog = () => {
   const fetchInitialData = async () => {
     // Fetch categories
     try {
-      const res = await axios.get('http://127.0.0.1:8000/api/categories/')
+      const res = await axios.get('http://192.168.1.17:8000/api/categories/')
       setCategories(res.data.results || res.data)
     } catch (err) {
       console.error("Error fetching categories", err)
@@ -43,7 +43,7 @@ const Catalog = () => {
 
     // Fetch config
     try {
-      const res = await axios.get('http://127.0.0.1:8000/api/config/')
+      const res = await axios.get('http://192.168.1.17:8000/api/config/')
       if (res.data) setConfig(res.data)
     } catch (err) {
       console.error("Error fetching config", err)
@@ -56,7 +56,7 @@ const Catalog = () => {
       setPage(1)
     }
     try {
-      let url = `http://127.0.0.1:8000/api/products/?page=${reset ? 1 : page + 1}&`
+      let url = `http://192.168.1.17:8000/api/products/?page=${reset ? 1 : page + 1}&`
       if (filterType !== 'all') url += `type=${filterType}&`
       if (filterCategory !== 'all') url += `category=${filterCategory}`
       

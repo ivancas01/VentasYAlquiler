@@ -56,9 +56,9 @@ const Staff = () => {
     setLoading(true)
     try {
       const [uRes, gRes, pRes] = await Promise.all([
-        axios.get(`http://127.0.0.1:8000/api/users/?page=${p}`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('http://127.0.0.1:8000/api/groups/', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('http://127.0.0.1:8000/api/permissions/', { headers: { Authorization: `Bearer ${token}` } })
+        axios.get(`http://192.168.1.17:8000/api/users/?page=${p}`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get('http://192.168.1.17:8000/api/groups/', { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get('http://192.168.1.17:8000/api/permissions/', { headers: { Authorization: `Bearer ${token}` } })
       ])
       
       const usersData = uRes.data.results || uRes.data
@@ -88,7 +88,7 @@ const Staff = () => {
     setLoadingMore(true)
     const token = localStorage.getItem('token')
     try {
-      const res = await axios.get(`http://127.0.0.1:8000/api/users/?page=${page + 1}`, { headers: { Authorization: `Bearer ${token}` } })
+      const res = await axios.get(`http://192.168.1.17:8000/api/users/?page=${page + 1}`, { headers: { Authorization: `Bearer ${token}` } })
       setUsers(prev => [...prev, ...(res.data.results || [])])
       setHasMore(!!res.data.next)
       setPage(prev => prev + 1)
@@ -145,11 +145,11 @@ const Staff = () => {
       
       if (editingItem) {
         if (!payload.password) delete payload.password
-        await axios.patch(`http://127.0.0.1:8000/api/users/${editingItem.id}/`, payload, {
+        await axios.patch(`http://192.168.1.17:8000/api/users/${editingItem.id}/`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         })
       } else {
-        await axios.post('http://127.0.0.1:8000/api/users/', payload, {
+        await axios.post('http://192.168.1.17:8000/api/users/', payload, {
           headers: { Authorization: `Bearer ${token}` }
         })
       }
@@ -165,11 +165,11 @@ const Staff = () => {
     const token = localStorage.getItem('token')
     try {
       if (editingItem) {
-        await axios.patch(`http://127.0.0.1:8000/api/groups/${editingItem.id}/`, groupForm, {
+        await axios.patch(`http://192.168.1.17:8000/api/groups/${editingItem.id}/`, groupForm, {
           headers: { Authorization: `Bearer ${token}` }
         })
       } else {
-        await axios.post('http://127.0.0.1:8000/api/groups/', groupForm, {
+        await axios.post('http://192.168.1.17:8000/api/groups/', groupForm, {
           headers: { Authorization: `Bearer ${token}` }
         })
       }
@@ -183,7 +183,7 @@ const Staff = () => {
     if (!window.confirm("¿Eliminar este usuario?")) return
     const token = localStorage.getItem('token')
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/users/${id}/`, {
+      await axios.delete(`http://192.168.1.17:8000/api/users/${id}/`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       fetchData()
@@ -194,7 +194,7 @@ const Staff = () => {
     if (!window.confirm("¿Eliminar este rol? Esto afectará a los usuarios asignados.")) return
     const token = localStorage.getItem('token')
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/groups/${id}/`, {
+      await axios.delete(`http://192.168.1.17:8000/api/groups/${id}/`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       fetchData()

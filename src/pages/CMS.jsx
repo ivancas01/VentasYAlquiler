@@ -27,8 +27,8 @@ const CMS = () => {
   const fetchImages = async () => {
     try {
       const [hRes, aRes] = await Promise.all([
-        axios.get('http://127.0.0.1:8000/api/hero-images/'),
-        axios.get('http://127.0.0.1:8000/api/about-images/')
+        axios.get('http://192.168.1.17:8000/api/hero-images/'),
+        axios.get('http://192.168.1.17:8000/api/about-images/')
       ])
       setHeroImages(hRes.data)
       setAboutImages(aRes.data)
@@ -48,7 +48,7 @@ const CMS = () => {
     const token = localStorage.getItem('token')
     const endpoint = type === 'hero' ? 'hero-images' : 'about-images'
     try {
-      await axios.post(`http://127.0.0.1:8000/api/${endpoint}/`, formData, {
+      await axios.post(`http://192.168.1.17:8000/api/${endpoint}/`, formData, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
@@ -67,7 +67,7 @@ const CMS = () => {
     const token = localStorage.getItem('token')
     const endpoint = type === 'hero' ? 'hero-images' : 'about-images'
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/${endpoint}/${id}/`, {
+      await axios.delete(`http://192.168.1.17:8000/api/${endpoint}/${id}/`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       fetchImages()
@@ -83,7 +83,7 @@ const CMS = () => {
     setLoading(true)
     const token = localStorage.getItem('token')
     try {
-      const res = await axios.patch(`http://127.0.0.1:8000/api/config/${config.id}/`, config, {
+      const res = await axios.patch(`http://192.168.1.17:8000/api/config/${config.id}/`, config, {
         headers: { Authorization: `Bearer ${token}` }
       })
       updateConfig(res.data)

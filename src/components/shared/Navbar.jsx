@@ -14,7 +14,7 @@ const Navbar = () => {
   const [config, setConfig] = useState(null)
 
   useEffect(() => {
-    axios.get('http://127.0.0.1:8000/api/config/')
+    axios.get('http://192.168.1.17:8000/api/config/')
       .then(res => setConfig(res.data))
       .catch(err => console.error(err))
     
@@ -30,10 +30,10 @@ const Navbar = () => {
   const fetchNotifications = async () => {
     const token = localStorage.getItem('token')
     try {
-      await axios.post('http://127.0.0.1:8000/api/notifications/refresh/', {}, {
+      await axios.post('http://192.168.1.17:8000/api/notifications/refresh/', {}, {
         headers: { Authorization: `Bearer ${token}` }
       })
-      const res = await axios.get('http://127.0.0.1:8000/api/notifications/', {
+      const res = await axios.get('http://192.168.1.17:8000/api/notifications/', {
         headers: { Authorization: `Bearer ${token}` }
       })
       setNotifications(res.data.filter(n => !n.is_read))
@@ -71,7 +71,7 @@ const Navbar = () => {
   const markAsRead = async (id) => {
     const token = localStorage.getItem('token')
     try {
-      await axios.patch(`http://127.0.0.1:8000/api/notifications/${id}/`, { is_read: true }, {
+      await axios.patch(`http://192.168.1.17:8000/api/notifications/${id}/`, { is_read: true }, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setNotifications(notifications.filter(n => n.id !== id))

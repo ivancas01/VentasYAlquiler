@@ -12,7 +12,7 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token')
       if (token) {
         try {
-          const res = await axios.get('http://127.0.0.1:8000/api/users/me/', {
+          const res = await axios.get('http://192.168.1.17:8000/api/users/me/', {
             headers: { Authorization: `Bearer ${token}` }
           })
           setUser(res.data)
@@ -30,12 +30,12 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      const res = await axios.post('http://127.0.0.1:8000/api/token/', { username, password })
+      const res = await axios.post('http://192.168.1.17:8000/api/token/', { username, password })
       localStorage.setItem('token', res.data.access)
       localStorage.setItem('refresh', res.data.refresh)
       
       // Fetch user profile after login
-      const userRes = await axios.get('http://127.0.0.1:8000/api/users/me/', {
+      const userRes = await axios.get('http://192.168.1.17:8000/api/users/me/', {
         headers: { Authorization: `Bearer ${res.data.access}` }
       })
       setUser(userRes.data)

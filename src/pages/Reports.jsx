@@ -11,7 +11,7 @@ const Reports = () => {
     const fetchAnalytics = async () => {
       const token = localStorage.getItem('token')
       try {
-        const res = await axios.get('http://127.0.0.1:8000/api/analytics/', {
+        const res = await axios.get('http://192.168.1.17:8000/api/analytics/', {
           headers: { Authorization: `Bearer ${token}` }
         })
         setData(res.data)

@@ -35,7 +35,7 @@ const AdminLayout = ({ children }) => {
   const fetchNotifCount = async () => {
     const token = localStorage.getItem('token')
     try {
-      const res = await axios.get('http://127.0.0.1:8000/api/notifications/', {
+      const res = await axios.get('http://192.168.1.17:8000/api/notifications/', {
         headers: { Authorization: `Bearer ${token}` }
       })
       const data = Array.isArray(res.data) ? res.data : (res.data.results || [])

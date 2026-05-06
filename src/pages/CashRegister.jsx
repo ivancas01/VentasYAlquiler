@@ -71,7 +71,7 @@ const CashRegister = () => {
     setLoading(true)
     const token = localStorage.getItem('token')
     try {
-      const res = await axios.get(`http://127.0.0.1:8000/api/cash/summary/?start_date=${dates.start}&end_date=${dates.end}`, {
+      const res = await axios.get(`http://192.168.1.17:8000/api/cash/summary/?start_date=${dates.start}&end_date=${dates.end}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setSummary(res.data)
@@ -85,7 +85,7 @@ const CashRegister = () => {
     setLoadingMovements(true)
     const token = localStorage.getItem('token')
     try {
-      const res = await axios.get(`http://127.0.0.1:8000/api/cash/movements/?start_date=${dates.start}&end_date=${dates.end}&page=${page}`, {
+      const res = await axios.get(`http://192.168.1.17:8000/api/cash/movements/?start_date=${dates.start}&end_date=${dates.end}&page=${page}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       if (page === 1) {
@@ -104,7 +104,7 @@ const CashRegister = () => {
     e.preventDefault()
     const token = localStorage.getItem('token')
     try {
-      await axios.post('http://127.0.0.1:8000/api/movements/', newMove, {
+      await axios.post('http://192.168.1.17:8000/api/movements/', newMove, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setShowMoveModal(false)

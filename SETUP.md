@@ -55,11 +55,11 @@ Sigue estos pasos para poner en marcha la API:
    python manage.py shell < seed.py
    ```
 
-8. **Iniciar el servidor de desarrollo:**
+8. **Iniciar el servidor de desarrollo (Accesible en Red Local):**
    ```powershell
-   python manage.py runserver
+   python manage.py runserver 0.0.0.0:8000
    ```
-   La API estará disponible en `http://127.0.0.1:8000/`.
+   La API estará disponible en `http://127.0.0.1:8000/` (local) y en `http://192.168.1.17:8000/` (red local).
 
 ---
 

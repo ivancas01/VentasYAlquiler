@@ -18,7 +18,7 @@ const Movements = () => {
     setLoading(true)
     const token = localStorage.getItem('token')
     try {
-      const res = await axios.get('http://127.0.0.1:8000/api/payments/?page_size=500', {
+      const res = await axios.get('http://192.168.1.17:8000/api/payments/?page_size=500', {
         headers: { Authorization: `Bearer ${token}` }
       })
       const results = res.data.results || res.data

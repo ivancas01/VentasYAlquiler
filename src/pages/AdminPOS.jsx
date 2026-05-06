@@ -92,7 +92,7 @@ const AdminPOS = () => {
 
   const fetchAvailability = async () => {
     try {
-      const res = await axios.get(`http://127.0.0.1:8000/api/products/availability/?start_date=${startDate}&end_date=${endDate}`)
+      const res = await axios.get(`http://192.168.1.17:8000/api/products/availability/?start_date=${startDate}&end_date=${endDate}`)
       const availMap = {}
       const conflictMap = {}
       res.data.forEach(item => {
@@ -111,7 +111,7 @@ const AdminPOS = () => {
     try {
       // For POS we want more than 10 initially, or we should handle pagination
       // Let's request a larger page for POS
-      const res = await axios.get('http://127.0.0.1:8000/api/products/?page_size=100', {
+      const res = await axios.get('http://192.168.1.17:8000/api/products/?page_size=100', {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       })
       const data = res.data.results || res.data
@@ -125,7 +125,7 @@ const AdminPOS = () => {
   const fetchCategories = async () => {
     const token = localStorage.getItem('token')
     try {
-      const res = await axios.get('http://127.0.0.1:8000/api/categories/', {
+      const res = await axios.get('http://192.168.1.17:8000/api/categories/', {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       })
       const data = res.data.results || res.data
@@ -143,7 +143,7 @@ const AdminPOS = () => {
     const token = localStorage.getItem('token')
     try {
       // Use exact doc_id filter instead of general search for autocomplete
-      const res = await axios.get(`http://127.0.0.1:8000/api/customers/?doc_id=${val}`, {
+      const res = await axios.get(`http://192.168.1.17:8000/api/customers/?doc_id=${val}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       const data = res.data.results || res.data
@@ -190,7 +190,7 @@ const AdminPOS = () => {
     if (imageFile) data.append('image', imageFile)
 
     try {
-      const res = await axios.post('http://127.0.0.1:8000/api/products/', data, {
+      const res = await axios.post('http://192.168.1.17:8000/api/products/', data, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
       })
       fetchProducts() // Refresh the list
@@ -264,11 +264,11 @@ const AdminPOS = () => {
       let customerId = customer.id
       const customerPayload = { ...customer }
       if (customerId) {
-        await axios.patch(`http://127.0.0.1:8000/api/customers/${customerId}/`, customerPayload, {
+        await axios.patch(`http://192.168.1.17:8000/api/customers/${customerId}/`, customerPayload, {
           headers: { Authorization: `Bearer ${token}` }
         })
       } else {
-        const cRes = await axios.post('http://127.0.0.1:8000/api/customers/', customerPayload, {
+        const cRes = await axios.post('http://192.168.1.17:8000/api/customers/', customerPayload, {
           headers: { Authorization: `Bearer ${token}` }
         })
         customerId = cRes.data.id
@@ -276,13 +276,13 @@ const AdminPOS = () => {
 
       let res;
       if (type === 'sale') {
-        res = await axios.post('http://127.0.0.1:8000/api/sales/', {
+        res = await axios.post('http://192.168.1.17:8000/api/sales/', {
           customer: customerId,
           total: total,
           items: cart.map(item => ({ product: item.id, quantity: 1, price_at_sale: item.custom_price }))
         }, { headers: { Authorization: `Bearer ${token}` } })
       } else {
-        res = await axios.post('http://127.0.0.1:8000/api/rentals/', {
+        res = await axios.post('http://192.168.1.17:8000/api/rentals/', {
           customer: customerId,
           start_date: startDate || new Date().toISOString().split('T')[0],
           end_date: endDate || new Date().toISOString().split('T')[0],
@@ -294,7 +294,7 @@ const AdminPOS = () => {
       }
 
       if (parseFloat(initialPayment) > 0) {
-        await axios.post('http://127.0.0.1:8000/api/payments/', {
+        await axios.post('http://192.168.1.17:8000/api/payments/', {
           rental: type === 'rental' ? res.data.id : null,
           sale: type === 'sale' ? res.data.id : null,
           amount: initialPayment,
