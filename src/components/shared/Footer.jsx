@@ -17,15 +17,15 @@ const Footer = () => {
       background: 'var(--primary)',
       color: 'white',
       padding: '80px 20px 40px'
-    }}>
+    }} className="main-footer">
       <div style={{
         maxWidth: '1200px',
         margin: '0 auto',
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
         gap: '40px'
-      }}>
-        <div style={{ flex: 1, minWidth: '300px' }}>
+      }} className="footer-grid">
+        <div style={{ flex: 1, minWidth: '300px' }} className="footer-info">
           <h2 className="urban-font" style={{ fontSize: '1.5rem', color: 'white', marginBottom: '20px' }}>
             {config?.company_name_white || 'URBAN'} <span className="gold-text">{config?.company_name_gold || 'LUXURY'}</span>
           </h2>
@@ -39,7 +39,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div>
+        <div className="footer-links">
           <h3 style={{ marginBottom: '20px' }}>{config?.footer_links_title || 'Enlaces Rápidos'}</h3>
           <ul style={{ listStyle: 'none', padding: 0 }}>
             <li style={{ marginBottom: '10px' }}><Link to="/" style={{ color: '#a8a29e' }}>Inicio</Link></li>
@@ -49,7 +49,7 @@ const Footer = () => {
           </ul>
         </div>
 
-        <div>
+        <div className="footer-contact">
           <h3 style={{ marginBottom: '20px' }}>{config?.footer_contact_title || 'Contacto'}</h3>
           <ul style={{ listStyle: 'none', padding: 0, color: '#a8a29e' }}>
             <li style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
@@ -76,6 +76,16 @@ const Footer = () => {
       }}>
         © {new Date().getFullYear()} {config?.company_name || 'Urban Luxury'}. Todos los derechos reservados.
       </div>
+
+      <style>{`
+        @media (max-width: 1024px) {
+          .main-footer { padding: 60px 20px 40px !important; text-align: center; }
+          .footer-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
+          .footer-info { min-width: 100% !important; }
+          .footer-info div { justify-content: center; }
+          .footer-contact ul li { justify-content: center; }
+        }
+      `}</style>
     </footer>
   )
 }

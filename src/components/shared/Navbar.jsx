@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ShoppingBag, Info, Phone, LayoutDashboard, User, LogOut, Bell, Shield } from 'lucide-react'
+import { ShoppingBag, Info, Phone, LayoutDashboard, User, LogOut, Bell, Shield, Menu, X } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import axios from 'axios'
 import LoginModal from './LoginModal'
@@ -78,6 +78,8 @@ const Navbar = () => {
     } catch (err) {}
   }
 
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+
   return (
     <nav style={{
       position: 'fixed',
@@ -91,15 +93,17 @@ const Navbar = () => {
       padding: '20px 50px',
       background: 'var(--bg)',
       borderBottom: '1px solid var(--glass-border)',
-      backdropFilter: 'blur(10px)'
-    }}>
-      <Link to="/" style={{ display: 'flex', alignItems: 'center' }}>
-        <span className="urban-font" style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'white' }}>
+      backdropFilter: 'blur(10px)',
+      boxSizing: 'border-box'
+    }} className="navbar">
+      <Link to="/" style={{ display: 'flex', alignItems: 'center' }} onClick={() => setIsMenuOpen(false)}>
+        <span className="urban-font logo-text" style={{ fontSize: 'clamp(1rem, 5vw, 1.2rem)', fontWeight: 'bold', color: 'white', letterSpacing: '2px' }}>
           {config?.company_name_white || 'URBAN'} <span className="gold-text">{config?.company_name_gold || 'LUXURY'}</span>
         </span>
       </Link>
       
-      <div style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
+      {/* Desktop Menu */}
+      <div className="desktop-menu" style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
         {/* Anchor Links Group (Smooth scroll section) */}
         <div style={{ display: 'flex', gap: '40px', alignItems: 'center' }}>
           <Link to="/#inicio" className="nav-link" style={{ 
@@ -199,7 +203,101 @@ const Navbar = () => {
         )}
       </div>
 
+      {/* Mobile Hamburger Toggle */}
+      <button 
+        className="mobile-toggle"
+        onClick={() => setIsMenuOpen(!isMenuOpen)}
+        style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', display: 'none' }}
+      >
+        {isMenuOpen ? <X size={30} /> : <Menu size={30} />}
+      </button>
+
+      {/* Mobile Menu Drawer */}
+      <div className={`mobile-drawer ${isMenuOpen ? 'open' : ''}`} style={{
+        position: 'fixed',
+        top: '0',
+        right: isMenuOpen ? '0' : '-100%',
+        width: '100%',
+        height: '100vh',
+        background: 'var(--bg)',
+        zIndex: 10001,
+        transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '30px',
+        padding: '40px'
+      }}>
+        <button 
+          onClick={() => setIsMenuOpen(false)}
+          style={{ position: 'absolute', top: '30px', right: '30px', background: 'transparent', border: 'none', color: 'var(--cta)' }}
+        >
+          <X size={35} />
+        </button>
+
+        <Link to="/#inicio" onClick={() => setIsMenuOpen(false)} className="mobile-nav-link">Inicio</Link>
+        <Link to="/#nosotros" onClick={() => setIsMenuOpen(false)} className="mobile-nav-link">Nosotros</Link>
+        <Link to="/#contacto" onClick={() => setIsMenuOpen(false)} className="mobile-nav-link">Contacto</Link>
+        <Link to="/catalog" onClick={() => setIsMenuOpen(false)} className="mobile-nav-link">Catálogo</Link>
+        
+        <div style={{ width: '50px', height: '1px', background: 'var(--cta)' }}></div>
+
+        {!user ? (
+          <button 
+            onClick={() => { setShowLoginModal(true); setIsMenuOpen(false); }} 
+            className="btn-primary" 
+            style={{ width: '100%', maxWidth: '300px', padding: '20px' }}
+          >
+            ACCEDER
+          </button>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%', maxWidth: '300px' }}>
+            <Link to="/admin" onClick={() => setIsMenuOpen(false)} className="btn-outline" style={{ textAlign: 'center', padding: '15px' }}>PANEL ADMIN</Link>
+            <button 
+              onClick={() => { logout(); navigate('/'); setIsMenuOpen(false); }} 
+              className="btn-primary" 
+              style={{ padding: '15px', background: '#ef4444' }}
+            >
+              CERRAR SESIÓN
+            </button>
+          </div>
+        )}
+      </div>
+
       <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
+
+      <style>{`
+        @media (max-width: 1024px) {
+          .navbar {
+            padding: 12px 15px !important;
+          }
+          .desktop-menu {
+            display: none !important;
+          }
+          .mobile-toggle {
+            display: block !important;
+          }
+          .navbar .urban-font {
+            font-size: clamp(0.9rem, 5vw, 1.1rem) !important;
+          }
+        }
+        .mobile-nav-link {
+          font-family: var(--urban-font);
+          font-size: clamp(1.5rem, 8vw, 2.5rem);
+          color: white;
+          text-transform: uppercase;
+          text-decoration: none;
+          letter-spacing: 4px;
+          text-align: center;
+        }
+        .mobile-nav-link:hover {
+          color: var(--cta);
+        }
+        .mobile-drawer.open {
+          right: 0 !important;
+        }
+      `}</style>
     </nav>
   )
 }

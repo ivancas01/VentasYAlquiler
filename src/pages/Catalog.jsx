@@ -77,29 +77,31 @@ const Catalog = () => {
     : []
 
   return (
-    <div className="fade-in" style={{ padding: '160px 20px 80px', maxWidth: '1400px', margin: '0 auto' }}>
-      <div style={{ textAlign: 'center', marginBottom: '80px' }}>
-        <h2 className="gold-text" style={{ fontSize: '3rem', marginBottom: '20px' }}>Exclusividad</h2>
-        <p style={{ color: 'var(--text-dim)', letterSpacing: '2px', textTransform: 'uppercase' }}>Explora nuestra colección de alta costura disponible para venta y alquiler.</p>
+    <div className="fade-in catalog-container" style={{ padding: '160px 20px 80px', maxWidth: '1400px', margin: '0 auto', boxSizing: 'border-box' }}>
+      <div className="catalog-header" style={{ textAlign: 'center', marginBottom: '80px' }}>
+        <h2 className="gold-text catalog-main-title" style={{ fontSize: 'clamp(1.8rem, 10vw, 3.5rem)', marginBottom: '20px' }}>Exclusividad</h2>
+        <p className="catalog-subtitle" style={{ color: 'var(--text-dim)', letterSpacing: '2px', textTransform: 'uppercase' }}>Explora nuestra colección de alta costura disponible para venta y alquiler.</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '30px', alignItems: 'center', marginBottom: '50px' }}>
-        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-          <div style={{ position: 'relative', width: '400px' }}>
+      <div className="filters-container" style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '30px', alignItems: 'center', marginBottom: '50px' }}>
+        <div className="filters-row" style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+          <div className="search-wrapper" style={{ position: 'relative', width: '400px' }}>
             <Search size={20} style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: 'var(--cta)' }} />
             <input 
               type="text" 
               placeholder="Buscar prendas..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{ width: '100%', padding: '15px 15px 15px 50px', fontSize: '1rem', background: 'var(--secondary)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+              className="catalog-input"
+              style={{ width: '100%', padding: '15px 15px 15px 50px', fontSize: '1rem', background: 'var(--secondary)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', height: '55px' }}
             />
           </div>
 
           <select 
             value={filterCategory} 
             onChange={(e) => setFilterCategory(e.target.value)}
-            style={{ width: '250px', background: 'var(--secondary)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '0 15px' }}
+            className="catalog-select"
+            style={{ width: '250px', background: 'var(--secondary)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '0 15px', height: '55px' }}
           >
             <option value="all">TODAS LAS CATEGORÍAS</option>
             {categories.map(cat => (
@@ -107,13 +109,14 @@ const Catalog = () => {
             ))}
           </select>
 
-          <div style={{ display: 'flex', gap: '10px', background: 'var(--secondary)', padding: '5px', border: '1px solid rgba(255,255,255,0.05)' }}>
+          <div className="type-toggle" style={{ display: 'flex', gap: '10px', background: 'var(--secondary)', padding: '5px', border: '1px solid rgba(255,255,255,0.05)', height: '55px', alignItems: 'center' }}>
             {['all', 'sale', 'rental'].map(t => (
               <button 
                 key={t}
                 onClick={() => setFilterType(t)}
                 style={{ 
-                  padding: '10px 20px', 
+                  padding: '0 20px', 
+                  height: '100%',
                   fontSize: '0.75rem', 
                   background: filterType === t ? 'var(--cta)' : 'transparent',
                   color: filterType === t ? 'black' : 'white',
@@ -134,7 +137,7 @@ const Catalog = () => {
         <div style={{ textAlign: 'center', padding: '100px', color: 'var(--cta)' }}>CARGANDO COLECCIÓN...</div>
       ) : (
         <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '40px' }}>
+          <div className="products-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '40px' }}>
             {filteredProducts.map(product => (
               <div 
                 key={product.id} 
@@ -198,13 +201,13 @@ const Catalog = () => {
             alignItems: 'center', 
             justifyContent: 'center', 
             zIndex: 99999999, 
-            padding: '40px', 
+            padding: '20px', 
             backdropFilter: 'blur(20px)' 
           }}
         >
           <div 
             id="catalog-modal-content" 
-            className="glass-card fade-in" 
+            className="glass-card fade-in catalog-modal" 
             onClick={(e) => e.stopPropagation()}
             style={{ 
               maxWidth: '1100px', 
@@ -217,25 +220,26 @@ const Catalog = () => {
               maxHeight: '90vh', 
               overflowY: 'auto',
               background: 'var(--bg)',
-              border: '1px solid var(--glass-border)'
+              border: '1px solid var(--glass-border)',
+              boxSizing: 'border-box'
             }}
           >
-            <button onClick={() => setSelectedProduct(null)} style={{ position: 'absolute', top: '30px', right: '30px', background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', zIndex: 10 }}>
+            <button onClick={() => setSelectedProduct(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', zIndex: 10 }}>
               <ArrowRight size={35} style={{ transform: 'rotate(180deg)' }} />
             </button>
             
-            <div style={{ height: '600px', background: 'var(--secondary)', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <div className="modal-image-container" style={{ height: '600px', background: 'var(--secondary)', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
               {selectedProduct.image && <img src={selectedProduct.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div className="modal-details" style={{ display: 'flex', flexDirection: 'column' }}>
               <span style={{ color: 'var(--cta)', letterSpacing: '4px', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '15px' }}>{selectedProduct.category_name}</span>
-              <h2 className="urban-font gold-text" style={{ fontSize: '3rem', marginBottom: '25px', lineHeight: '1.1' }}>{selectedProduct.name}</h2>
-              <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '1.05rem', lineHeight: '1.8', marginBottom: '40px', background: 'rgba(255,255,255,0.03)', padding: '25px', borderLeft: '3px solid var(--cta)' }}>
+              <h2 className="urban-font gold-text modal-title" style={{ fontSize: 'clamp(1.8rem, 8vw, 3rem)', marginBottom: '25px', lineHeight: '1.1' }}>{selectedProduct.name}</h2>
+              <p className="modal-desc" style={{ color: 'rgba(255,255,255,0.8)', fontSize: '1.05rem', lineHeight: '1.8', marginBottom: '40px', background: 'rgba(255,255,255,0.03)', padding: '25px', borderLeft: '3px solid var(--cta)' }}>
                 {selectedProduct.description || 'Sin descripción detallada disponible para esta pieza exclusiva.'}
               </p>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '40px' }}>
+              <div className="modal-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '40px' }}>
                 <div className="detail-item">
                   <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '10px' }}>Color</label>
                   <p style={{ fontSize: '1.2rem', color: 'white', fontWeight: '500' }}>{selectedProduct.color || 'N/A'}</p>
@@ -255,21 +259,40 @@ const Catalog = () => {
               </div>
 
               <div style={{ marginTop: 'auto', background: 'rgba(255,255,255,0.02)', padding: '35px', border: '1px solid var(--glass-border)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+                  <div className="modal-prices">
                     {selectedProduct.price_sale && <div style={{ fontSize: '2.2rem', fontWeight: 'bold', color: 'white' }}>{formatCurrency(selectedProduct.price_sale)} <span style={{fontSize: '0.8rem', color: 'var(--text-dim)'}}>VENTA</span></div>}
                     {selectedProduct.price_rental && <div style={{ fontSize: '2.2rem', fontWeight: 'bold', color: 'var(--cta)', marginTop: '8px' }}>{formatCurrency(selectedProduct.price_rental)} <span style={{fontSize: '0.8rem', color: 'var(--text-dim)'}}>ALQUILER</span></div>}
                   </div>
-                  <a 
-                    href={`https://wa.me/${config?.contact_phone?.replace(/\D/g, '') || '573000000000'}?text=Hola, estoy interesado en el producto: ${selectedProduct.name}`} 
-                    target="_blank" 
-                    rel="noreferrer" 
-                    className="btn-primary" 
-                    style={{ padding: '20px 40px', fontSize: '0.9rem' }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    SOLICITAR AHORA
-                  </a>
+                  
+                  {selectedProduct.stock > 0 ? (
+                    <a 
+                      href={`https://wa.me/${config?.contact_phone?.replace(/\D/g, '') || '573000000000'}?text=Hola, estoy interesado en el producto: ${selectedProduct.name}`} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="btn-primary" 
+                      style={{ padding: '20px 40px', fontSize: '0.9rem', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      SOLICITAR AHORA
+                    </a>
+                  ) : (
+                    <button 
+                      className="btn-outline" 
+                      style={{ 
+                        padding: '20px 40px', 
+                        fontSize: '0.9rem', 
+                        cursor: 'not-allowed', 
+                        opacity: 0.5,
+                        borderColor: '#ef4444',
+                        color: '#ef4444',
+                        width: '100%'
+                      }}
+                      disabled
+                    >
+                      {selectedProduct.product_type === 'sale' ? 'AGOTADO' : 'NO DISPONIBLE'}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -277,6 +300,49 @@ const Catalog = () => {
         </div>,
         document.body
       )}
+
+      <style>{`
+        @media (max-width: 1024px) {
+          .catalog-container { 
+            padding: 120px 15px 60px !important; 
+            overflow-x: hidden !important; 
+            width: 100vw !important;
+            box-sizing: border-box !important;
+          }
+          
+          .catalog-header { margin-bottom: 25px !important; }
+          .catalog-main-title { font-size: clamp(1.4rem, 8vw, 2rem) !important; letter-spacing: 1px !important; }
+          .catalog-subtitle { font-size: 0.65rem !important; letter-spacing: 0.5px !important; line-height: 1.3 !important; padding: 0 10px; }
+          
+          .filters-container { grid-template-columns: 1fr !important; gap: 12px !important; width: 100% !important; margin: 0 auto !important; }
+          .filters-row { flex-direction: column !important; align-items: stretch !important; gap: 10px !important; width: 100% !important; }
+          .search-wrapper, .catalog-select, .type-toggle { width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; }
+          .catalog-input, .catalog-select, .type-toggle { height: 42px !important; font-size: 0.75rem !important; }
+          .type-toggle { justify-content: center !important; gap: 4px !important; padding: 2px !important; }
+          .type-toggle button { padding: 0 8px !important; font-size: 0.6rem !important; flex: 1 !important; }
+
+          .products-grid { grid-template-columns: 1fr !important; gap: 20px !important; width: 100% !important; margin-top: 30px !important; }
+
+          .catalog-modal {
+            grid-template-columns: 1fr !important;
+            padding: 15px 10px !important;
+            gap: 20px !important;
+            text-align: center;
+            width: 96% !important;
+            margin: 0 auto !important;
+            max-height: 85vh !important;
+          }
+          .modal-image-container { height: 220px !important; }
+          .modal-title { font-size: 1.2rem !important; margin-bottom: 10px !important; }
+          .modal-desc { font-size: 0.75rem !important; padding: 12px !important; text-align: left; margin-bottom: 15px !important; }
+          .modal-grid { gap: 8px !important; margin-bottom: 15px !important; }
+          .modal-prices div { font-size: 1.1rem !important; }
+          .detail-item p { font-size: 0.8rem !important; }
+          .modal-details { align-items: center; }
+          .modal-details > span { font-size: 0.5rem !important; letter-spacing: 2px !important; }
+        }
+      `}</style>
+
     </div>
   )
 }
