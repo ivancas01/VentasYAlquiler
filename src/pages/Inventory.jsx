@@ -578,6 +578,7 @@ const Inventory = () => {
 
       <FeedbackModal {...feedback} onClose={() => setFeedback({ ...feedback, isOpen: false })} />
       <style>{`
+        .tab-btn {
           border: none;
           background: transparent;
           font-size: 1.2rem;

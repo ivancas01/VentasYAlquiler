@@ -57,8 +57,8 @@ const Notifications = () => {
 
   return (
     <div className="fade-in" style={{ maxWidth: '1000px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
-        <h2 className="urban-font gold-text" style={{ fontSize: '2.2rem', display: 'flex', alignItems: 'center', gap: '20px' }}>
+      <div className="notifications-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px', gap: '20px' }}>
+        <h2 className="urban-font gold-text notifications-title" style={{ fontSize: '2.2rem', display: 'flex', alignItems: 'center', gap: '20px' }}>
           <Bell size={35} /> Centro de Alertas
         </h2>
         <button onClick={fetchNotifications} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -73,7 +73,7 @@ const Notifications = () => {
           {notifications.map(n => (
             <div 
               key={n.id} 
-              className="glass-card" 
+              className="glass-card notification-item" 
               style={{ 
                 padding: '25px', 
                 borderLeft: `5px solid ${n.notification_type === 'alert' ? '#ef4444' : 'var(--cta)'}`,
@@ -82,6 +82,7 @@ const Notifications = () => {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
+                gap: '20px',
                 background: n.is_read ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.03)'
               }}
             >
@@ -102,8 +103,8 @@ const Notifications = () => {
                     <Clock size={14} /> {new Date(n.created_at).toLocaleDateString()}
                   </span>
                 </div>
-                <h4 style={{ fontSize: '1.2rem', color: 'white', marginBottom: '5px' }}>{n.title}</h4>
-                <p style={{ color: 'var(--text-dim)', fontSize: '0.95rem' }}>{n.message}</p>
+                <h4 className="notif-title" style={{ fontSize: '1.2rem', color: 'white', marginBottom: '5px' }}>{n.title}</h4>
+                <p className="notif-message" style={{ color: 'var(--text-dim)', fontSize: '0.95rem' }}>{n.message}</p>
               </div>
               
               <div style={{ display: 'flex', gap: '15px' }}>
@@ -144,6 +145,43 @@ const Notifications = () => {
           )}
         </div>
       )}
+      <style>{`
+        @media (max-width: 768px) {
+          .notifications-header {
+            flex-direction: column;
+            text-align: center;
+            gap: 15px !important;
+            margin-bottom: 25px !important;
+          }
+          .notifications-title {
+            font-size: 1.4rem !important;
+            justify-content: center;
+            gap: 10px !important;
+          }
+          .notifications-title svg {
+            width: 25px !important;
+            height: 25px !important;
+          }
+          .notification-item {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 20px;
+            padding: 15px !important;
+          }
+          .notif-title {
+            font-size: 0.95rem !important;
+          }
+          .notif-message {
+            font-size: 0.8rem !important;
+          }
+          .notification-item > div:last-child {
+            width: 100%;
+            justify-content: flex-end;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 15px;
+          }
+        }
+      `}</style>
     </div>
   )
 }

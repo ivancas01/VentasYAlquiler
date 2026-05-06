@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
-import { Plus, Trash2, ShoppingCart, Calendar, User, DollarSign, Package, Eye, AlertCircle, CheckCircle, Info, Landmark, X, Search } from 'lucide-react'
+import { Plus, Trash2, ShoppingCart, Calendar, User, DollarSign, Package, Eye, AlertCircle, CheckCircle, Info, Landmark, X, Search, Upload } from 'lucide-react'
 import FeedbackModal from '../components/FeedbackModal'
 import { createPortal } from 'react-dom'
 import { formatCurrency } from '../utils/format'
@@ -71,6 +71,14 @@ const AdminPOS = () => {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [availability, setAvailability] = useState({})
   const [conflicts, setConflicts] = useState({})
+
+  useEffect(() => {
+    if (type === 'rental' && startDate && endDate) {
+      fetchAvailability()
+    } else {
+      setAvailability({})
+    }
+  }, [type, startDate, endDate])
 
   useEffect(() => {
     const initData = async () => {
@@ -287,10 +295,17 @@ const AdminPOS = () => {
         }, { headers: { Authorization: `Bearer ${token}` } })
       }
 
-      setFeedback({ isOpen: true, title: 'Éxito', message: 'Transacción procesada correctamente.', type: 'success' })
+      setFeedback({ 
+        isOpen: true, 
+        title: '¡TRANSACCIÓN EXITOSA!', 
+        message: type === 'sale' ? 'La venta se ha procesado con éxito.' : 'El alquiler se ha registrado correctamente.',
+        type: 'success' 
+      })
       setCart([])
       setCustomer({ full_name: '', doc_type: 'CC', doc_id: '', city: '', address: '', phone: '', phone_ref: '', name_ref: '' })
       setInitialPayment('0')
+      setStartDate('')
+      setEndDate('')
       setGuarantee('')
       fetchProducts()
       if (type === 'rental') fetchAvailability()
@@ -323,6 +338,25 @@ const AdminPOS = () => {
           </div>
         </div>
       </div>
+      
+      {type === 'rental' && (!startDate || !endDate) && (
+        <div className="fade-in" style={{ 
+          background: 'rgba(37, 99, 235, 0.1)', 
+          border: '1px solid var(--cta)', 
+          padding: '15px 25px', 
+          marginBottom: '30px', 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '15px',
+          borderRadius: '0px'
+        }}>
+          <Calendar size={24} color="var(--cta)" />
+          <div>
+            <h4 style={{ fontSize: '0.8rem', color: 'white', letterSpacing: '1px' }}>ACCION REQUERIDA</h4>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>Por favor, seleccione las fechas de recogida y devolución para verificar disponibilidad.</p>
+          </div>
+        </div>
+      )}
 
         <div className="pos-search-filters" style={{ display: 'flex', gap: '20px', marginBottom: '40px' }}>
           <div style={{ position: 'relative', flex: 1 }}>
@@ -340,8 +374,10 @@ const AdminPOS = () => {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '25px' }}>
             {filteredProducts.map(product => {
-              const isAvailable = type === 'rental' && startDate && endDate ? (availability[product.id] > 0) : (product.stock > 0)
-              const availCount = type === 'rental' && startDate && endDate ? (availability[product.id] ?? product.stock) : product.stock
+              const avail = availability[product.id] ?? product.stock
+              const hasDates = type === 'rental' && startDate && endDate
+              const isAvailable = hasDates ? (avail > 0) : (product.stock > 0)
+              const availCount = hasDates ? (availability[product.id] ?? product.stock) : product.stock
               
               return (
                 <div key={product.id} className="glass-card" style={{ padding: '20px', textAlign: 'center', opacity: isAvailable ? 1 : 0.6 }}>
@@ -360,6 +396,9 @@ const AdminPOS = () => {
                     <p style={{ fontSize: '0.65rem', color: isAvailable ? 'var(--text-dim)' : '#ef4444', fontWeight: 'bold' }}>
                       {type === 'rental' ? 'DISPONIBILIDAD:' : 'STOCK VENTA:'} {availCount}
                     </p>
+                    {type === 'rental' && (!startDate || !endDate) && (
+                      <p style={{ fontSize: '0.6rem', color: 'var(--cta)', fontWeight: 'bold' }}>SELECCIONE FECHAS</p>
+                    )}
                   </div>
                       {conflicts[product.id]?.length > 0 && (
                         <div style={{ marginTop: '8px', padding: '10px', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '6px', border: '1px solid rgba(239, 68, 68, 0.1)' }}>

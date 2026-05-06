@@ -246,7 +246,7 @@ const AdminLayout = ({ children }) => {
         justifyContent: 'space-between'
       }}>
         <div style={{ fontSize: '0.8rem', color: 'white', letterSpacing: '2px', fontWeight: 'bold' }}>
-          {config?.company_name_white || 'URBAN'} <span style={{ color: 'var(--cta)' }}>LUXURY</span>
+          {config?.company_name_white || 'URBAN'} <span style={{ color: 'var(--cta)' }}>{config?.company_name_gold || 'LUXURY'}</span>
         </div>
         <button 
           onClick={() => setIsMenuOpen(!isMenuOpen)}

@@ -56,7 +56,6 @@ h1, h2, h3, .urban-font {
 .glass-card:hover {
   border-color: var(--cta);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  transform: translateY(-5px);
 }
 
 .btn-primary {
@@ -166,6 +165,14 @@ input, select, textarea {
   border-radius: 0px !important;
   transition: all 0.3s ease !important;
   font-size: 0.9rem;
+  min-height: 48px; /* Standardize height for touch targets and iOS */
+}
+
+input[type="date"] {
+  display: flex;
+  align-items: center;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 input:focus, select:focus, textarea:focus {
