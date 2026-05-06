@@ -5,6 +5,7 @@ import {
   Lock, UserPlus, Shield, X, Check, Search, Key
 } from 'lucide-react'
 import { createPortal } from 'react-dom'
+import FeedbackModal from '../components/FeedbackModal'
 
 const Modal = ({ children, onClose, title }) => {
   return createPortal(
@@ -46,6 +47,8 @@ const Staff = () => {
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
+
+  const [feedback, setFeedback] = useState({ isOpen: false, title: '', message: '', type: 'info', onConfirm: null, showCancel: false })
 
   useEffect(() => {
     fetchData(1)
@@ -134,7 +137,12 @@ const Staff = () => {
   const submitUser = async (e) => {
     e.preventDefault()
     if (userForm.password !== userForm.confirmPassword) {
-      alert("Las contraseñas no coinciden.")
+      setFeedback({
+        isOpen: true,
+        title: 'Error de validación',
+        message: 'Las contraseñas no coinciden.',
+        type: 'error'
+      })
       return
     }
     setLoading(true)
@@ -155,7 +163,20 @@ const Staff = () => {
       }
       setShowUserModal(false)
       fetchData()
-    } catch (err) { alert("Error al guardar usuario") }
+      setFeedback({
+        isOpen: true,
+        title: 'Éxito',
+        message: editingItem ? 'Usuario actualizado correctamente.' : 'Usuario registrado con éxito.',
+        type: 'success'
+      })
+    } catch (err) { 
+      setFeedback({
+        isOpen: true,
+        title: 'Error',
+        message: 'No se pudo guardar el usuario. Verifica los datos.',
+        type: 'error'
+      })
+    }
     setLoading(false)
   }
 
@@ -175,30 +196,65 @@ const Staff = () => {
       }
       setShowGroupModal(false)
       fetchData()
-    } catch (err) { alert("Error al guardar grupo") }
+      setFeedback({
+        isOpen: true,
+        title: 'Éxito',
+        message: editingItem ? 'Rol actualizado correctamente.' : 'Nuevo rol creado con éxito.',
+        type: 'success'
+      })
+    } catch (err) { 
+      setFeedback({
+        isOpen: true,
+        title: 'Error',
+        message: 'No se pudo guardar el rol. El nombre podría estar duplicado.',
+        type: 'error'
+      })
+    }
     setLoading(false)
   }
 
   const handleDeleteUser = async (id) => {
-    if (!window.confirm("¿Eliminar este usuario?")) return
-    const token = localStorage.getItem('token')
-    try {
-      await axios.delete(`http://192.168.1.17:8000/api/users/${id}/`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      fetchData()
-    } catch (err) { alert("Error al eliminar usuario") }
+    setFeedback({
+      isOpen: true,
+      title: 'Confirmar Eliminación',
+      message: '¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.',
+      type: 'warning',
+      showCancel: true,
+      onConfirm: async () => {
+        const token = localStorage.getItem('token')
+        try {
+          await axios.delete(`http://192.168.1.17:8000/api/users/${id}/`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+          fetchData()
+          setFeedback({ isOpen: true, title: 'Eliminado', message: 'El usuario ha sido eliminado.', type: 'success' })
+        } catch (err) { 
+          setFeedback({ isOpen: true, title: 'Error', message: 'No se pudo eliminar el usuario.', type: 'error' })
+        }
+      }
+    })
   }
 
   const handleDeleteGroup = async (id) => {
-    if (!window.confirm("¿Eliminar este rol? Esto afectará a los usuarios asignados.")) return
-    const token = localStorage.getItem('token')
-    try {
-      await axios.delete(`http://192.168.1.17:8000/api/groups/${id}/`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      fetchData()
-    } catch (err) { alert("Error al eliminar rol") }
+    setFeedback({
+      isOpen: true,
+      title: 'Confirmar Eliminación',
+      message: '¿Eliminar este rol? Esto afectará los permisos de los usuarios asignados.',
+      type: 'warning',
+      showCancel: true,
+      onConfirm: async () => {
+        const token = localStorage.getItem('token')
+        try {
+          await axios.delete(`http://192.168.1.17:8000/api/groups/${id}/`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+          fetchData()
+          setFeedback({ isOpen: true, title: 'Eliminado', message: 'El rol ha sido eliminado con éxito.', type: 'success' })
+        } catch (err) { 
+          setFeedback({ isOpen: true, title: 'Error', message: 'No se pudo eliminar el rol.', type: 'error' })
+        }
+      }
+    })
   }
 
   const translatePermission = (name) => {

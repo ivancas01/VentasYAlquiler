@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import axios from 'axios'
 import { useLocation } from 'react-router-dom'
-import { History, ShoppingBag, Calendar, User, DollarSign, ChevronRight, Eye, Edit3, CheckCircle, Package, Truck, RotateCcw, X, Plus, Trash2, ArrowRight, Search, Filter, Shield } from 'lucide-react'
+import { History, ShoppingBag, Calendar, User, DollarSign, ChevronRight, Eye, Edit3, CheckCircle, Package, Truck, RotateCcw, X, Plus, Trash2, ArrowRight, Search, Filter, Shield, AlertCircle, Info } from 'lucide-react'
 import { useCallback, useRef } from 'react'
+import FeedbackModal from '../components/FeedbackModal'
 import { formatCurrency, formatDate } from '../utils/format'
 
 const Modal = ({ children, onClose }) => {
@@ -53,11 +54,13 @@ const Transactions = () => {
   const [activeTab, setActiveTab] = useState('sales')
   const [loading, setLoading] = useState(true)
   const [selectedRental, setSelectedRental] = useState(null)
+  const [selectedSale, setSelectedSale] = useState(null)
   const [products, setProducts] = useState([])
   const [paymentAmount, setPaymentAmount] = useState('')
   const [paymentLabel, setPaymentLabel] = useState('Abono')
   const [paymentMethod, setPaymentMethod] = useState('efectivo')
   const [bank, setBank] = useState('nequi')
+  const [feedback, setFeedback] = useState({ isOpen: false, title: '', message: '', type: 'info', onConfirm: null, showCancel: false })
 
   // Inner Rental Management
   const [innerSearch, setInnerSearch] = useState('')
@@ -143,7 +146,7 @@ const Transactions = () => {
         const foundSale = sales.find(s => String(s.id) === id)
         if (foundSale) {
           setActiveTab('sales')
-          // Add sale modal support if needed
+          setSelectedSale(foundSale)
         }
       }
     }
@@ -241,7 +244,12 @@ const Transactions = () => {
     const rentalInfo = selectedRental || rentals.find(t => t.id === id)
     
     if (newStatus === 'delivered' && parseFloat(rentalInfo.total_paid) < parseFloat(rentalInfo.total)) {
-      alert("No se puede entregar el alquiler porque aún tiene saldo pendiente. El valor total debe estar cancelado.")
+      setFeedback({
+        isOpen: true,
+        title: 'Saldo Pendiente',
+        message: 'No se puede entregar el alquiler porque aún tiene saldo pendiente. El valor total debe estar cancelado.',
+        type: 'warning'
+      })
       return
     }
 
@@ -252,7 +260,12 @@ const Transactions = () => {
       })
       
       if (newStatus === 'received') {
-        alert(`🚨 RECORDATORIO DE GARANTÍA 🚨\n\nEl alquiler ha sido marcado como RECIBIDO.\n\nPor favor, asegúrate de devolver la garantía:\n👉 ${rentalInfo?.guarantee_info || 'No especificada'}`)
+        setFeedback({
+          isOpen: true,
+          title: '🚨 Recordatorio de Garantía 🚨',
+          message: `El alquiler ha sido marcado como RECIBIDO.\n\nPor favor, asegúrate de devolver la garantía:\n👉 ${rentalInfo?.guarantee_info || 'No especificada'}`,
+          type: 'info'
+        })
       }
 
       fetchTransactions()
@@ -270,7 +283,12 @@ const Transactions = () => {
         guarantee_info: selectedRental.guarantee_info 
       }, { headers: { Authorization: `Bearer ${token}` } })
       fetchTransactions()
-      alert("Garantía actualizada correctamente")
+      setFeedback({
+        isOpen: true,
+        title: 'Éxito',
+        message: 'Garantía actualizada correctamente',
+        type: 'success'
+      })
     } catch (err) {
       console.error("Error updating guarantee", err)
     }
@@ -301,8 +319,14 @@ const Transactions = () => {
   }
 
   const removeItemFromRental = async (productId) => {
-    if (selectedRental.status === 'delivered' || selectedRental.status === 'received') {
-      return alert("No se pueden editar items de un alquiler ya entregado o recibido.")
+    if (['delivered', 'received'].includes(selectedRental.status)) {
+      setFeedback({
+        isOpen: true,
+        title: 'Acción No Permitida',
+        message: 'No se pueden editar items de un alquiler ya entregado o recibido.',
+        type: 'error'
+      })
+      return
     }
     const token = localStorage.getItem('token')
     const newItems = selectedRental.items.filter(i => i.product !== productId)
@@ -321,8 +345,14 @@ const Transactions = () => {
   }
 
   const addItemToRental = async (product, customPrice) => {
-    if (selectedRental.status === 'delivered' || selectedRental.status === 'received') {
-      return alert("No se pueden agregar items a un alquiler ya entregado o recibido.")
+    if (['delivered', 'received'].includes(selectedRental.status)) {
+      setFeedback({
+        isOpen: true,
+        title: 'Acción No Permitida',
+        message: 'No se pueden agregar items a un alquiler ya entregado o recibido.',
+        type: 'error'
+      })
+      return
     }
     const token = localStorage.getItem('token')
     const price = parseFloat(customPrice || product.price_rental || 0)
@@ -468,7 +498,10 @@ const Transactions = () => {
                   }}>{t.status || t.staff_name}</span>
                 </td>
                 <td>
-                  <button onClick={() => activeTab === 'rentals' ? setSelectedRental(t) : null} className="btn-icon btn-sm">
+                  <button 
+                    onClick={() => activeTab === 'rentals' ? setSelectedRental(t) : setSelectedSale(t)} 
+                    className="btn-icon btn-sm"
+                  >
                     <Eye size={18} />
                   </button>
                 </td>
@@ -748,6 +781,73 @@ const Transactions = () => {
                     </div>
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {selectedSale && (
+        <Modal onClose={() => setSelectedSale(null)}>
+          <div className="modal-inner-content">
+            <div className="modal-header-section" style={{ marginBottom: '25px' }}>
+              <h3 className="urban-font gold-text modal-main-title" style={{ fontSize: '1.2rem' }}>DETALLE DE VENTA #{selectedSale.id}</h3>
+              <p className="modal-meta-text">
+                Vendido por: <span style={{color: 'white'}}>{selectedSale.staff_name}</span> | 
+                Fecha: <span style={{color: 'var(--cta)'}}>{formatDate(selectedSale.created_at)}</span>
+              </p>
+              <p className="modal-meta-text" style={{ marginTop: '5px' }}>
+                Cliente: {selectedSale.customer_data?.full_name || selectedSale.customer_name || 'CONSUMIDOR FINAL'}
+              </p>
+            </div>
+
+            <div className="cms-layout-stack" style={{ gap: '20px' }}>
+              <div>
+                <h4 className="urban-font report-section-title" style={{ color: 'var(--cta)', marginBottom: '15px', fontSize: '0.75rem' }}>
+                  <Package size={16} style={{ verticalAlign: 'middle', marginRight: '8px' }} /> Productos Vendidos
+                </h4>
+                <div className="glass-card" style={{ padding: '0', overflow: 'hidden' }}>
+                  <div className="table-container" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                    <table className="urban-table" style={{ width: '100%' }}>
+                      <thead>
+                        <tr>
+                          <th style={{ fontSize: '0.65rem', padding: '10px' }}>PRODUCTO</th>
+                          <th style={{ textAlign: 'center', fontSize: '0.65rem', padding: '10px' }}>CANT.</th>
+                          <th style={{ textAlign: 'right', fontSize: '0.65rem', padding: '10px' }}>PRECIO</th>
+                          <th style={{ textAlign: 'right', fontSize: '0.65rem', padding: '10px' }}>SUBTOTAL</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedSale.items?.map((item, idx) => (
+                          <tr key={idx}>
+                            <td style={{ padding: '10px' }}>
+                              <div style={{ fontWeight: '600', fontSize: '0.8rem' }}>{item.product_name}</div>
+                              <div style={{ fontSize: '0.6rem', color: 'var(--text-dim)' }}>Ref: {item.product_reference}</div>
+                            </td>
+                            <td style={{ textAlign: 'center', fontSize: '0.8rem', padding: '10px' }}>{item.quantity}</td>
+                            <td style={{ textAlign: 'right', fontSize: '0.8rem', padding: '10px' }}>{formatCurrency(item.price)}</td>
+                            <td style={{ textAlign: 'right', fontWeight: 'bold', fontSize: '0.85rem', padding: '10px' }}>{formatCurrency(item.price * item.quantity)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <div className="glass-card" style={{ padding: '20px', background: 'var(--secondary)', border: '1px solid rgba(212, 175, 55, 0.1)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>Artículos Totales:</span>
+                  <span style={{ fontWeight: 'bold', color: 'white', fontSize: '0.85rem' }}>{selectedSale.items?.reduce((acc, item) => acc + item.quantity, 0)} unidades</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', paddingBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>Método de Pago:</span>
+                  <span style={{ fontWeight: 'bold', color: 'var(--cta)', textTransform: 'uppercase', fontSize: '0.85rem' }}>{selectedSale.payment_method}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span className="urban-font" style={{ fontSize: '0.9rem', color: 'white' }}>TOTAL COBRADO:</span>
+                  <span className="urban-font gold-text" style={{ fontSize: '1.4rem' }}>{formatCurrency(selectedSale.total)}</span>
+                </div>
               </div>
             </div>
           </div>

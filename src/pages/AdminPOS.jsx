@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
-import { Plus, Trash2, ShoppingCart, Calendar, CheckCircle, CreditCard, Shield, Edit3, ArrowRight, Search, Filter, User, MapPin, Phone, CreditCard as CardIcon, Landmark, X, Upload } from 'lucide-react'
+import { Plus, Trash2, ShoppingCart, Calendar, User, DollarSign, Package, Eye, AlertCircle, CheckCircle, Info, Landmark, X, Search } from 'lucide-react'
+import FeedbackModal from '../components/FeedbackModal'
 import { createPortal } from 'react-dom'
 import { formatCurrency } from '../utils/format'
 
@@ -32,7 +33,6 @@ const AdminPOS = () => {
   const [categories, setCategories] = useState([])
   const [cart, setCart] = useState([])
   
-  // Quick Add State
   const [showProductModal, setShowProductModal] = useState(false)
   const [loadingProduct, setLoadingProduct] = useState(false)
   const [imageFile, setImageFile] = useState(null)
@@ -43,7 +43,6 @@ const AdminPOS = () => {
     stock: 1, is_active: true
   })
   
-  // Customer State
   const [customer, setCustomer] = useState({
     full_name: '',
     doc_type: 'CC',
@@ -55,7 +54,6 @@ const AdminPOS = () => {
     name_ref: ''
   })
   
-  // Payment & Transaction State
   const [paymentMethod, setPaymentMethod] = useState('efectivo')
   const [bank, setBank] = useState('nequi')
   const [initialPayment, setInitialPayment] = useState('0')
@@ -66,6 +64,7 @@ const AdminPOS = () => {
   const [guaranteeType, setGuaranteeType] = useState('documento')
 
   const [loading, setLoading] = useState(false)
+  const [feedback, setFeedback] = useState({ isOpen: false, title: '', message: '', type: 'info', onConfirm: null, showCancel: false })
   const [fetching, setFetching] = useState(true)
   const [success, setSuccess] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -81,14 +80,6 @@ const AdminPOS = () => {
     }
     initData()
   }, [])
-
-  useEffect(() => {
-    if (type === 'rental' && startDate && endDate) {
-      fetchAvailability()
-    } else {
-      setAvailability({})
-    }
-  }, [type, startDate, endDate])
 
   const fetchAvailability = async () => {
     try {
@@ -109,8 +100,6 @@ const AdminPOS = () => {
   const fetchProducts = async () => {
     const token = localStorage.getItem('token')
     try {
-      // For POS we want more than 10 initially, or we should handle pagination
-      // Let's request a larger page for POS
       const res = await axios.get('http://192.168.1.17:8000/api/products/?page_size=100', {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       })
@@ -142,7 +131,6 @@ const AdminPOS = () => {
     }
     const token = localStorage.getItem('token')
     try {
-      // Use exact doc_id filter instead of general search for autocomplete
       const res = await axios.get(`http://192.168.1.17:8000/api/customers/?doc_id=${val}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
@@ -151,7 +139,6 @@ const AdminPOS = () => {
       
       if (results.length === 1) {
         const c = results[0]
-        // Only fill if it's an exact match of what was typed
         if (c.doc_id === val || c.dni === val) {
           setCustomer({
             id: c.id,
@@ -166,8 +153,6 @@ const AdminPOS = () => {
           })
         }
       } else {
-        // If no exact match, just ensure we are in "new customer" mode (id: null)
-        // but DO NOT clear the fields so the user can continue typing/editing
         setCustomer(prev => ({ ...prev, id: null }))
       }
     } catch (err) {
@@ -193,7 +178,7 @@ const AdminPOS = () => {
       const res = await axios.post('http://192.168.1.17:8000/api/products/', data, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
       })
-      fetchProducts() // Refresh the list
+      fetchProducts()
       addToCart(res.data)
       setShowProductModal(false)
       setProductForm({
@@ -204,26 +189,25 @@ const AdminPOS = () => {
       setImageFile(null)
       setImagePreview(null)
     } catch (err) {
-      console.error(err)
-      alert("Error al crear producto rápido")
+      setFeedback({ isOpen: true, title: 'Error', message: 'Error al crear producto rápido', type: 'error' })
     }
     setLoadingProduct(false)
   }
 
   const addToCart = (product) => {
     if (type === 'sale' && product.stock <= 0) {
-      alert("Producto sin stock disponible para venta.")
+      setFeedback({ isOpen: true, title: 'Sin Stock', message: 'Producto sin stock disponible para venta.', type: 'error' })
       return
     }
     
     if (type === 'rental') {
       if (!startDate || !endDate) {
-        alert("Por favor seleccione las fechas del alquiler antes de agregar prendas.")
+        setFeedback({ isOpen: true, title: 'Fechas Requeridas', message: 'Por favor seleccione las fechas del alquiler antes de agregar prendas.', type: 'warning' })
         return
       }
       const avail = availability[product.id] ?? product.stock
       if (avail <= 0) {
-        alert("Este producto no está disponible para las fechas seleccionadas.")
+        setFeedback({ isOpen: true, title: 'No Disponible', message: 'Este producto no está disponible para las fechas seleccionadas.', type: 'error' })
         return
       }
     }
@@ -238,20 +222,19 @@ const AdminPOS = () => {
   }
 
   const handleSubmit = async () => {
-    // Trim and check
     const name = (customer.full_name || '').trim()
     const doc = (customer.doc_id || '').trim()
 
     if (cart.length === 0) {
-      alert("El carrito está vacío.")
+      setFeedback({ isOpen: true, title: 'Carrito Vacío', message: 'El carrito está vacío.', type: 'warning' })
       return
     }
     if (!name || !doc) {
-      alert("Por favor complete el nombre y documento del cliente.")
+      setFeedback({ isOpen: true, title: 'Datos del Cliente', message: 'Por favor complete el nombre y documento del cliente.', type: 'warning' })
       return
     }
     if (type === 'rental' && (!startDate || !endDate)) {
-      alert("Por favor seleccione las fechas de recogida y devolución.")
+      setFeedback({ isOpen: true, title: 'Fechas Requeridas', message: 'Por favor seleccione las fechas de recogida y devolución.', type: 'warning' })
       return
     }
 
@@ -304,17 +287,15 @@ const AdminPOS = () => {
         }, { headers: { Authorization: `Bearer ${token}` } })
       }
 
-      setSuccess(true)
+      setFeedback({ isOpen: true, title: 'Éxito', message: 'Transacción procesada correctamente.', type: 'success' })
       setCart([])
       setCustomer({ full_name: '', doc_type: 'CC', doc_id: '', city: '', address: '', phone: '', phone_ref: '', name_ref: '' })
       setInitialPayment('0')
       setGuarantee('')
-      fetchProducts() // Refresh stock in UI
+      fetchProducts()
       if (type === 'rental') fetchAvailability()
-      setTimeout(() => setSuccess(false), 3000)
     } catch (err) {
-      console.error(err)
-      alert("Error al procesar la transacción. Verifica los campos obligatorios.")
+      setFeedback({ isOpen: true, title: 'Error', message: 'Error al procesar la transacción. Verifica los campos obligatorios.', type: 'error' })
     }
     setLoading(false)
   }

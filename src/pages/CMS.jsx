@@ -4,6 +4,7 @@ import {
   Globe, Layout, Info, Phone, Share2, 
   Save, RefreshCw, Trash2, Plus, Image as ImageIcon
 } from 'lucide-react'
+import FeedbackModal from '../components/FeedbackModal'
 
 import { useSite } from '../context/SiteContext'
 
@@ -11,7 +12,7 @@ const CMS = () => {
   const { config: globalConfig, updateConfig } = useSite()
   const [config, setConfig] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
+  const [feedback, setFeedback] = useState({ isOpen: false, title: '', message: '', type: 'info', onConfirm: null, showCancel: false })
   
   const [heroImages, setHeroImages] = useState([])
   const [aboutImages, setAboutImages] = useState([])
@@ -56,24 +57,32 @@ const CMS = () => {
       })
       fetchImages()
     } catch (err) {
-      alert("Error al subir imagen")
+      setFeedback({ isOpen: true, title: 'Error', message: 'No se pudo subir la imagen.', type: 'error' })
     }
     setUploading(false)
   }
 
   const handleDeleteImage = async (id, type) => {
-    if (!window.confirm("¿Eliminar esta imagen?")) return
-    
-    const token = localStorage.getItem('token')
     const endpoint = type === 'hero' ? 'hero-images' : 'about-images'
-    try {
-      await axios.delete(`http://192.168.1.17:8000/api/${endpoint}/${id}/`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      fetchImages()
-    } catch (err) {
-      alert("Error al eliminar")
-    }
+    setFeedback({
+      isOpen: true,
+      title: 'Confirmar Eliminación',
+      message: '¿Estás seguro de que deseas eliminar esta imagen?',
+      type: 'warning',
+      showCancel: true,
+      onConfirm: async () => {
+        const token = localStorage.getItem('token')
+        try {
+          await axios.delete(`http://192.168.1.17:8000/api/${endpoint}/${id}/`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+          fetchImages()
+          setFeedback({ ...feedback, isOpen: false })
+        } catch (err) {
+          setFeedback({ isOpen: true, title: 'Error', message: 'No se pudo eliminar la imagen.', type: 'error' })
+        }
+      }
+    })
   }
 
   const handleSubmit = async (e) => {
@@ -87,11 +96,9 @@ const CMS = () => {
         headers: { Authorization: `Bearer ${token}` }
       })
       updateConfig(res.data)
-      setSuccess(true)
-      setTimeout(() => setSuccess(false), 3000)
+      setFeedback({ isOpen: true, title: 'Éxito', message: 'Configuración actualizada correctamente.', type: 'success' })
     } catch (err) {
-      console.error("Save error", err)
-      alert("Error al actualizar la configuración")
+      setFeedback({ isOpen: true, title: 'Error', message: 'No se pudo actualizar la configuración.', type: 'error' })
     }
     setLoading(false)
   }

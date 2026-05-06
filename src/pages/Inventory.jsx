@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import axios from 'axios'
 import { Plus, Edit, Trash2, X, Upload, Check, Package, ArrowRight, Tag, History } from 'lucide-react'
-import { useCallback, useRef } from 'react'
+import FeedbackModal from '../components/FeedbackModal'
 
 const Modal = ({ children, onClose, title }) => {
   return createPortal(
@@ -61,6 +61,9 @@ const Inventory = () => {
   const [hasMore, setHasMore] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const observer = useRef()
+  const [showQuickCategory, setShowQuickCategory] = useState(false)
+  const [quickCatName, setQuickCatName] = useState('')
+  const [feedback, setFeedback] = useState({ isOpen: false, title: '', message: '', type: 'info', onConfirm: null, showCancel: false })
 
   // Form State for Product
   const [productForm, setProductForm] = useState({
@@ -110,7 +113,6 @@ const Inventory = () => {
         axios.get(`http://192.168.1.17:8000/api/products/?page=${p}`),
         axios.get('http://192.168.1.17:8000/api/categories/')
       ])
-      // Handle paginated responses
       setProducts(prodRes.data.results || prodRes.data)
       setHasMore(!!prodRes.data.next)
       setCategories(catRes.data.results || catRes.data)
@@ -190,7 +192,6 @@ const Inventory = () => {
     const token = localStorage.getItem('token')
     const data = new FormData()
     
-    // Clean data before sending
     const cleanedForm = { ...productForm }
     if (cleanedForm.price_sale === '') delete cleanedForm.price_sale
     if (cleanedForm.price_rental === '') delete cleanedForm.price_rental
@@ -211,10 +212,19 @@ const Inventory = () => {
       }
       setShowProductModal(false)
       fetchData()
-      alert(editingItem ? "Producto actualizado con éxito" : "Producto creado con éxito")
+      setFeedback({
+        isOpen: true,
+        title: 'Éxito',
+        message: editingItem ? 'Producto actualizado correctamente.' : 'Producto registrado con éxito.',
+        type: 'success'
+      })
     } catch (err) {
-      console.error("Error saving product", err)
-      alert("Error al guardar el producto. Verifica los campos.")
+      setFeedback({
+        isOpen: true,
+        title: 'Error',
+        message: 'No se pudo guardar el producto. Verifica los campos obligatorios.',
+        type: 'error'
+      })
     }
     setLoading(false)
   }
@@ -236,34 +246,62 @@ const Inventory = () => {
       }
       setShowCategoryModal(false)
       fetchData()
-      alert("Categoría guardada con éxito")
+      setFeedback({
+        isOpen: true,
+        title: 'Éxito',
+        message: 'La categoría ha sido guardada correctamente.',
+        type: 'success'
+      })
     } catch (err) {
-      console.error("Error saving category", err)
-      alert("Error al guardar la categoría. Asegúrate de que el nombre o slug no estén duplicados.")
+      setFeedback({
+        isOpen: true,
+        title: 'Error',
+        message: 'Error al guardar la categoría. El nombre o slug podrían estar duplicados.',
+        type: 'error'
+      })
     }
     setLoading(false)
   }
 
   const handleDeleteProduct = async (id) => {
-    if (!window.confirm("¿Eliminar producto?")) return
-    const token = localStorage.getItem('token')
-    try {
-      await axios.delete(`http://192.168.1.17:8000/api/products/${id}/`, { headers: { Authorization: `Bearer ${token}` } })
-      fetchData()
-    } catch (err) {}
+    setFeedback({
+      isOpen: true,
+      title: 'Eliminar Producto',
+      message: '¿Estás seguro de que deseas eliminar este producto? Esta acción es irreversible.',
+      type: 'warning',
+      showCancel: true,
+      onConfirm: async () => {
+        const token = localStorage.getItem('token')
+        try {
+          await axios.delete(`http://192.168.1.17:8000/api/products/${id}/`, { headers: { Authorization: `Bearer ${token}` } })
+          fetchData()
+          setFeedback({ isOpen: true, title: 'Eliminado', message: 'Producto eliminado con éxito.', type: 'success' })
+        } catch (err) {}
+      }
+    })
   }
 
   const handleDeleteCategory = async (id) => {
-    if (!window.confirm("¿Eliminar categoría? Esto afectará a los productos relacionados.")) return
-    const token = localStorage.getItem('token')
-    try {
-      await axios.delete(`http://192.168.1.17:8000/api/categories/${id}/`, { headers: { Authorization: `Bearer ${token}` } })
-      fetchData()
-    } catch (err) {}
+    setFeedback({
+      isOpen: true,
+      title: 'Eliminar Categoría',
+      message: '¿Eliminar esta categoría? Se desvinculará de todos los productos relacionados.',
+      type: 'warning',
+      showCancel: true,
+      onConfirm: async () => {
+        const token = localStorage.getItem('token')
+        try {
+          await axios.delete(`http://192.168.1.17:8000/api/categories/${id}/`, { headers: { Authorization: `Bearer ${token}` } })
+          fetchData()
+          setFeedback({ isOpen: true, title: 'Eliminado', message: 'Categoría eliminada con éxito.', type: 'success' })
+        } catch (err) {}
+      }
+    })
   }
 
   return (
     <div className="fade-in" style={{ width: '100%', margin: '0' }}>
+      <FeedbackModal {...feedback} onClose={() => setFeedback({ ...feedback, isOpen: false })} />
       <div className="admin-header">
         <h2 className="urban-font gold-text admin-title">
           <Package size={40} /> Inventario
@@ -428,19 +466,7 @@ const Inventory = () => {
                     </select>
                     <button 
                       type="button" 
-                      onClick={() => {
-                        const name = prompt("Nombre de la nueva categoría:")
-                        if (name) {
-                          const slug = name.toLowerCase().trim().replace(/\s+/g, '-')
-                          const token = localStorage.getItem('token')
-                          axios.post('http://192.168.1.17:8000/api/categories/', { name, slug }, {
-                            headers: { Authorization: `Bearer ${token}` }
-                          }).then(res => {
-                            setCategories([...categories, res.data])
-                            setProductForm({...productForm, category: res.data.id})
-                          }).catch(err => alert("Error al crear categoría rápida"))
-                        }
-                      }} 
+                      onClick={() => setShowQuickCategory(true)} 
                       className="btn-icon" 
                       style={{ background: 'var(--secondary)', border: '1px solid rgba(255,255,255,0.1)' }}
                     >
@@ -511,8 +537,47 @@ const Inventory = () => {
         </Modal>
       )}
 
+      {showQuickCategory && (
+        <Modal onClose={() => setShowQuickCategory(false)} title="RÁPIDA: NUEVA CATEGORÍA">
+          <div style={{ padding: '10px' }}>
+            <label style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', display: 'block', marginBottom: '12px' }}>Nombre de la Categoría</label>
+            <input 
+              type="text" 
+              value={quickCatName} 
+              onChange={e => setQuickCatName(e.target.value)} 
+              placeholder="Ej: Accesorios"
+              style={{ width: '100%', marginBottom: '25px' }} 
+              autoFocus
+            />
+            <button 
+              onClick={async () => {
+                if (!quickCatName.trim()) return
+                const slug = quickCatName.toLowerCase().trim().replace(/\s+/g, '-')
+                const token = localStorage.getItem('token')
+                try {
+                  const res = await axios.post('http://192.168.1.17:8000/api/categories/', { name: quickCatName, slug }, {
+                    headers: { Authorization: `Bearer ${token}` }
+                  })
+                  setCategories([...categories, res.data])
+                  setProductForm({...productForm, category: res.data.id})
+                  setShowQuickCategory(false)
+                  setQuickCatName('')
+                  setFeedback({ isOpen: true, title: 'Éxito', message: 'Categoría creada y seleccionada.', type: 'success' })
+                } catch (err) {
+                  setFeedback({ isOpen: true, title: 'Error', message: 'No se pudo crear la categoría rápida.', type: 'error' })
+                }
+              }} 
+              className="btn-primary" 
+              style={{ width: '100%' }}
+            >
+              CREAR Y SELECCIONAR
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      <FeedbackModal {...feedback} onClose={() => setFeedback({ ...feedback, isOpen: false })} />
       <style>{`
-        .tab-btn {
           border: none;
           background: transparent;
           font-size: 1.2rem;
