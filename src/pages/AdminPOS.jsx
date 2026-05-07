@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
+import useDebounce from '../hooks/useDebounce'
 import api from '../api/axios'
 import { Plus, Trash2, ShoppingCart, Calendar, User, DollarSign, Package, Eye, AlertCircle, CheckCircle, Info, Landmark, X, Search, Upload, Printer } from 'lucide-react'
 import FeedbackModal from '../components/FeedbackModal'
@@ -103,12 +104,18 @@ const AdminPOS = () => {
     }
   }, [type, startDate, endDate, products])
 
+  const debouncedSearch = useDebounce(searchTerm, 500)
+  const debouncedDocId = useDebounce(customer.doc_id, 800)
+
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchProducts(1)
-    }, 500)
-    return () => clearTimeout(timer)
-  }, [searchTerm, selectedCategory])
+    fetchProducts(1)
+  }, [debouncedSearch, selectedCategory])
+
+  useEffect(() => {
+    if (debouncedDocId && debouncedDocId.length >= 5) {
+      lookupCustomer(debouncedDocId)
+    }
+  }, [debouncedDocId])
 
   useEffect(() => {
     const initData = async () => {
@@ -548,7 +555,7 @@ const AdminPOS = () => {
           </div>
           <div className="pos-form-group">
             <label style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Documento</label>
-            <input type="text" value={customer.doc_id || ''} onChange={e => { setCustomer({...customer, doc_id: e.target.value}); lookupCustomer(e.target.value); }} style={{ width: '100%' }} />
+            <input type="text" value={customer.doc_id || ''} onChange={e => setCustomer({...customer, doc_id: e.target.value})} style={{ width: '100%' }} />
           </div>
         </div>
 
@@ -854,6 +861,16 @@ const AdminPOS = () => {
         data={receiptData}
         config={config}
         staffName={currentUser?.username}
+      />
+      <FeedbackModal 
+        isOpen={feedback.isOpen} 
+        title={feedback.title} 
+        message={feedback.message} 
+        type={feedback.type} 
+        onConfirm={feedback.onConfirm}
+        onCancel={() => setFeedback({ ...feedback, isOpen: false })}
+        showCancel={feedback.showCancel}
+        onClose={() => setFeedback({ ...feedback, isOpen: false })} 
       />
     </div>
   )

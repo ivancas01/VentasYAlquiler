@@ -225,6 +225,35 @@ select option {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+
+/* Loading Overlay Utilities */
+.loading-overlay-container {
+  position: relative;
+  min-height: 200px;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  border-radius: 12px;
+}
+
+.loading-blur {
+  filter: blur(4px);
+  opacity: 0.6;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
 @keyframes bell-ring {
   0%, 100% { transform: rotate(0); }
   20% { transform: rotate(15deg); }
@@ -311,6 +340,7 @@ select option {
     justify-content: center;
     padding: 12px !important;
     font-size: 0.8rem !important;
+    height: 42px !important;
   }
 }
 
@@ -364,24 +394,6 @@ select option {
 
 .urban-table tr:hover td {
   background: rgba(255, 255, 255, 0.02);
-}
-
-/* Scrollbar customization */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--bg);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--secondary);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--cta);
 }
 
 /* POS Form Utilities */

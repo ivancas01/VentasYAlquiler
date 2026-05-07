@@ -81,14 +81,33 @@ class SaleItemSerializer(serializers.ModelSerializer):
         model = SaleItem
         fields = ('id', 'product', 'product_name', 'product_reference', 'quantity', 'price_at_sale')
 
+class PaymentSerializer(serializers.ModelSerializer):
+    staff_name = serializers.ReadOnlyField(source='staff.username')
+    reference = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Payment
+        fields = ('id', 'staff', 'staff_name', 'rental', 'sale', 'amount', 'payment_method', 'bank', 'label', 'created_at', 'reference')
+
+    def get_reference(self, obj):
+        if obj.rental:
+            customer = obj.rental.customer.full_name if obj.rental.customer else obj.rental.customer_name
+            return f"Alquiler #{obj.rental.id} - {customer}"
+        if obj.sale:
+            customer = obj.sale.customer.full_name if obj.sale.customer else obj.sale.customer_name
+            return f"Venta #{obj.sale.id} - {customer}"
+        return "N/A"
+
 class SaleSerializer(serializers.ModelSerializer):
     items = SaleItemSerializer(many=True)
+    payments = PaymentSerializer(many=True, read_only=True)
     staff_name = serializers.ReadOnlyField(source='staff.username')
     customer_data = CustomerSerializer(source='customer', read_only=True)
+    total_paid = serializers.ReadOnlyField()
 
     class Meta:
         model = Sale
-        fields = ('id', 'staff', 'staff_name', 'customer', 'customer_data', 'total', 'description', 'created_at', 'items')
+        fields = ('id', 'staff', 'staff_name', 'customer', 'customer_data', 'total', 'total_paid', 'description', 'created_at', 'items', 'payments')
 
     def create(self, validated_data):
         items_data = validated_data.pop('items')
@@ -117,22 +136,6 @@ class RentalItemSerializer(serializers.ModelSerializer):
             return f"http://127.0.0.1:8000{obj.product.image.url}"
         return None
 
-class PaymentSerializer(serializers.ModelSerializer):
-    staff_name = serializers.ReadOnlyField(source='staff.username')
-    reference = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Payment
-        fields = ('id', 'staff', 'staff_name', 'rental', 'sale', 'amount', 'payment_method', 'bank', 'label', 'created_at', 'reference')
-
-    def get_reference(self, obj):
-        if obj.rental:
-            customer = obj.rental.customer.full_name if obj.rental.customer else obj.rental.customer_name
-            return f"Alquiler #{obj.rental.id} - {customer}"
-        if obj.sale:
-            customer = obj.sale.customer.full_name if obj.sale.customer else obj.sale.customer_name
-            return f"Venta #{obj.sale.id} - {customer}"
-        return "N/A"
 
 class RentalSerializer(serializers.ModelSerializer):
     items = RentalItemSerializer(many=True, required=False)

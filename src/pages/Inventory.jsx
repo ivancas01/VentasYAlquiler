@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import useDebounce from '../hooks/useDebounce'
 import { createPortal } from 'react-dom'
 import api from '../api/axios'
 import { Plus, Edit, Trash2, X, Upload, Check, Package, ArrowRight, Tag, History, Search } from 'lucide-react'
@@ -90,22 +91,25 @@ const Inventory = () => {
   // Form State for Category
   const [categoryForm, setCategoryForm] = useState({ name: '', slug: '' })
 
-  const fetchProducts = useCallback(async (p = 1, catId = selectedCategory, search = searchTerm) => {
+  const fetchProducts = useCallback(async (p = null, catId = selectedCategory, search = searchTerm) => {
+    const pageToFetch = p || prodPage
     setLoading(true)
     try {
-      let url = `/products/?page=${p}`
+      let url = `/products/?page=${pageToFetch}`
       if (catId) url += `&category=${catId}`
       if (search) url += `&search=${search}`
       const res = await api.get(url)
       setProducts(res.data.results || res.data)
       if (res.data.count) setProdTotalPages(Math.ceil(res.data.count / 10))
-      setProdPage(p)
+      setProdPage(pageToFetch)
     } catch (err) {
       console.error("Error fetching products", err)
     } finally {
       setLoading(false)
     }
-  }, [selectedCategory])
+  }, []) // Remove selectedCategory dependency to avoid re-creation
+
+  const debouncedSearch = useDebounce(searchTerm, 500)
 
   const fetchCategories = useCallback(async (p = 1) => {
     setLoading(true)
@@ -121,13 +125,13 @@ const Inventory = () => {
     }
   }, [])
 
-  const fetchData = useCallback(async () => {
-    await Promise.all([fetchProducts(1, selectedCategory, searchTerm), fetchCategories(1)])
-  }, [fetchProducts, fetchCategories, selectedCategory, searchTerm])
+  useEffect(() => {
+    fetchProducts(1, selectedCategory, debouncedSearch)
+  }, [debouncedSearch, selectedCategory])
 
   useEffect(() => {
-    fetchData()
-  }, [fetchData])
+    fetchCategories(1)
+  }, [])
 
   const handleOpenProductModal = (product = null) => {
     if (product) {
@@ -357,7 +361,7 @@ const Inventory = () => {
                   // Optionally add a debounce here, but for now simple search
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') fetchProducts(1, selectedCategory, searchTerm)
+                  if (e.key === 'Enter') setProdPage(1)
                 }}
                 style={{ width: '100%', paddingLeft: '40px' }} 
               />
@@ -368,9 +372,8 @@ const Inventory = () => {
               <select 
                 value={selectedCategory} 
                 onChange={(e) => {
-                  const catId = e.target.value
-                  setSelectedCategory(catId)
-                  fetchProducts(1, catId, searchTerm)
+                  setSelectedCategory(e.target.value)
+                  setProdPage(1)
                 }}
                 style={{ 
                   background: 'var(--secondary)', 
@@ -392,8 +395,13 @@ const Inventory = () => {
           </div>
         </div>
           
-        <div className="table-container" style={{ background: 'var(--primary)', border: '1px solid var(--glass-border)' }}>
-          <table className="urban-table" style={{ width: '100%' }}>
+        <div className="table-container loading-overlay-container" style={{ background: 'var(--primary)', border: '1px solid var(--glass-border)' }}>
+          {loading && !showProductModal && !showCategoryModal && (
+            <div className="loading-overlay">
+              <div className="urban-font gold-text" style={{ fontSize: '0.8rem', letterSpacing: '2px' }}>ACTUALIZANDO...</div>
+            </div>
+          )}
+          <table className={`urban-table ${loading && !showProductModal && !showCategoryModal ? 'loading-blur' : ''}`} style={{ width: '100%' }}>
             <thead>
               <tr>
                 <th>Producto</th>
@@ -410,7 +418,7 @@ const Inventory = () => {
                 <tr key={p.id}>
                   <td style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                     <div style={{ width: '55px', height: '55px', background: 'var(--secondary)', borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
-                      {p.image && <img src={p.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                      {p.image && <img src={p.image} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                       <span style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>{p.name}</span>
@@ -447,7 +455,7 @@ const Inventory = () => {
           <Pagination 
             current={prodPage} 
             total={prodTotalPages} 
-            onPageChange={(p) => fetchProducts(p)} 
+            onPageChange={(p) => fetchProducts(p, selectedCategory, debouncedSearch)} 
           />
           </div>
         </div>

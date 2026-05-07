@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
+import useDebounce from '../hooks/useDebounce'
 import api from '../api/axios'
 import { 
   Users, Search, UserPlus, Edit, Trash2, 
@@ -46,9 +47,11 @@ const Customers = () => {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
 
+  const debouncedSearch = useDebounce(searchTerm, 500)
+
   useEffect(() => {
     fetchCustomers(1)
-  }, [searchTerm])
+  }, [debouncedSearch])
 
   const fetchCustomers = async (p = 1) => {
     setLoading(true)
@@ -134,8 +137,13 @@ const Customers = () => {
         </div>
       </div>
 
-      <div className="table-container" style={{ background: 'var(--primary)', border: '1px solid var(--glass-border)' }}>
-        <table className="urban-table" style={{ width: '100%', minWidth: '800px' }}>
+      <div className="table-container loading-overlay-container" style={{ background: 'var(--primary)', border: '1px solid var(--glass-border)' }}>
+        {loading && !showModal && (
+          <div className="loading-overlay">
+            <div className="urban-font gold-text" style={{ fontSize: '0.8rem', letterSpacing: '2px' }}>ACTUALIZANDO...</div>
+          </div>
+        )}
+        <table className={`urban-table ${loading && !showModal ? 'loading-blur' : ''}`} style={{ width: '100%', minWidth: '800px' }}>
           <thead>
             <tr>
               <th>Cliente</th>

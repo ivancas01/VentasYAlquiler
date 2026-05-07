@@ -6,7 +6,7 @@ from django.db.models import Sum, Count, Q
 from django.db.models.functions import TruncMonth, TruncDate
 from django.utils import timezone
 from .models import (
-    User, Category, Product, Sale, Rental, Invoice, 
+    User, Category, Product, Sale, SaleItem, Rental, RentalItem, Invoice, 
     Payment, Notification, Customer, SiteConfig, Movement, HeroImage, AboutImage
 )
 from .serializers import (
@@ -85,16 +85,30 @@ class ProductViewSet(viewsets.ModelViewSet):
             
         # Get booked counts using aggregation (Single query for all products)
         q_overlap = Q(rental__start_date__lte=end_date, rental__end_date__gte=start_date)
-        booked_counts = RentalItem.objects.filter(q_overlap).exclude(rental__status='received')\
-            .values('product_id').annotate(total_booked=Count('id'))
+        active_rentals_items = RentalItem.objects.filter(q_overlap).exclude(rental__status__in=['received', 'cancelled'])
         
+        booked_counts = active_rentals_items.values('product_id').annotate(total_booked=Count('id'))
         booked_map = {item['product_id']: item['total_booked'] for item in booked_counts}
         
+        # New: Detailed conflicts for the frontend
+        conflicts_map = {}
+        for item in active_rentals_items.select_related('rental'):
+            pid = item.product_id
+            if pid not in conflicts_map:
+                conflicts_map[pid] = []
+            conflicts_map[pid].append({
+                "start": item.rental.start_date.strftime('%Y-%m-%d'),
+                "end": item.rental.end_date.strftime('%Y-%m-%d')
+            })
+
         # Filter products if IDs are provided
         queryset = Product.objects.all()
         if product_ids:
-            ids = [int(x) for x in product_ids.split(',')]
-            queryset = queryset.filter(id__in=ids)
+            try:
+                ids = [int(x) for x in product_ids.split(',') if x.strip()]
+                queryset = queryset.filter(id__in=ids)
+            except ValueError:
+                pass
             
         results = []
         for product in queryset:
@@ -102,7 +116,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             results.append({
                 "id": product.id,
                 "available_stock": max(0, product.stock - booked),
-                "conflicts": [] # Simplified for list view performance
+                "conflicts": conflicts_map.get(product.id, [])
             })
             
         return Response(results)
@@ -265,8 +279,12 @@ class CashViewSet(viewsets.ModelViewSet):
         payments_normal = Payment.objects.filter(q_pay).exclude(label='Garantia')
         total_payments = payments_normal.aggregate(Sum('amount'))['amount__sum'] or 0
         
-        # 2. Manual Movements (only those NOT from payments)
-        movements_manual = Movement.objects.filter(q_move).exclude(description__icontains='Pago de Alquiler #').exclude(description__icontains='Pago de Venta #')
+        # 2. Manual Movements (only those NOT from payments and NOT guarantees)
+        movements_manual = Movement.objects.filter(q_move)\
+            .exclude(description__icontains='Pago de Alquiler #')\
+            .exclude(description__icontains='Pago de Venta #')\
+            .exclude(description__icontains='Garantía')
+        
         manual_in = movements_manual.filter(movement_type='IN').aggregate(Sum('amount'))['amount__sum'] or 0
         manual_out = movements_manual.filter(movement_type='OUT').aggregate(Sum('amount'))['amount__sum'] or 0
         
@@ -320,7 +338,7 @@ class CashViewSet(viewsets.ModelViewSet):
                 "channel": ch['label'],
                 "income": total_method_income,
                 "guarantees": float(m_guarantees),
-                "total": total_method_income + float(m_guarantees)
+                "total": total_method_income
             })
             
             income_by_method.append({

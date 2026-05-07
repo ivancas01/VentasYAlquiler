@@ -38,101 +38,161 @@ const Pagination = ({ current, total, onPageChange }) => {
   const pages = getPageNumbers();
 
   return (
-    <div className="pagination-container" style={{ 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      gap: '10px', 
-      marginTop: '40px',
-      padding: '20px 0'
-    }}>
+    <div className="futuristic-pagination">
       <button 
         onClick={() => onPageChange(current - 1)}
         disabled={current === 1}
-        className="pagination-btn arrow-btn"
-        style={{ 
-          opacity: current === 1 ? 0.3 : 1,
-          cursor: current === 1 ? 'not-allowed' : 'pointer'
-        }}
+        className="nav-btn prev"
       >
-        <ChevronLeft size={20} />
+        <ChevronLeft size={18} />
       </button>
 
-      {pages.map((p, idx) => (
-        <React.Fragment key={idx}>
-          {p === '...' ? (
-            <span style={{ color: 'var(--text-dim)', padding: '0 5px' }}>...</span>
-          ) : (
-            <button
-              onClick={() => onPageChange(p)}
-              className={`pagination-btn ${current === p ? 'active' : ''}`}
-            >
-              {p}
-            </button>
-          )}
-        </React.Fragment>
-      ))}
+      <div className="pages-container">
+        {pages.map((p, idx) => (
+          <React.Fragment key={idx}>
+            {p === '...' ? (
+              <span className="dots">...</span>
+            ) : (
+              <button
+                onClick={() => onPageChange(p)}
+                className={`page-btn ${current === p ? 'active' : ''}`}
+              >
+                <span className="btn-content">{p}</span>
+                {current === p && <span className="active-glow"></span>}
+              </button>
+            )}
+          </React.Fragment>
+        ))}
+      </div>
 
       <button 
         onClick={() => onPageChange(current + 1)}
         disabled={current === total}
-        className="pagination-btn arrow-btn"
-        style={{ 
-          opacity: current === total ? 0.3 : 1,
-          cursor: current === total ? 'not-allowed' : 'pointer'
-        }}
+        className="nav-btn next"
       >
-        <ChevronRight size={20} />
+        <ChevronRight size={18} />
       </button>
 
       <style>{`
-        .pagination-btn {
-          width: 40px;
-          height: 40px;
+        .futuristic-pagination {
           display: flex;
-          alignItems: center;
+          align-items: center;
           justify-content: center;
-          background: var(--secondary);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          color: var(--cta);
+          gap: 15px;
+          margin-top: 50px;
+          padding: 20px;
+          user-select: none;
+        }
+
+        .pages-container {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: rgba(255, 255, 255, 0.02);
+          padding: 6px;
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(10px);
+        }
+
+        .page-btn {
+          position: relative;
+          width: 42px;
+          height: 42px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: transparent;
+          border: 1px solid transparent;
+          color: var(--text-dim);
+          font-family: var(--font-heading);
+          font-size: 0.85rem;
           font-weight: 600;
           cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          font-size: 0.9rem;
-          border-radius: 8px !important; /* Overriding global 0px for this specific premium component as per image */
+          transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          border-radius: 8px;
+          overflow: hidden;
         }
 
-        .pagination-btn:hover:not(:disabled) {
+        .page-btn .btn-content {
+          position: relative;
+          z-index: 2;
+        }
+
+        .page-btn:hover:not(.active) {
+          color: white;
+          background: rgba(255, 255, 255, 0.05);
+          border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .page-btn.active {
+          color: white;
+          background: var(--cta);
           border-color: var(--cta);
-          background: rgba(37, 99, 235, 0.1);
-          transform: translateY(-2px);
+          box-shadow: 0 0 20px var(--cta-glow);
+          transform: scale(1.05);
         }
 
-        .pagination-btn.active {
+        .active-glow {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+          animation: scan 2s linear infinite;
+        }
+
+        @keyframes scan {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+
+        .nav-btn {
+          width: 42px;
+          height: 42px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          color: var(--cta);
+          border-radius: 10px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover:not(:disabled) {
           background: var(--cta);
           color: white;
+          box-shadow: 0 0 15px var(--cta-glow);
           border-color: var(--cta);
-          box-shadow: 0 4px 15px var(--cta-glow);
         }
 
-        .arrow-btn {
-          background: transparent;
-          border-color: transparent;
-        }
-        
-        .arrow-btn:hover:not(:disabled) {
-          background: rgba(255, 255, 255, 0.05);
-          border-color: transparent;
+        .nav-btn:disabled {
+          opacity: 0.2;
+          cursor: not-allowed;
         }
 
-        @media (max-width: 480px) {
-          .pagination-container {
-            gap: 5px;
+        .dots {
+          color: var(--text-dim);
+          font-weight: bold;
+          padding: 0 10px;
+          letter-spacing: 2px;
+        }
+
+        @media (max-width: 600px) {
+          .futuristic-pagination {
+            gap: 10px;
           }
-          .pagination-btn {
-            width: 35px;
-            height: 35px;
-            font-size: 0.8rem;
+          .page-btn, .nav-btn {
+            width: 36px;
+            height: 36px;
+            font-size: 0.75rem;
+          }
+          .pages-container {
+            padding: 4px;
+            gap: 4px;
           }
         }
       `}</style>

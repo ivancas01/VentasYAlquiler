@@ -1,8 +1,14 @@
 from django.contrib import admin
 from .models import (
     User, Category, Product, Sale, Rental, Invoice, 
-    Payment, Notification, Customer, SiteConfig, HeroImage
+    Payment, Notification, Customer, SiteConfig, HeroImage, Movement
 )
+
+@admin.register(Movement)
+class MovementAdmin(admin.ModelAdmin):
+    list_display = ('description', 'amount', 'movement_type', 'payment_method', 'created_at')
+    list_filter = ('movement_type', 'payment_method', 'created_at')
+    search_fields = ('description',)
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):

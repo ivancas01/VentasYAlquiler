@@ -178,11 +178,11 @@ const CashRegister = () => {
                   <Landmark size={24} />
                 </div>
                 <div style={{ color: 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem', fontWeight: 'bold' }}>
-                  TOTAL EN CAJA (REAL)
+                  TOTAL DISPONIBLE (FLUJO)
                 </div>
               </div>
-              <h3 style={{ fontSize: '2rem', color: 'white', marginBottom: '5px' }}>{formatCurrency((summary?.net_income || 0) + (summary?.total_guarantees || 0))}</h3>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '1px' }}>Efectivo + Bancos total</p>
+              <h3 style={{ fontSize: '2rem', color: 'white', marginBottom: '5px' }}>{formatCurrency(summary?.net_income)}</h3>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '1px' }}>Dinero real sin contar garantías</p>
             </div>
           </div>
 

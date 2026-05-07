@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom'
 import api from '../api/axios'
 import { useLocation } from 'react-router-dom'
 import { History, ShoppingBag, Calendar, User, DollarSign, ChevronRight, Eye, Edit3, CheckCircle, Package, Truck, RotateCcw, X, Plus, Trash2, ArrowRight, Search, Filter, Shield, AlertCircle, Info, Printer } from 'lucide-react'
-import { useCallback, useRef } from 'react'
+import { useCallback, useRef, useMemo } from 'react'
+import useDebounce from '../hooks/useDebounce'
 import FeedbackModal from '../components/FeedbackModal'
 import { formatCurrency, formatDate } from '../utils/format'
 import Pagination from '../components/shared/Pagination'
@@ -91,13 +92,10 @@ const Transactions = () => {
 
   const location = useLocation()
 
+  const debouncedSearch = useDebounce(searchTerm, 500)
+
   useEffect(() => {
-    const init = async () => {
-      setLoading(true)
-      await fetchTransactions(1)
-      setLoading(false)
-    }
-    init()
+    fetchTransactions(1)
   }, [])
 
   useEffect(() => {
@@ -138,25 +136,26 @@ const Transactions = () => {
     }
   }, [loading, searchTerm, rentals, sales])
 
-  const fetchTransactions = async (p = 1) => {
+  const fetchTransactions = async (p = null) => {
+    const pageToFetch = p || (activeTab === 'sales' ? pageSales : pageRentals)
     setLoading(true)
     try {
       if (activeTab === 'sales') {
         const res = await api.get('/sales/', { 
-          params: { page: p, search: searchTerm, start_date: dateFilter.start, end_date: dateFilter.end }
+          params: { page: pageToFetch, search: searchTerm, start_date: dateFilter.start, end_date: dateFilter.end }
         })
         const newSales = res.data.results || res.data
         setSales(newSales)
         if (res.data.count) setTotalSalesPages(Math.ceil(res.data.count / 10))
-        setPageSales(p)
+        setPageSales(pageToFetch)
       } else {
         const res = await api.get('/rentals/', { 
-          params: { page: p, search: searchTerm, status: statusFilter, start_date: dateFilter.start, end_date: dateFilter.end }
+          params: { page: pageToFetch, search: searchTerm, status: statusFilter, start_date: dateFilter.start, end_date: dateFilter.end }
         })
         const newRentals = res.data.results || res.data
         setRentals(newRentals)
         if (res.data.count) setTotalRentalsPages(Math.ceil(res.data.count / 10))
-        setPageRentals(p)
+        setPageRentals(pageToFetch)
       }
     } catch (err) {
       console.error("Error fetching transactions", err)
@@ -166,13 +165,10 @@ const Transactions = () => {
 
   // Removed fetchMoreSales/Rentals in favor of Pagination
 
-  // Refetch on filter change
+  // Refetch on filter change (debounced for search)
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchTransactions(1)
-    }, 500)
-    return () => clearTimeout(timer)
-  }, [searchTerm, statusFilter, dateFilter, activeTab])
+    fetchTransactions(1)
+  }, [debouncedSearch, statusFilter, dateFilter.start, dateFilter.end, activeTab])
 
   const fetchProducts = async () => {
     try {
@@ -218,7 +214,13 @@ const Transactions = () => {
         })
       }
 
-      fetchTransactions()
+      // Optimistically update local state instead of full refetch to prevent jumping to page 1
+      if (activeTab === 'rentals') {
+        setRentals(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r))
+      } else {
+        setSales(prev => prev.map(s => s.id === id ? { ...s, status: newStatus } : s))
+      }
+      
       if (selectedRental) setSelectedRental({ ...selectedRental, status: newStatus })
     } catch (err) {
       console.error("Error updating status", err)
@@ -348,7 +350,7 @@ const Transactions = () => {
     }
   }
 
-  if (loading) return <div style={{ padding: '200px', textAlign: 'center', color: 'var(--cta)' }}>CARGANDO HISTORIAL...</div>
+  // Removed full-screen loading override to prevent UI flickering
 
   return (
     <div className="fade-in" style={{ width: '100%', margin: '0' }}>
@@ -412,8 +414,13 @@ const Transactions = () => {
         </button>
       </div>
 
-      <div className="table-container" style={{ background: 'var(--primary)', border: '1px solid var(--glass-border)' }}>
-        <table className="urban-table" style={{ width: '100%' }}>
+      <div className="table-container loading-overlay-container" style={{ background: 'var(--primary)', border: '1px solid var(--glass-border)' }}>
+        {loading && !selectedRental && !selectedSale && (
+          <div className="loading-overlay">
+            <div className="urban-font gold-text" style={{ fontSize: '0.8rem', letterSpacing: '2px' }}>ACTUALIZANDO...</div>
+          </div>
+        )}
+        <table className={`urban-table ${loading && !selectedRental && !selectedSale ? 'loading-blur' : ''}`} style={{ width: '100%' }}>
           <thead>
             <tr>
               <th>ID</th>
@@ -621,7 +628,7 @@ const Transactions = () => {
 
                 {selectedRental.status !== 'received' && (
                   <form onSubmit={addPayment} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                    <div className="payment-form-grid">
                       <div>
                         <label style={{ fontSize: '0.6rem', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '5px', display: 'block' }}>Concepto</label>
                         <select value={paymentLabel} onChange={e => setPaymentLabel(e.target.value)} style={{ width: '100%' }}>
@@ -640,7 +647,7 @@ const Transactions = () => {
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: paymentMethod === 'transferencia' ? '1fr 1fr' : '1fr', gap: '15px' }}>
+                    <div className="payment-form-grid" style={{ gridTemplateColumns: paymentMethod === 'transferencia' ? '1fr 1fr' : '1fr' }}>
                       {paymentMethod === 'transferencia' && (
                         <div>
                           <label style={{ fontSize: '0.6rem', color: 'var(--text-dim)', textTransform: 'uppercase', marginBottom: '5px', display: 'block' }}>Banco</label>
@@ -695,51 +702,51 @@ const Transactions = () => {
 
                 {(selectedRental.status === 'reserved' || selectedRental.status === 'preparing' || selectedRental.status === 'ready') && (
                   <div className="fade-in">
-                    <h4 className="urban-font" style={{ marginBottom: '20px', fontSize: '1rem', color: 'var(--cta)' }}>Añadir Más Prendas</h4>
+                    <h4 className="urban-font" style={{ marginBottom: '20px', fontSize: '1rem', color: 'var(--cta)' }}>Añadir Artículos</h4>
                     
-                    <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                    <div className="inner-search-filters" style={{ marginBottom: '25px' }}>
                       <div style={{ position: 'relative', flex: 1 }}>
-                        <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--cta)' }} />
+                        <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--cta)' }} />
                         <input 
                           type="text" 
-                          placeholder="Buscar prenda..." 
+                          placeholder="Buscar artículo..." 
                           value={innerSearch} 
                           onChange={e => setInnerSearch(e.target.value)} 
-                          style={{ paddingLeft: '35px', fontSize: '0.8rem', height: '40px' }}
+                          style={{ paddingLeft: '40px', fontSize: '0.85rem', height: '45px', width: '100%' }}
                         />
                       </div>
                       <select 
                         value={innerCat} 
                         onChange={e => setInnerCat(e.target.value)} 
-                        style={{ width: '130px', fontSize: '0.8rem', height: '40px' }}
+                        style={{ fontSize: '0.85rem', height: '45px', minWidth: '150px' }}
                       >
                         <option value="all">Categoría</option>
                         {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                       </select>
                     </div>
 
-                    <div style={{ maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', paddingRight: '10px' }}>
+                    <div style={{ maxHeight: '500px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '15px', paddingRight: '10px', alignItems: 'stretch' }}>
                       {products.filter(p => {
                         const matchesSearch = p.name.toLowerCase().includes(innerSearch.toLowerCase())
                         const matchesCat = innerCat === 'all' || String(p.category) === innerCat
                         const alreadyIn = selectedRental.items.find(i => i.product === p.id)
                         return matchesSearch && matchesCat && !alreadyIn && p.product_type !== 'sale'
                       }).map(p => (
-                        <div key={p.id} className="glass-card" style={{ padding: '12px 15px', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', gap: '15px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                          <div style={{ width: '45px', height: '45px', borderRadius: '4px', overflow: 'hidden', background: 'rgba(255,255,255,0.05)' }}>
+                        <div key={p.id} className="glass-card add-item-card" style={{ padding: '20px', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', gap: '20px', border: '1px solid rgba(255,255,255,0.08)', marginBottom: '15px' }}>
+                          <div style={{ width: '65px', height: '65px', minWidth: '65px', borderRadius: '8px', overflow: 'hidden', background: 'rgba(255,255,255,0.05)' }}>
                             {p.image ? (
                               <img src={getImageUrl(p.image)} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             ) : (
                               <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Package size={14} color="var(--text-dim)" />
+                                <Package size={20} color="var(--text-dim)" />
                               </div>
                             )}
                           </div>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: 'bold', fontSize: '0.8rem' }}>{p.name}</div>
-                            <div style={{ color: 'var(--text-dim)', fontSize: '0.65rem' }}>Stock: {p.stock} | Base: ${p.price_rental}</div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 'bold', fontSize: '0.95rem', color: 'white', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
+                            <div style={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>Ref: {p.reference || 'N/A'} | Stock: {p.stock} | Base: ${p.price_rental}</div>
                           </div>
-                          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                          <div className="add-item-actions">
                             <div style={{ textAlign: 'right' }}>
                               <label style={{ fontSize: '0.55rem', color: 'var(--text-dim)', display: 'block', marginBottom: '2px' }}>PRECIO</label>
                               <input 
@@ -750,8 +757,8 @@ const Transactions = () => {
                                 style={{ width: '80px', padding: '5px', fontSize: '0.8rem', textAlign: 'right', height: '30px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)' }} 
                               />
                             </div>
-                            <button onClick={() => addItemToRental(p, customPrices[p.id])} className="btn-primary" style={{ width: '32px', height: '32px', padding: '0', borderRadius: '6px' }}>
-                              <Plus size={16} />
+                            <button onClick={() => addItemToRental(p, customPrices[p.id])} className="btn-primary add-btn-lg">
+                              <Plus size={20} />
                             </button>
                           </div>
                         </div>
@@ -808,8 +815,8 @@ const Transactions = () => {
                               <div style={{ fontSize: '0.6rem', color: 'var(--text-dim)' }}>Ref: {item.product_reference}</div>
                             </td>
                             <td style={{ textAlign: 'center', fontSize: '0.8rem', padding: '10px' }}>{item.quantity}</td>
-                            <td style={{ textAlign: 'right', fontSize: '0.8rem', padding: '10px' }}>{formatCurrency(item.price)}</td>
-                            <td style={{ textAlign: 'right', fontWeight: 'bold', fontSize: '0.85rem', padding: '10px' }}>{formatCurrency(item.price * item.quantity)}</td>
+                            <td style={{ textAlign: 'right', fontSize: '0.8rem', padding: '10px' }}>{formatCurrency(item.price_at_sale)}</td>
+                            <td style={{ textAlign: 'right', fontWeight: 'bold', fontSize: '0.85rem', padding: '10px' }}>{formatCurrency(item.price_at_sale * item.quantity)}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -824,12 +831,30 @@ const Transactions = () => {
                   <span style={{ fontWeight: 'bold', color: 'white', fontSize: '0.85rem' }}>{selectedSale.items?.reduce((acc, item) => acc + item.quantity, 0)} unidades</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', paddingBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>Método de Pago:</span>
-                  <span style={{ fontWeight: 'bold', color: 'var(--cta)', textTransform: 'uppercase', fontSize: '0.85rem' }}>{selectedSale.payment_method}</span>
+                  <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>Abonado:</span>
+                  <span style={{ fontWeight: 'bold', color: '#10b981', fontSize: '0.85rem' }}>{formatCurrency(selectedSale.total_paid)}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span className="urban-font" style={{ fontSize: '0.9rem', color: 'white' }}>TOTAL COBRADO:</span>
-                  <span className="urban-font gold-text" style={{ fontSize: '1.4rem' }}>{formatCurrency(selectedSale.total)}</span>
+                
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+                  <span className="urban-font" style={{ fontSize: '0.9rem', color: 'white' }}>VALOR TOTAL:</span>
+                  <span className="urban-font gold-text" style={{ fontSize: '1.2rem' }}>{formatCurrency(selectedSale.total)}</span>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(239, 68, 68, 0.1)', padding: '10px', borderRadius: '4px' }}>
+                  <span style={{ color: '#ef4444', fontSize: '0.75rem', fontWeight: 'bold' }}>SALDO PENDIENTE:</span>
+                  <span style={{ color: '#ef4444', fontWeight: 'bold', fontSize: '1.2rem' }}>{formatCurrency(selectedSale.total - selectedSale.total_paid)}</span>
+                </div>
+
+                <div style={{ marginTop: '30px' }}>
+                  <h4 className="urban-font" style={{ fontSize: '0.7rem', color: 'var(--cta)', marginBottom: '15px' }}>Historial de Pagos</h4>
+                  <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
+                    {selectedSale.payments?.map(p => (
+                      <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>{p.created_at?.split('T')[0]} ({p.payment_method})</span>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#10b981' }}>{formatCurrency(p.amount)}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -900,6 +925,82 @@ const Transactions = () => {
           color: var(--cta);
         }
 
+        .inner-search-filters {
+          display: flex;
+          gap: 15px;
+        }
+
+        .add-item-card {
+          transition: all 0.3s ease;
+          flex-shrink: 0;
+          height: auto !important;
+          min-height: fit-content !important;
+        }
+
+        .payment-form-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 15px;
+        }
+
+        .add-item-actions {
+          display: flex;
+          gap: 15px;
+          align-items: center;
+        }
+
+        .add-btn-lg {
+          width: 45px;
+          height: 45px;
+          padding: 0;
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--cta) !important;
+          color: black !important;
+          border: none !important;
+        }
+
+        @media (max-width: 600px) {
+          .add-item-card {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 20px !important;
+          }
+
+          .add-item-card > div:first-child {
+            width: 100% !important;
+            height: 150px !important;
+            min-height: 150px !important;
+          }
+
+          .inner-search-filters, .payment-form-grid, .add-item-actions {
+            flex-direction: column;
+            grid-template-columns: 1fr !important;
+            align-items: stretch !important;
+            height: auto !important;
+            width: 100% !important;
+          }
+          .inner-search-filters select, .add-item-actions div, .add-item-actions button {
+            width: 100% !important;
+            height: auto !important;
+          }
+          .add-item-actions div {
+            text-align: left !important;
+            margin-bottom: 5px;
+          }
+          .add-item-actions input {
+            width: 100% !important;
+            height: 50px !important;
+            text-align: left !important;
+            padding: 10px !important;
+          }
+          .inner-search-filters select {
+            width: 100%;
+          }
+        }
+
         .status-scroll-container {
           display: flex;
           flex-direction: column;
@@ -965,6 +1066,16 @@ const Transactions = () => {
         data={receiptData}
         config={config}
         staffName={currentUser?.username}
+      />
+      <FeedbackModal 
+        isOpen={feedback.isOpen} 
+        title={feedback.title} 
+        message={feedback.message} 
+        type={feedback.type} 
+        onConfirm={feedback.onConfirm}
+        onCancel={() => setFeedback({ ...feedback, isOpen: false })}
+        showCancel={feedback.showCancel}
+        onClose={() => setFeedback({ ...feedback, isOpen: false })} 
       />
     </div>
   )
